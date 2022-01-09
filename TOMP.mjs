@@ -1,26 +1,6 @@
 import { HTMLRewriter } from './HTMLRewriter.mjs';
 import { WrapInterface, PlainWrap, XORWrap, RC4Wrap } from './Wrap.mjs'
-
-// CACHE THE CONSOLE
-// CONSOLE.CONTEXT ISOLATE
-// FIREFOX
-class Logger {
-	constructor(tomp){
-		this.tomp = tomp;
-	}
-	info(...args){
-		if(!this.tomp.silent)console.info('[TOMP]', ...args);
-	}
-	warn(...args){
-		if(!this.tomp.silent)console.warn('[TOMP]', ...args);
-	}
-	error(...args){
-		if(!this.tomp.silent)console.error('[TOMP]', ...args);
-	}
-	trace(...args){
-		if(!this.tomp.silent)console.trace('[TOMP]', ...args);
-	}
-};
+import { Logger } from './Logger.mjs'
 
 export class TOMP {
 	static wraps = [ PlainWrap, XORWrap, RC4Wrap ];
@@ -32,7 +12,7 @@ export class TOMP {
 	}
 	prefix = '/tomp/';
 	wrap = new PlainWrap();
-	silent = true;
+	loglevel = 0;
 	constructor(config){
 		if(typeof config.prefix == 'string'){
 			this.prefix = config.prefix;
@@ -46,10 +26,10 @@ export class TOMP {
 			this.wrap = config.wrap;
 		}
 
-		if(typeof config.silent == 'boolean'){
-			this.silent = config.silent;
-		}			
-		
+		if(typeof config.loglevel == 'number'){
+			this.loglevel = config.loglevel;
+		}
+
 		this.log = new Logger(this);
 		this.html = new HTMLRewriter(this);
 	}

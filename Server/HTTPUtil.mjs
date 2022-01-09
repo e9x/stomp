@@ -24,11 +24,11 @@ export async function DecompressStream(stream, encoding){
 			break;
 		case'gzip':
 		case'x-gzip':
-			res = res.pipe(zlib.createGunzip(zlib_opts));
+			stream = stream.pipe(zlib.createGunzip(zlib_opts));
 			
 			break;
 		case'br':
-			res = res.pipe(zlib.createBrotliDecompress());
+			stream = stream.pipe(zlib.createBrotliDecompress());
 				
 			break;
 		default:
@@ -38,7 +38,7 @@ export async function DecompressStream(stream, encoding){
 			break;
 	}
 	
-	return await ReadStream(res);
+	return await ReadStream(stream);
 }
 
 export async function DecompressResponseBody(response){

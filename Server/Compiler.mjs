@@ -8,16 +8,18 @@ import { CompilationErrors, CompileCommon } from '../WebpackUtil.mjs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const public_dir = path.resolve(__dirname, 'public');
+export const PublicDir = path.resolve(__dirname, 'public');
 
-export const Static = serveStatic(public_dir);
+export const CompilationPath = path.join(PublicDir, 'main.js'); 
+
+export const Static = serveStatic(PublicDir);
 
 const frontend = webpack({
 	...CompileCommon,
 	entry: path.join(__dirname, '..', 'Client', 'index.mjs'),
 	output: {
-		path: public_dir,
-		filename: 'main.js',
+		path: path.dirname(CompilationPath),
+		filename: path.basename(CompilationPath),
 	},
 });
 
