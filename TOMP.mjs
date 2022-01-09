@@ -1,4 +1,5 @@
-import { WrapInterface, PlainWrap, XORWrap, RC4Wrap } from './URLWrap.mjs'
+import { HTMLRewriter } from './HTMLRewriter.mjs';
+import { WrapInterface, PlainWrap, XORWrap, RC4Wrap } from './Wrap.mjs'
 
 // CACHE THE CONSOLE
 // CONSOLE.CONTEXT ISOLATE
@@ -22,28 +23,29 @@ class Logger {
 };
 
 export class TOMP {
-	static URLs = [ PlainWrap, XORWrap, RC4Wrap ];
+	static wraps = [ PlainWrap, XORWrap, RC4Wrap ];
 	toJSON(){
 		return {
-			url: TOMP.urls.indexOf(this.url),
+			wrap: TOMP.wraps.indexOf(this.wrap),
 			prefix: this.prefix,
 		};
 	}
 	prefix = '/tomp/';
-	url = new PlainWrap();
+	wrap = new PlainWrap();
 	constructor(config){
 		if(typeof config.prefix == 'string'){
 			this.prefix = config.prefix;
 		}
 
-		if(typeof config.url == 'number'){
-			config.url = TOMP.urls[config.url];
+		if(typeof config.wrap == 'number'){
+			config.wrap = TOMP.wraps[config.wrap];
 		}
 
-		if(config.url instanceof WrapInterface.constructor){
-			this.url = config.url;
+		if(config.wrap instanceof WrapInterface.constructor){
+			this.wrap = config.wrap;
 		}
 		
 		this.log = new Logger(config.silent);
+		this.html = new HTMLRewriter();
 	}
 };

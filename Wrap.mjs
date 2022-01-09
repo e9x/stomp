@@ -3,7 +3,17 @@
 // eg for salts, seeds
 // per client basis
 
-export class WrapInterface {};
+export class WrapInterface {
+	static generate_key(){
+		throw new Error('generate_key() not implemented');
+	}
+	static wrap(input, key){
+		throw new Error('wrap() not implemented');
+	}
+	static unwrap(input, key){
+		throw new Error('unwrap() not implemented');
+	}
+};
 
 export class PlainWrap extends WrapInterface {
 	static generate_key(){
@@ -51,11 +61,5 @@ export class XORWrap extends WrapInterface {
 
 // todo...
 export class RC4Wrap extends WrapInterface {
-	static generate_key(){
-		return String();
-	}
-	static wrap(input, key){
-	}
-	static unwrap(input, key){
-	}
+	
 };

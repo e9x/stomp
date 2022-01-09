@@ -23,7 +23,7 @@ export async function Process(server, request, response){
 
 	// override tomp$key for security purposes
 	
-	const key = server.tomp.url.generate_key();
+	const key = server.tomp.wrap.generate_key();
 
 	cookies.tomp$key = key;
 
@@ -31,7 +31,7 @@ export async function Process(server, request, response){
 		maxAge: 60 * 60 * 2, // 2 hours
 	});
 	
-	const redirect = '/tomp/html/' + encodeURIComponent(server.tomp.url.wrap(body.input, cookies.tomp$key));
+	const redirect = '/tomp/html/' + encodeURIComponent(server.tomp.wrap.wrap(body.input, cookies.tomp$key));
 	const send = Buffer.from(`<!DOCTYPE HTML><html><head><meta charset='utf-8' /><meta http-equiv="refresh" content=${JSON.stringify('0;' + redirect)} /></head><body></body></html>`);
 	headers['content-length'] = send.byteLength;
 	response.writeHead(200, headers);

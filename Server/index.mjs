@@ -49,6 +49,7 @@ export class Server {
 		console.log(path, field, service);
 
 // http://[::1]/tomp/html/%C3%8Dttps%3A%2F%2F%C3%92ww.goog%C3%89e.com%2Fs%C3%80arch%3Fq%3D%C3%9Crdy
+// 
 
 		switch(service){
 			case 'process':
@@ -58,8 +59,8 @@ export class Server {
 				return void Static(request, response);
 				break;
 			case 'html':
-				console.log(service, field, this.get_key(request), this.tomp.url.unwrap(decodeURIComponent(field), this.get_key(request)));
-				const url = this.tomp.url.unwrap(decodeURIComponent(field), this.get_key(request));
+				console.log(service, field, this.get_key(request), this.tomp.wrap.unwrap(decodeURIComponent(field), this.get_key(request)));
+				const url = this.tomp.wrap.unwrap(decodeURIComponent(field), this.get_key(request));
 
 				console.log('Proxy:', url);
 
@@ -70,4 +71,4 @@ export class Server {
 	}
 };
 
-export * from '../URLWrap.mjs';
+export * from '../Wrap.mjs';
