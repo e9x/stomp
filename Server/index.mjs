@@ -28,6 +28,9 @@ export class Server {
 			'content-type': 'application/json',
 			'content-length': send.byteLength,
 		});
+		
+		// this.tomp.log.trace.trace(json);
+
 		response.write(send);
 		response.end();
 	}
@@ -37,6 +40,14 @@ export class Server {
 			throw new Error('Your server is misconfigured! TOMPServer should only run on its specified prefix.');
 		}
 
+		response.on('error', error => {
+			this.tomp.log.error(error);
+		});
+
+		var finished = false;
+
+		response.on('finish', () => finished = true);
+		
 		var path = request.url.substr(this.tomp.prefix.length);
 		var service;
 		
@@ -53,26 +64,29 @@ export class Server {
 		try{
 			switch(service){
 				case 'process':
-					return void Process(this, request, response);
+					return void await Process(this, request, response);
 					break;
 				case 'script':
-					await SendScript(this, request, response);
+					return void await SendScript(this, request, response);
 					break;
 				case 'static':
-					return void Static(request, response);
+					return void await Static(request, response);
 					break;
 				case 'binary':
-					return void SendBinary(this, request, response, field)
+					return void await SendBinary(this, request, response, field)
 					break;
 				case 'html':
-					return void SendHTML(this, request, response, field);
+					return void await SendHTML(this, request, response, field);
 					break;
 				default:
-					return void this.send_json(response, 404, { message: this.messages['error.unknownservice']});
+					return void await this.send_json(response, 404, { message: this.messages['error.unknownservice']});
 					break;
 			}
 		}catch(err){
-			return void this.send_json(response, 500, { message: this.messages['generic.exception.request'] });	
+			setTimeout(async () => {
+				this.tomp.log.error(err);
+				if(!finished)return void await this.send_json(response, 500, { message: this.messages['generic.exception.request'] });
+			});
 		}
 	}
 };
