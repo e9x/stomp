@@ -1,24 +1,24 @@
 import http from 'http';
 import https from 'https';
-import {DecompressResponseBody, ReadStream} from './HTTPUtil.mjs'
 
-// max of 4 concurrent sockets, rest is queued while busy
+// max of 4 concurrent sockets, rest is queued while busy? set max to 75
 // const http_agent = http.Agent();
 // const https_agent = https.Agent();
 
-export async function Fetch(server_request, input, stream = false){
+export async function Fetch(server_request, request_headers, input){
 	const url = new URL(input);
+
+	request_headers.host = url.hostname;
 
 	const options = {
 		url: url.href,
 		hostname: url.host,
 		port: url.port,
-		path: url.href.substr(url.origin.length), // include query
+		path: url.pathname + url.search, // include query
 		method: server_request.method,
+		headers: request_headers,
 	};
 	
-	console.log('request');
-
 	var request_stream;
 	
 	if(url.protocol == 'https:')var response_promise = new Promise(resolve => request_stream = https.request(options, resolve));
@@ -33,12 +33,5 @@ export async function Fetch(server_request, input, stream = false){
 		request_stream.end();
 	}
 
-	const response = await response_promise;
-	
-	if(stream){
-		return { status: response.statusCode, headers: response.headers, stream: response }
-	}else{
-		const body = await DecompressResponseBody(response);
-		return { status: response.statusCode, headers: response.headers, body }
-	}
+	return await response_promise;
 }

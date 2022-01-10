@@ -1,7 +1,5 @@
 import zlib from 'zlib';
 
-import Stream, {PassThrough, pipeline} from 'node:stream';
-
 export async function DecompressStream(stream, encoding){
 	// For Node v6+
 	// Be less strict when decoding compressed responses, since sometimes
@@ -31,22 +29,17 @@ export async function DecompressStream(stream, encoding){
 			stream = stream.pipe(zlib.createBrotliDecompress());
 				
 			break;
-		default:
-			
-			
-			
-			break;
 	}
 	
 	return await ReadStream(stream);
 }
 
-export async function DecompressResponseBody(response){
+export async function DecompressResponse(response){
 	// if(request.method != 'HEAD' && res.statusCode != 204  && res.statusCode != 304)switch(res.headers['content-encoding'] || res.headers['x-content-encoding']){
 
 	if(response.statusCode == 204 || response.statusCode == 304) return Buffer.alloc(0);
 
-	return await DecompressStream(response, response.headers['content-encoding']);
+	return await DecompressStream(response, response.headers['content-encoding'] || response.headers['x-content-encoding']);
 }
 
 
@@ -64,15 +57,15 @@ export async function ReadStream(stream){
 	});
 }
 
-export async function DecodeRequestBody(request){
+export async function DecodePOSTStream(stream, type){
 	const decoded = {};
 
 	Object.setPrototypeOf(decoded, null);
 
-	const body = await ReadStream(request);
+	const body = await ReadStream(stream);
 	
 	try{
-		switch(request.headers['content-type']){
+		switch(type){
 			case'application/x-www-form-urlencoded':
 				Object.assign(decoded, Object.fromEntries([...new URLSearchParams(body.toString()).entries()]));
 				break;

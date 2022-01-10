@@ -1,11 +1,11 @@
 import cookie from 'cookie';
-import { DecodeRequestBody } from './HTTPUtil.mjs'
+import { DecodePOSTStream } from './HTTPUtil.mjs'
 
 const whitespace = /\s/;
 const http_s_protocol = /^https?:\/\//;
 
 export async function Process(server, request, response){
-	const body = await DecodeRequestBody(request);
+	const body = await DecodePOSTStream(request, request.headers['content-type']);
 	
 	if(typeof body.input != 'string'){
 		return server.send_json(response, 400, { error: 'body.input was not a string' })
@@ -13,7 +13,7 @@ export async function Process(server, request, response){
 
 	if(body.input.includes('.') && !body.input.match(http_s_protocol)){
 		body.input = `http://${body.input}`;
-	}else if(!body.input.match(http_s_protocol)) {
+	}else if(body.input.match(whitespace) || !body.input.match(http_s_protocol)) {
 		body.input = `https://www.google.com/search?q=${encodeURIComponent(body.input)}`;
 	}
 	

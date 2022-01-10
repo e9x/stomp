@@ -1,4 +1,9 @@
+import fs from 'fs';
+
 import { Fetch } from './Fetch.mjs';
+import { DecompressResponse } from './HTTPUtil.mjs'
+import { MapHeaderNames, ObjectFromRawHeaders } from './HeaderUtil.mjs'
+import { CompilationPath } from './Compiler.mjs';
 
 // todo: cache
 export async function SendScript(server, request, response){
@@ -13,32 +18,43 @@ export async function SendScript(server, request, response){
 		}
 	}
 	
-	data = data.replace(/client_information/g, JSON.stringify(server.tomp));
+	data = data.replace(/client_information/g, JSON.stringify([
+		tomp,
+		server.get_key(request),
+	]));
 
 }
 
-export async function SendBinary(server, request, response, field){
-	const url = server.tomp.wrap.unwrap(decodeURIComponent(field), server.get_key(request));
+export async function SendBinary(server, server_request, server_response, field){
+	const url = server.tomp.wrap.unwrap(decodeURIComponent(field), server.get_key(server_request));
 			
-	const { status, headers, stream } = await Fetch(request, url);
+	const request_headers = {...server_request.headers};
+	request_headers.host = url.host;
+	const response = await Fetch(server_request, request_headers, url);
 	
-	response.writeHead(status, headers);
-	response.pipe(stream);
+	server_response.writeHead(response.statusCode, headers);
+	stream.pipe(server_response);
 }
 
-export async function SendHTML(server, request, response, field){
-	const url = server.tomp.wrap.unwrap(decodeURIComponent(field), server.get_key(request));
+export async function SendHTML(server, server_request, server_response, field){
+	const key = server.get_key(server_request);
+	const url = server.tomp.wrap.unwrap(decodeURIComponent(field), key);
 	
-	const { status, headers, body } = await Fetch(request, url);
-	const send = body;
+	const request_headers = {...server_request.headers};
 
-	server.tomp.log.info('Proxy:', url);
+	const response = await Fetch(server_request, request_headers, url);
+	const send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), key));
+	const send_headers = Object.setPrototypeOf({...response.headers}, null);
 
-	headers['content-length'] = send.byteLength;
-	delete headers['content-encoding'];
-	delete headers['x-content-encoding'];
+	server.tomp.log.debug(url, send_headers);
+
+	delete send_headers['x-frame-options'];
+	send_headers['content-length'] = send.byteLength;
+	delete send_headers['transfer-encoding'];
+	delete send_headers['content-encoding'];
+	delete send_headers['x-content-encoding'];
 	
-	response.writeHead(status, headers);
-	response.write(send);
-	response.end();
+	server_response.writeHead(response.statusCode, MapHeaderNames(ObjectFromRawHeaders(response.rawHeaders), send_headers));
+	server_response.write(send);
+	server_response.end();
 }

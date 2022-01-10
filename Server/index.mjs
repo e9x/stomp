@@ -1,9 +1,8 @@
 import { TOMP } from '../TOMP.mjs';
-import { Static, CompilationPath } from './Compiler.mjs';
+import { Static } from './Compiler.mjs';
 import { Process } from './Process.mjs';
 import { SendBinary, SendHTML, SendScript } from './Send.mjs';
 import cookie from 'cookie';
-import fs from 'fs';
 
 export class Server {
 	messages = {
@@ -17,7 +16,7 @@ export class Server {
 		this.upgrade = this.upgrade.bind(this);
 	}
 	upgrade(req, socket, head){
-
+		socket.end();
 	}
 	get_key(request){
 		const cookies = typeof request.headers.cookie == 'string' ? cookie.parse(request.headers.cookie) : {};
