@@ -41,6 +41,7 @@ export async function SendScript(server, request, response){
 		'content-type': 'application/javascript',
 		'content-length': send.byteLength,
 	});
+	
 	response.write(send);
 	response.end();
 }

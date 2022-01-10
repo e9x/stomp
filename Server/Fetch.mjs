@@ -21,8 +21,8 @@ export async function Fetch(server_request, request_headers, input){
 	
 	var request_stream;
 	
-	if(url.protocol == 'https:')var response_promise = new Promise(resolve => request_stream = https.request(options, resolve));
-	else if(url.protocol == 'http:')var response_promise =  new Promise(resolve => request_stream = http.request(options, resolve));
+	if(url.protocol == 'https:')var response_promise = new Promise((resolve, reject) => request_stream = https.request(options, resolve).on('error', reject));
+	else if(url.protocol == 'http:')var response_promise =  new Promise((resolve, reject) => request_stream = http.request(options, resolve).on('error', reject));
 	else throw new RangeError(`Unsupported protocol: '${url.protocol}'`);
 
 	if(options.method == 'POST'){

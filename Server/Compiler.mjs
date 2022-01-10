@@ -16,7 +16,8 @@ export const Static = serveStatic(PublicDir);
 
 const frontend = webpack({
 	...CompileCommon,
-	entry: path.join(__dirname, '..', 'Client', 'index.mjs'),
+	entry: path.join(__dirname, '..', 'Client', 'Entry.mjs'),
+	context: __dirname,
 	output: {
 		path: path.dirname(CompilationPath),
 		filename: path.basename(CompilationPath),
