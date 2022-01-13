@@ -70,12 +70,30 @@ export async function SendHTML(server, server_request, server_response, field){
 
 	server.tomp.log.debug(url, response_headers);
 
-	delete response_headers['x-frame-options'];
-	response_headers['content-length'] = send.byteLength;
-	delete response_headers['transfer-encoding'];
-	delete response_headers['content-encoding'];
-	delete response_headers['x-content-encoding'];
+	// whitelist headers
+
+	for(let remove of [
+		'x-frame-options',
+		'x-transfer-encoding',
+		'x-content-encoding',
+		'content-encoding',
+		'x-xss-protection',
+		'alt-svc',
+	])delete response_headers[remove];
 	
+	response_headers['content-length'] = send.byteLength;
+	
+	const set_cookies = [].concat(response['set-cookie']);
+
+	for(let set of set_cookies){
+		
+	}
+
+	// too much work rn
+	set_cookies.length = 0;
+
+	response['set-cookie'] = set_cookies.length == 1 ? set_cookies[0] : set_cookies;
+
 	MapHeaderNames(ObjectFromRawHeaders(response.rawHeaders), response_headers);
 	server_response.writeHead(response.statusCode, response_headers);
 	server_response.write(send);
