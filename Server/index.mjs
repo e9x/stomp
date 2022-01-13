@@ -1,11 +1,12 @@
 import { TOMP } from '../TOMP.mjs';
 import { Static } from './Compiler.mjs';
 import { Process } from './Process.mjs';
-import { SendBinary, SendHTML, SendScript } from './Send.mjs';
+import { SendBinary, SendHTML, SendJS, SendScript } from './Send.mjs';
 import cookie from 'cookie';
 
 export class Server {
 	messages = {
+		'generic.exception.badurl': `Invalid URL`,
 		'generic.error.notready': `Endpoint not ready`,
 		'generic.exception.request': `'TOMPServer encountered an exception while handling your request. Contact this server's administrator.`,
 		'error.unknownservice': `Service not found`,
@@ -78,6 +79,9 @@ export class Server {
 				case 'html':
 					return void await SendHTML(this, request, response, field);
 					break;
+				case 'js':
+					return void await SendJS(this, request, response, field);
+					break;
 				default:
 					return void await this.send_json(response, 404, { message: this.messages['error.unknownservice']});
 					break;
@@ -91,5 +95,5 @@ export class Server {
 	}
 };
 
-export * from '../Wrap.mjs';
+export * from '../URLWrap.mjs';
 export * from '../Logger.mjs';

@@ -1,9 +1,11 @@
+import { JSRewriter } from './JSRewriter.mjs';
 import { HTMLRewriter } from './HTMLRewriter.mjs';
-import { WrapInterface, PlainWrap, XORWrap, RC4Wrap } from './Wrap.mjs'
+import { WrapInterface, PlainWrap, XORWrap, RC4Wrap } from './URLWrap.mjs'
 import { Logger } from './Logger.mjs'
 
+const urlwraps = [ PlainWrap, XORWrap, RC4Wrap ];
+
 export class TOMP {
-	static wraps = [ PlainWrap, XORWrap, RC4Wrap ];
 	toJSON(){
 		return {
 			wrap: TOMP.wraps.indexOf(this.wrap),
@@ -11,19 +13,19 @@ export class TOMP {
 		};
 	}
 	prefix = '/tomp/';
-	wrap = new PlainWrap();
+	url = new PlainWrap();
 	loglevel = 0;
 	constructor(config){
 		if(typeof config.prefix == 'string'){
 			this.prefix = config.prefix;
 		}
 
-		if(typeof config.wrap == 'number'){
-			config.wrap = TOMP.wraps[config.wrap];
+		if(typeof config.url == 'number'){
+			config.url = urlwraps[config.url];
 		}
 
-		if(config.wrap instanceof WrapInterface.constructor){
-			this.wrap = config.wrap;
+		if(config.url instanceof WrapInterface.constructor){
+			this.url = config.url;
 		}
 
 		if(typeof config.loglevel == 'number'){
@@ -31,6 +33,7 @@ export class TOMP {
 		}
 
 		this.log = new Logger(this);
+		this.js = new JSRewriter(this);
 		this.html = new HTMLRewriter(this);
 	}
 };
