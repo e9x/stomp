@@ -45,8 +45,9 @@ export class Parse5Context {
 		if(place == -1) return false;
 		this.parent.node.childNodes.splice(place, 0, node);
 		this.attached = false;
+		var created = new Parse5Context(node, this.parent);
 		delete this.parent;
-		return new Parse5Context(node, this.parent);
+		return created;
 	}
 	append(node){
 		this.node.childNodes.push(node);

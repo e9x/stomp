@@ -14,15 +14,18 @@ export class RewriteJS {
 		// code = null;
 
 		for(let ctx of new AcornIterator(ast)){
-			// console.log(ctx);
 			switch(ctx.type){
+				// handle top level const/let in import
 				case'VariableDeclaration':
-
-					// console.log(ctx.parent);
+					
 					if(ctx.parent.node == ast){
-						console.log('top level var', ctx.like);
+						ctx.replace_with({
+							type: 'Identifier',
+							name: 'wip',
+						});
+						
+						console.log('top level var', ctx.node);
 					}
-
 					break;
 			}
 		}

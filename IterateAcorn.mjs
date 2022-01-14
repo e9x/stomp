@@ -39,17 +39,18 @@ export class AcornContext {
 		else if(!this.attached)throw new RangeError('Cannot replace a detached node.');
 		
 		if(this.parent_array){
-			let place = this.parent.node.childNodes.indexOf(this.node);
+			let place = this.parent_object.indexOf(this.node);
 			if(place == -1) return false;
-			this.parent.node.childNodes.splice(place, 0, node);
+			this.parent_object.splice(place, 1, node);
 		}else{
 			delete this.parent.node[this.parent_key];
 		}
 
 		this.attached = false;
-		delete this.parent;
 		
-		return new AcornContext(node, this.parent);
+		var created = new AcornContext(node, this.parent, this.parent_key);
+		delete this.parent;
+		return created;
 	}
 };
 
