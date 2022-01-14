@@ -106,6 +106,8 @@ export async function SendCSS(server, server_request, server_response, field){
 	response.pipe(server_response);
 }
 
+const status_empty = [204,304];
+
 export async function SendJS(server, server_request, server_response, field){
 	const key = server.get_key(server_request);
 	const url = server.tomp.codec.unwrap(decodeURIComponent(field), key);
@@ -113,14 +115,17 @@ export async function SendJS(server, server_request, server_response, field){
 	const request_headers = {...server_request.headers};
 	request_headers.host = url.host;
 	const response = await Fetch(server_request, request_headers, url);
-	const send = Buffer.from(server.tomp.js.wrap((await DecompressResponse(response)).toString(), url, key));
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
+
+	var send;
+	if(!status_empty.includes(response.statusCode)){
+		send = Buffer.from(server.tomp.js.wrap((await DecompressResponse(response)).toString(), url, key));
+		response_headers['content-length'] = send.byteLength;	
+	}
 
 	for(let remove of remove_csp_headers)delete response_headers[remove];
 	for(let remove of remove_general)delete response_headers[remove];
 
-	response_headers['content-length'] = send.byteLength;
-	
 	const set_cookies = [].concat(response['set-cookie']);
 
 	for(let set of set_cookies){
@@ -134,7 +139,7 @@ export async function SendJS(server, server_request, server_response, field){
 
 	MapHeaderNames(ObjectFromRawHeaders(response.rawHeaders), response_headers);
 	server_response.writeHead(response.statusCode, response_headers);
-	server_response.write(send);
+	if(Buffer.isBuffer(send))server_response.write(send);
 	server_response.end();
 }
 
@@ -152,8 +157,13 @@ export async function SendHTML(server, server_request, server_response, field){
 	MapHeaderNames(ObjectFromRawHeaders(server_request.rawHeaders), request_headers);
 
 	const response = await Fetch(server_request, request_headers, url);
-	const send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
+
+	var send;
+	if(!status_empty.includes(response.statusCode)){
+		send = Buffer.from(server.tomp.js.wrap((await DecompressResponse(response)).toString(), url, key));
+		response_headers['content-length'] = send.byteLength;	
+	}
 
 	// server.tomp.log.debug(url, response_headers);
 
@@ -199,6 +209,6 @@ export async function SendHTML(server, server_request, server_response, field){
 
 	MapHeaderNames(ObjectFromRawHeaders(response.rawHeaders), response_headers);
 	server_response.writeHead(response.statusCode, response_headers);
-	server_response.write(send);
+	if(Buffer.isBuffer(send))server_response.write(send);
 	server_response.end();
 }

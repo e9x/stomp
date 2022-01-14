@@ -31,7 +31,7 @@ export class AcornContext {
 		return this.parent_object.indexOf(this.node);
 	}
 	get type(){
-		return this.node.nodeName;
+		return this.node.type;
 	}
 	// returns new context if this node is attached and in parent, false otherwise
 	replace_with(node){

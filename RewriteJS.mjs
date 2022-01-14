@@ -11,12 +11,22 @@ export class RewriteJS {
 	wrap(code, url, key){
 		const ast = parse(code, { ecmaVersion: 2020 });
 		// unload from memory
-		code = null;
+		// code = null;
 
 		for(let ctx of new AcornIterator(ast)){
 			// console.log(ctx);
+			switch(ctx.type){
+				case'VariableDeclaration':
+
+					// console.log(ctx.parent);
+					if(ctx.parent.node == ast){
+						console.log('top level var', ctx.like);
+					}
+
+					break;
+			}
 		}
-		
+
 		code = generate({
 			type: 'WithStatement',
 			object: {
