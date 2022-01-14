@@ -95,5 +95,5 @@ export class Server {
 	}
 };
 
-export * from '../URLWrap.mjs';
+export * from '../Codec.mjs';
 export * from '../Logger.mjs';

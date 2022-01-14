@@ -1,8 +1,8 @@
 import { serialize, parse, parseFragment } from 'parse5';
-import { NodeTraverseIterator } from './NodeTraverseIterator.mjs';
+import { Parse5Iterator } from './IterateParse5.mjs';
 
 const essential_nodes = ['#documentType', '#document', 'html','head','body'];
-const js_mimes = ['text/javascript','application/javascript','module',undefined];
+const js_types = ['text/javascript','application/javascript','module',undefined];
 
 export class HTMLRewriter {
 	constructor(tomp){
@@ -29,27 +29,36 @@ export class HTMLRewriter {
 
 		var inserted_script = false;
 
-		for(let node of new NodeTraverseIterator(ast)) {
+		for(let node of new Parse5Iterator(ast)) {
 			if(node.tagName == 'script'){
 				console.log(node);
+				let src;
+				let type;
+				let text = node?.childNodes[0];
+					
 				if (Array.isArray(node.attrs)) {
-					let src;
-
 					for(let attr of node.attrs) if (attr.name == 'src') {
-						console.log(attr);
 						src = attr;
 						break;
 					}
-					
-					if (src) {
-						const src_resolved = new URL(src.value, url)
-						const redirect = '/tomp/js/' + encodeURIComponent(this.tomp.wrap.wrap(src_resolved.href, key));
-						
-						src.value = redirect;
+
+					for(let attr of node.attrs) if (attr.name == 'type') {
+						type = attr;
+						break;
 					}
 				}
-
-				// handle node.childNodes text
+				
+				if(!type || js_types.includes(type.value))
+				
+				if (src) {
+					const src_resolved = new URL(src.value, url)
+					const redirect = '/tomp/js/' + encodeURIComponent(this.tomp.codec.wrap(src_resolved.href, key));
+					
+					src.value = redirect;
+				}
+				else if(text) {
+					text.value = this.tomp.js.wrap(text.value, url, key);
+				}
 			}
 			
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)

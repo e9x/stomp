@@ -1,7 +1,6 @@
 import { Client } from "./index.mjs";
+import { global_client } from '../JSRewriter.mjs'
 
 const [tompc, key] = client_information;
 
-const client = new Client(tompc, key);
-
-console.log('Test');
+window[global_client] = new Client(tompc, key);

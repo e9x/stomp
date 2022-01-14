@@ -57,7 +57,7 @@ export async function SendScript(server, request, response){
 
 export async function SendBinary(server, server_request, server_response, field){
 	const key = server.get_key(server_request);
-	const url = server.tomp.wrap.unwrap(decodeURIComponent(field), key);
+	const url = server.tomp.codec.unwrap(decodeURIComponent(field), key);
 			
 	const request_headers = {...server_request.headers};
 	request_headers.host = url.host;
@@ -69,7 +69,7 @@ export async function SendBinary(server, server_request, server_response, field)
 
 export async function SendJS(server, server_request, server_response, field){
 	const key = server.get_key(server_request);
-	const url = server.tomp.url.unwrap(decodeURIComponent(field), key);
+	const url = server.tomp.codec.unwrap(decodeURIComponent(field), key);
 			
 	const request_headers = {...server_request.headers};
 	request_headers.host = url.host;
@@ -111,7 +111,7 @@ export async function SendJS(server, server_request, server_response, field){
 
 export async function SendHTML(server, server_request, server_response, field){
 	const key = server.get_key(server_request);
-	const url = server.tomp.wrap.unwrap(decodeURIComponent(field), key);
+	const url = server.tomp.codec.unwrap(decodeURIComponent(field), key);
 	
 	try{
 		new URL(url);
@@ -126,7 +126,7 @@ export async function SendHTML(server, server_request, server_response, field){
 	const send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
 
-	server.tomp.log.debug(url, response_headers);
+	// server.tomp.log.debug(url, response_headers);
 
 	// whitelist headers
 

@@ -1,31 +1,31 @@
 import { JSRewriter } from './JSRewriter.mjs';
 import { HTMLRewriter } from './HTMLRewriter.mjs';
-import { WrapInterface, PlainWrap, XORWrap, RC4Wrap } from './URLWrap.mjs'
 import { Logger } from './Logger.mjs'
+import { CodecInterface, PlainCodec, XORCodec, RC4Codec } from './Codec.mjs'
 
-const urlwraps = [ PlainWrap, XORWrap, RC4Wrap ];
+const codecs = [ PlainCodec, XORCodec, RC4Codec ];
 
 export class TOMP {
 	toJSON(){
 		return {
-			wrap: TOMP.wraps.indexOf(this.wrap),
+			codec: codecs.indexOf(this.wrap),
 			prefix: this.prefix,
 		};
 	}
 	prefix = '/tomp/';
-	url = new PlainWrap();
+	codec = PlainCodec;
 	loglevel = 0;
 	constructor(config){
 		if(typeof config.prefix == 'string'){
 			this.prefix = config.prefix;
 		}
 
-		if(typeof config.url == 'number'){
-			config.url = urlwraps[config.url];
+		if(typeof config.codec == 'number'){
+			config.codec = codecs[config.codec];
 		}
 
-		if(config.url instanceof WrapInterface.constructor){
-			this.url = config.url;
+		if(config.codec instanceof CodecInterface.constructor){
+			this.codec = config.codec;
 		}
 
 		if(typeof config.loglevel == 'number'){

@@ -1,4 +1,4 @@
-export class NodeTraverseIterator {
+export class AcornIterator {
 	constructor(ast){
 		this.stack = [ast];
 	}
@@ -7,8 +7,10 @@ export class NodeTraverseIterator {
 		
 		const node = this.stack.pop();
 
-		if(Array.isArray(node.childNodes)) this.stack.push(...[...node.childNodes].reverse());
-
+		for(let [prop,value] of Object.entries(node).reverse()){
+			if(typeof value?.type == 'string')this.stack.push(value);
+		}
+		
 		return { value: node, done: false };
 	}
 	[Symbol.iterator](){

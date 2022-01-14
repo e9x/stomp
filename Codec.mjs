@@ -3,7 +3,7 @@
 // eg for salts, seeds
 // per client basis
 
-export class WrapInterface {
+export class CodecInterface {
 	static generate_key(){
 		throw new Error('generate_key() not implemented');
 	}
@@ -15,7 +15,7 @@ export class WrapInterface {
 	}
 };
 
-export class PlainWrap extends WrapInterface {
+export class PlainCodec extends CodecInterface {
 	static generate_key(){
 		return String(0);
 	}
@@ -30,7 +30,7 @@ export class PlainWrap extends WrapInterface {
 };
 
 // nature of xor allows wrap to be used both ways
-export class XORWrap extends WrapInterface {
+export class XORCodec extends CodecInterface {
 	static generate_key(){
 		var xor = ~~(Math.random() * 0xFF), frequency = ~~(Math.random() * 0xF);
 
@@ -60,6 +60,6 @@ export class XORWrap extends WrapInterface {
 };
 
 // todo...
-export class RC4Wrap extends WrapInterface {
+export class RC4Codec extends CodecInterface {
 	
 };

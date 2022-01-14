@@ -5,6 +5,8 @@ import https from 'https';
 // const http_agent = http.Agent();
 // const https_agent = https.Agent();
 
+const post_methods = ['PATCH','POST','PUT'];
+
 export async function Fetch(server_request, request_headers, input){
 	const url = new URL(input);
 
@@ -25,7 +27,7 @@ export async function Fetch(server_request, request_headers, input){
 	else if(url.protocol == 'http:')var response_promise =  new Promise((resolve, reject) => request_stream = http.request(options, resolve).on('error', reject));
 	else throw new RangeError(`Unsupported protocol: '${url.protocol}'`);
 
-	if(options.method == 'POST'){
+	if(post_methods.includes(options.method)){
 		request_stream.pipe(server_request);
 		// const body = await ReadStream(request_stream);
 	}
