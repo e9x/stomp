@@ -64,9 +64,7 @@ export class AcornIterator {
 		while(context = this.stack.pop(), context.node[delete_from_stack]);
 		
 		const entries = [];
-
-		console.log(context.node);
-
+		
 		for(let [key, value] of Object.entries(context.node)){
 			if(typeof value?.type == 'string')entries.push([key,value]);
 			else if(Array.isArray(value)){

@@ -14,11 +14,29 @@ export class RewriteJS {
 		code = null;
 
 		for(let ctx of new AcornIterator(ast)){
-			console.log(ctx);
+			// console.log(ctx);
 		}
 		
-		code = generate(ast);
-		return `with(${global_client}.with){${code}}`;
+		code = generate({
+			type: 'WithStatement',
+			object: {
+				type: 'MemberExpression',
+				object: {
+					type: 'Identifier',
+					name: global_client,
+				},
+				property: {
+					type: 'Identifier',
+					name: 'with',	
+				},
+				computed: false,
+			},
+			body: {
+				type: 'BlockStatement',
+				body: ast.body,
+			},
+		});
+		return code;
 	}
 	unwrap(code, url, key){
 		code = Buffer.from(code);
