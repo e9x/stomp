@@ -1,5 +1,5 @@
 import { Client } from "./index.mjs";
-import { global_client } from '../JSRewriter.mjs'
+import { global_client } from '../RewriteJS.mjs'
 
 const [tompc, key] = client_information;
 

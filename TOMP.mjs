@@ -1,6 +1,6 @@
-import { JSRewriter } from './JSRewriter.mjs';
-import { CSSRewriter } from './CSSRewriter.mjs';
-import { HTMLRewriter } from './HTMLRewriter.mjs';
+import { RewriteJS } from './RewriteJS.mjs';
+import { RewriteCSS } from './RewriteCSS.mjs';
+import { RewriteHTML } from './RewriteHTML.mjs';
 import { Logger } from './Logger.mjs'
 import { CodecInterface, PlainCodec, XORCodec, RC4Codec } from './Codec.mjs'
 
@@ -34,8 +34,8 @@ export class TOMP {
 		}
 
 		this.log = new Logger(this);
-		this.js = new JSRewriter(this);
-		this.css = new CSSRewriter(this);
-		this.html = new HTMLRewriter(this);
+		this.js = new RewriteJS(this);
+		this.css = new RewriteCSS(this);
+		this.html = new RewriteHTML(this);
 	}
 };

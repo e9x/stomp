@@ -4,7 +4,7 @@ import {AcornIterator} from './IterateAcorn.mjs';
 
 export const global_client = 'tompc$';
 
-export class JSRewriter {
+export class RewriteJS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}

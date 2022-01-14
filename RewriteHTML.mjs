@@ -4,7 +4,7 @@ import { Parse5Iterator } from './IterateParse5.mjs';
 const essential_nodes = ['#documentType','#document','#text','html','head','body'];
 const js_types = ['text/javascript','application/javascript','module',undefined];
 
-export class HTMLRewriter {
+export class RewriteHTML {
 	constructor(tomp){
 		this.tomp = tomp;
 	}

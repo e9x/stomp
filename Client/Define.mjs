@@ -1,4 +1,4 @@
-import { global_client } from "../JSRewriter.mjs";
+import { global_client } from "../RewriteJS.mjs";
 import { global } from '../Global.mjs';
 
 const global_eval = global.eval.bind(global);

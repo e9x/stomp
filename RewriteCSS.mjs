@@ -1,6 +1,6 @@
 // import that one css lib
 
-export class CSSRewriter {
+export class RewriteCSS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
