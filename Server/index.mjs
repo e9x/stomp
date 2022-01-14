@@ -1,7 +1,7 @@
 import { TOMP } from '../TOMP.mjs';
 import { Static } from './Compiler.mjs';
 import { Process } from './Process.mjs';
-import { SendBinary, SendHTML, SendJS, SendScript } from './Send.mjs';
+import { SendBinary, SendHTML, SendJS, SendCSS, SendScript } from './Send.mjs';
 import cookie from 'cookie';
 
 export class Server {
@@ -81,6 +81,9 @@ export class Server {
 					break;
 				case 'js':
 					return void await SendJS(this, request, response, field);
+					break;
+				case 'css':
+					return void await SendCSS(this, request, response, field);
 					break;
 				default:
 					return void await this.send_json(response, 404, { message: this.messages['error.unknownservice']});

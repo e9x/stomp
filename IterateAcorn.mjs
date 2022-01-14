@@ -63,16 +63,19 @@ export class AcornIterator {
 		var context;
 		while(context = this.stack.pop(), context.node[delete_from_stack]);
 		
-		if(Array.isArray(context.node.childNodes)) {
-			// insert new contexts in reverse order
-			// not cloning arrays then reversing in the interest of optimization
-			let start = this.stack.length - 1,
-				length = context.node.childNodes.length;
-			
-			for(let [key, value] of Object.entries(context.node)){
-				if(typeof value?.type == 'string')
-				this.stack[start + length--] = new AcornContext(node, context, key);
-			}
+		const entries = [];
+
+		console.log(context.node);
+
+		for(let [key, value] of Object.entries(context.node)){
+			if(typeof value?.type == 'string')entries.push([key,value]);
+		}
+
+		let start = this.stack.length - 1,
+			length = entries.length;
+		
+		for(let [key, node] of entries){
+			this.stack[start + length--] = new AcornContext(node, context, key);
 		}
 
 		return { value: context, done: false };

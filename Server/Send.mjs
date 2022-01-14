@@ -5,16 +5,34 @@ import { DecompressResponse } from './HTTPUtil.mjs'
 import { MapHeaderNames, ObjectFromRawHeaders } from './HeaderUtil.mjs'
 import { CompilationPath } from './Compiler.mjs';
 
-const bad_html_headers = [
-	'x-frame-options',
+const remove_general = [
+	'alt-svc',
 	'x-transfer-encoding',
 	'x-content-encoding',
 	'content-encoding',
 	'x-xss-protection',
-	'alt-svc',
 ];
 
-// todo: cache
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers#security
+const remove_csp_headers = [
+	'cross-origin-embedder-policy',
+	'cross-origin-opener-policy',
+	'cross-origin-resource-policy',
+	'content-security-policy',
+	'content-security-policy-report-only',
+	'expect-ct',
+	'feature-policy',
+	'origin-isolation',
+	'strict-transport-security',
+	'upgrade-insecure-requests',
+	'x-content-type-options',
+	'x-download-options',
+	'x-frame-options',
+	'x-permitted-cross-domain-policies',
+	'x-powered-by',
+	'x-xss-protection',
+];
+
 export async function SendScript(server, request, response){
 	try{
 		const handle = await fs.promises.open(CompilationPath, 'r');
@@ -62,7 +80,28 @@ export async function SendBinary(server, server_request, server_response, field)
 	const request_headers = {...server_request.headers};
 	request_headers.host = url.host;
 	const response = await Fetch(server_request, request_headers, url);
-	
+	const response_headers = Object.setPrototypeOf({...response.headers}, null);
+
+	for(let remove of remove_csp_headers)delete response_headers[remove];
+	for(let remove of remove_general)delete response_headers[remove];
+
+	server_response.writeHead(response.statusCode, response.headers);
+	response.pipe(server_response);
+}
+
+// placeholder
+export async function SendCSS(server, server_request, server_response, field){
+	const key = server.get_key(server_request);
+	const url = server.tomp.codec.unwrap(decodeURIComponent(field), key);
+			
+	const request_headers = {...server_request.headers};
+	request_headers.host = url.host;
+	const response = await Fetch(server_request, request_headers, url);
+	const response_headers = Object.setPrototypeOf({...response.headers}, null);
+
+	for(let remove of remove_csp_headers)delete response_headers[remove];
+	for(let remove of remove_general)delete response_headers[remove];
+
 	server_response.writeHead(response.statusCode, response.headers);
 	response.pipe(server_response);
 }
@@ -77,19 +116,9 @@ export async function SendJS(server, server_request, server_response, field){
 	const send = Buffer.from(server.tomp.js.wrap((await DecompressResponse(response)).toString(), url, key));
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
 
-	server.tomp.log.debug(url, response_headers);
+	for(let remove of remove_csp_headers)delete response_headers[remove];
+	for(let remove of remove_general)delete response_headers[remove];
 
-	// whitelist headers
-
-	for(let remove of [
-		'x-frame-options',
-		'x-transfer-encoding',
-		'x-content-encoding',
-		'content-encoding',
-		'x-xss-protection',
-		'alt-svc',
-	])delete response_headers[remove];
-	
 	response_headers['content-length'] = send.byteLength;
 	
 	const set_cookies = [].concat(response['set-cookie']);
@@ -128,9 +157,10 @@ export async function SendHTML(server, server_request, server_response, field){
 
 	// server.tomp.log.debug(url, response_headers);
 
-	// whitelist headers
+	// whitelist headers soon?
 
-	for(let remove of bad_html_headers)delete response_headers[remove];
+	for(let remove of remove_csp_headers)delete response_headers[remove];
+	for(let remove of remove_general)delete response_headers[remove];
 	
 	response_headers['content-length'] = send.byteLength;
 	

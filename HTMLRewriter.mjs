@@ -27,8 +27,7 @@ export class HTMLRewriter {
 		var inserted_script = false;
 
 		for(let ctx of new Parse5Iterator(ast)) {
-			if(ctx.type == 'script'){
-				console.log(ctx.node);
+			if(ctx.type == 'script'){;
 				let src;
 				let type;
 				let text = ctx.node?.childNodes[0];
@@ -45,23 +44,21 @@ export class HTMLRewriter {
 					}
 				}
 				
-				if(!type || js_types.includes(type.value))
-				
-				if (src) {
-					const src_resolved = new URL(src.value, url)
-					const redirect = '/tomp/js/' + encodeURIComponent(this.tomp.codec.wrap(src_resolved.href, key));
-					
-					src.value = redirect;
-				}
-				else if(text) {
-					text.value = this.tomp.js.wrap(text.value, url, key);
+				if(!type || js_types.includes(type.value)) {
+					if (src) {
+						const src_resolved = new URL(src.value, url)
+						src.value = this.tomp.js.serve(src_resolved.href);
+					}
+					else if(text) {
+						text.value = this.tomp.js.wrap(text.value, url, key);
+					}
 				}
 			}
 			
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)
 			// on the first non-essential node (not html,head,or body), insert the client script before it
 			if(!inserted_script && !essential_nodes.includes(ctx.type)){
-				this.tomp.log.info('inserting', ctx.type);
+				this.tomp.log.debug('inserting head injection into', ctx.type);
 				inserted_script = ctx.insert_before(this.head);
 			}
 		}
