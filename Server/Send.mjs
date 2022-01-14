@@ -116,7 +116,7 @@ export async function SendHTML(server, server_request, server_response, field){
 	try{
 		new URL(url);
 	}catch(err){
-		return server.send_json(response, 400, { message: server.messages['generic.exception.badurl'] });
+		return server.send_json(server_response, 400, { message: server.messages['generic.exception.badurl'] });
 	}
 
 	const request_headers = {...server_request.headers};
@@ -143,7 +143,29 @@ export async function SendHTML(server, server_request, server_response, field){
 	// too much work rn
 	set_cookies.length = 0;
 
-	response['set-cookie'] = set_cookies.length == 1 ? set_cookies[0] : set_cookies;
+	response_headers['set-cookie'] = set_cookies.length == 1 ? set_cookies[0] : set_cookies;
+
+	const will_redirect = response.statusCode >= 300 && response.statusCode < 400 || response.statusCode == 201;
+
+	// CONTENT-LOCATION WHAT
+	if(will_redirect && response_headers['location']){
+		let location = response_headers['location'];
+		delete response_headers['location'];
+		// if new URL() fails, no redirect
+		
+		let evaluated;
+
+		try{
+			evaluated = new URL(location, url);
+		}catch(err){
+			console.error('failure', err);
+		}
+
+		if(evaluated){
+			console.log(evaluated.href);
+			response_headers['location'] = server.tomp.html.serve(evaluated.href, key);
+		}
+	}
 
 	MapHeaderNames(ObjectFromRawHeaders(response.rawHeaders), response_headers);
 	server_response.writeHead(response.statusCode, response_headers);

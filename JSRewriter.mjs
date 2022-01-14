@@ -13,8 +13,8 @@ export class JSRewriter {
 		// unload from memory
 		code = null;
 
-		for(let node of new AcornIterator(ast)){
-			console.log(node);
+		for(let ctx of new AcornIterator(ast)){
+			console.log(ctx);
 		}
 		
 		code = generate(ast);
@@ -23,6 +23,9 @@ export class JSRewriter {
 	unwrap(code, url, key){
 		code = Buffer.from(code);
 		return code.slice(12 + global_client.length, -1);
+	}
+	serve(url, key){
+		return `${this.tomp.prefix}js/${encodeURIComponent(this.tomp.codec.wrap(url, key))}`
 	}
 };
 

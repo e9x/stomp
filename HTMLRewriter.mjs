@@ -1,7 +1,7 @@
 import { serialize, parse, parseFragment } from 'parse5';
 import { Parse5Iterator } from './IterateParse5.mjs';
 
-const essential_nodes = ['#documentType', '#document', 'html','head','body'];
+const essential_nodes = ['#documentType','#document','#text','html','head','body'];
 const js_types = ['text/javascript','application/javascript','module',undefined];
 
 export class HTMLRewriter {
@@ -24,25 +24,22 @@ export class HTMLRewriter {
 	wrap(html, url, key){	
 		const ast = parse(html);
 
-		var last_parent = ast;
-		// last_parent.childNodes must be accessible
-
 		var inserted_script = false;
 
-		for(let node of new Parse5Iterator(ast)) {
-			if(node.tagName == 'script'){
-				console.log(node);
+		for(let ctx of new Parse5Iterator(ast)) {
+			if(ctx.type == 'script'){
+				console.log(ctx.node);
 				let src;
 				let type;
-				let text = node?.childNodes[0];
+				let text = ctx.node?.childNodes[0];
 					
-				if (Array.isArray(node.attrs)) {
-					for(let attr of node.attrs) if (attr.name == 'src') {
+				if (Array.isArray(ctx.node.attrs)) {
+					for(let attr of ctx.node.attrs) if (attr.name == 'src') {
 						src = attr;
 						break;
 					}
 
-					for(let attr of node.attrs) if (attr.name == 'type') {
+					for(let attr of ctx.node.attrs) if (attr.name == 'type') {
 						type = attr;
 						break;
 					}
@@ -63,18 +60,10 @@ export class HTMLRewriter {
 			
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)
 			// on the first non-essential node (not html,head,or body), insert the client script before it
-			if(!inserted_script && !essential_nodes.includes(node.nodeName)){
-				let place = last_parent.childNodes.indexOf(node);
-
-				if(place != -1){
-					this.tomp.log.info('inserting', place, node.nodeName);
-					last_parent.childNodes.splice(place, 0, this.head);
-					inserted_script = true;
-				}
-				else console.log('place was -1', node, last_parent);
+			if(!inserted_script && !essential_nodes.includes(ctx.type)){
+				this.tomp.log.info('inserting', ctx.type);
+				inserted_script = ctx.insert_before(this.head);
 			}
-
-			last_parent = node;
 		}
 
 		return serialize(ast);
@@ -85,5 +74,8 @@ export class HTMLRewriter {
 	unwrap(html, url, key){
 		
 		return html;
+	}
+	serve(url, key){
+		return `${this.tomp.prefix}html/${encodeURIComponent(this.tomp.codec.wrap(url, key))}`
 	}
 };
