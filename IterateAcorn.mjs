@@ -69,6 +69,11 @@ export class AcornIterator {
 
 		for(let [key, value] of Object.entries(context.node)){
 			if(typeof value?.type == 'string')entries.push([key,value]);
+			else if(Array.isArray(value)){
+				for(let sv of value){
+					entries.push([key,sv]);
+				}
+			}
 		}
 
 		let start = this.stack.length - 1,
