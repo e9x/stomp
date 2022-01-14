@@ -4,12 +4,21 @@ import {AcornIterator} from './IterateAcorn.mjs';
 
 export const global_client = 'tompc$';
 
+const top_level_variables = ['const','let'];
+
 export class RewriteJS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
 	wrap(code, url, key){
-		const ast = parse(code, { ecmaVersion: 2020 });
+		try{
+			var ast = parse(code, { ecmaVersion: 2020 });
+		}catch(err){
+			if(err instanceof SyntaxError){
+				return `throw new SyntaxError(${JSON.stringify(err.message)})`;
+			}else throw err;
+		}
+
 		// unload from memory
 		// code = null;
 
@@ -18,19 +27,51 @@ export class RewriteJS {
 				// handle top level const/let in import
 				case'VariableDeclaration':
 					
-					if(ctx.parent.node == ast){
+					if(ctx.parent.node == ast && top_level_variables.includes(ctx.node.like)){
+						let expressions = [];
+						for(let declaration of ctx.node.declarations){
+							expressions.push({
+								type: 'CallExpression',
+								callee: {
+									type: 'MemberExpression',
+									object: {
+										type: 'MemberExpression',
+										object: {
+											type: 'Identifier',
+											name: global_client,
+										},
+										property: {
+											name: 'Identifier',
+											name: 'define',
+										},
+									},
+									property: {
+										type: 'Identifier',
+										name: ctx.node.like,
+									},
+								},
+								arguments: [
+									{
+										type: 'Literal',
+										value: declaration.id.name,
+									},
+									declaration.init,
+								],
+							});
+						}
 						ctx.replace_with({
-							type: 'Identifier',
-							name: 'wip',
+							type: 'ExpressionStatement',
+							expression: {
+								type: 'SequenceExpression',
+								expressions,
+							},
 						});
-						
-						console.log('top level var', ctx.node);
 					}
 					break;
 			}
 		}
-
-		code = generate({
+		
+		ast = {
 			type: 'WithStatement',
 			object: {
 				type: 'MemberExpression',
@@ -48,7 +89,9 @@ export class RewriteJS {
 				type: 'BlockStatement',
 				body: ast.body,
 			},
-		});
+		};
+		
+		code = generate(ast);
 		return code;
 	}
 	unwrap(code, url, key){

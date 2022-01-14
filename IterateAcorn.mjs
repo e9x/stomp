@@ -33,24 +33,28 @@ export class AcornContext {
 	get type(){
 		return this.node.type;
 	}
-	// returns new context if this node is attached and in parent, false otherwise
-	replace_with(node){
+	// returns true if there is 1 node to replace with and if this node is attached and in parent, false otherwise
+	replace_with(...node){
 		if(this.root)throw new RangeError('Cannot replace the root.');
 		else if(!this.attached)throw new RangeError('Cannot replace a detached node.');
 		
 		if(this.parent_array){
 			let place = this.parent_object.indexOf(this.node);
 			if(place == -1) return false;
-			this.parent_object.splice(place, 1, node);
+			this.parent_object.splice(place, 1, ...node);
 		}else{
 			delete this.parent.node[this.parent_key];
 		}
 
 		this.attached = false;
 		
-		var created = new AcornContext(node, this.parent, this.parent_key);
-		delete this.parent;
-		return created;
+		if(node.length == 1){
+			let created = new AcornContext(node, this.parent, this.parent_key);
+			delete this.parent;
+			return created;
+		}else{
+			return true;
+		}
 	}
 };
 

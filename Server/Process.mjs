@@ -19,19 +19,13 @@ export async function Process(server, request, response){
 	
 	const headers = {};
 
-	const cookies = typeof request.headers.cookie == 'string' ? cookie.parse(request.headers.cookie) : {};
-
 	// override tomp$key for security purposes
 	
 	const key = server.tomp.codec.generate_key();
 
-	cookies.tomp$key = key;
-
-	headers['set-cookie'] = cookie.serialize('tomp$key', key, {
-		maxAge: 60 * 60 * 2, // 2 hours
-	});
+	headers['set-cookie'] = server.get_setcookie(key);
 	
-	const redirect = '/tomp/html/' + encodeURIComponent(server.tomp.codec.wrap(body.input, cookies.tomp$key));
+	const redirect = '/tomp/html/' + encodeURIComponent(server.tomp.codec.wrap(body.input, key));
 	const send = Buffer.from(`<!DOCTYPE HTML><html><head><meta charset='utf-8' /><meta http-equiv="refresh" content=${JSON.stringify('0;' + redirect)} /></head><body></body></html>`);
 	headers['content-length'] = send.byteLength;
 	response.writeHead(200, headers);

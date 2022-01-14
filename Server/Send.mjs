@@ -73,10 +73,31 @@ export async function SendScript(server, request, response){
 	response.end();
 }
 
-export async function SendBinary(server, server_request, server_response, field){
+// returns const [gderr,url,key]
+function get_data(server, server_request, server_response, field){
 	const key = server.get_key(server_request);
+	
+	if(!key){
+		server.send_json(server_response, 400, { message: server.messages['error.nokey'] });
+		return [true];
+	}
+
 	const url = server.tomp.codec.unwrap(decodeURIComponent(field), key);
-			
+	
+	try{
+		new URL(url);
+	}catch(err){
+		server.send_json(server_response, 400, { message: server.messages['generic.error.badurl'] });
+		return [true];
+	}
+
+	return [false,url,key];
+}
+
+export async function SendBinary(server, server_request, server_response, field){
+	const [gderr,url,key] = get_data(server, server_request, server_response, field);
+	if(gderr)return;
+	
 	const request_headers = {...server_request.headers};
 	request_headers.host = url.host;
 	const response = await Fetch(server_request, request_headers, url);
@@ -85,15 +106,29 @@ export async function SendBinary(server, server_request, server_response, field)
 	for(let remove of remove_csp_headers)delete response_headers[remove];
 	for(let remove of remove_general)delete response_headers[remove];
 
+	const set_cookies = [].concat(response['set-cookie']);
+
+	for(let set of set_cookies){
+		
+	}
+
+	// too much work rn
+	set_cookies.length = 0;
+
+	response_headers['set-cookie'] = [
+		server.get_setcookie(key),
+		...set_cookies
+	];
+	
 	server_response.writeHead(response.statusCode, response.headers);
 	response.pipe(server_response);
 }
 
 // placeholder
 export async function SendCSS(server, server_request, server_response, field){
-	const key = server.get_key(server_request);
-	const url = server.tomp.codec.unwrap(decodeURIComponent(field), key);
-			
+	const [gderr,url,key] = get_data(server, server_request, server_response, field);
+	if(gderr)return;
+	
 	const request_headers = {...server_request.headers};
 	request_headers.host = url.host;
 	const response = await Fetch(server_request, request_headers, url);
@@ -102,6 +137,20 @@ export async function SendCSS(server, server_request, server_response, field){
 	for(let remove of remove_csp_headers)delete response_headers[remove];
 	for(let remove of remove_general)delete response_headers[remove];
 
+	const set_cookies = [].concat(response['set-cookie']);
+
+	for(let set of set_cookies){
+		
+	}
+
+	// too much work rn
+	set_cookies.length = 0;
+
+	response_headers['set-cookie'] = [
+		server.get_setcookie(key),
+		...set_cookies
+	];
+	
 	server_response.writeHead(response.statusCode, response.headers);
 	response.pipe(server_response);
 }
@@ -109,9 +158,9 @@ export async function SendCSS(server, server_request, server_response, field){
 const status_empty = [204,304];
 
 export async function SendJS(server, server_request, server_response, field){
-	const key = server.get_key(server_request);
-	const url = server.tomp.codec.unwrap(decodeURIComponent(field), key);
-			
+	const [gderr,url,key] = get_data(server, server_request, server_response, field);
+	if(gderr)return;
+	
 	const request_headers = {...server_request.headers};
 	request_headers.host = url.host;
 	const response = await Fetch(server_request, request_headers, url);
@@ -135,8 +184,11 @@ export async function SendJS(server, server_request, server_response, field){
 	// too much work rn
 	set_cookies.length = 0;
 
-	response['set-cookie'] = set_cookies.length == 1 ? set_cookies[0] : set_cookies;
-
+	response_headers['set-cookie'] = [
+		server.get_setcookie(key),
+		...set_cookies
+	];
+	
 	MapHeaderNames(ObjectFromRawHeaders(response.rawHeaders), response_headers);
 	server_response.writeHead(response.statusCode, response_headers);
 	if(Buffer.isBuffer(send))server_response.write(send);
@@ -144,15 +196,9 @@ export async function SendJS(server, server_request, server_response, field){
 }
 
 export async function SendHTML(server, server_request, server_response, field){
-	const key = server.get_key(server_request);
-	const url = server.tomp.codec.unwrap(decodeURIComponent(field), key);
+	const [gderr,url,key] = get_data(server, server_request, server_response, field);
+	if(gderr)return;
 	
-	try{
-		new URL(url);
-	}catch(err){
-		return server.send_json(server_response, 400, { message: server.messages['generic.exception.badurl'] });
-	}
-
 	const request_headers = {...server_request.headers};
 	MapHeaderNames(ObjectFromRawHeaders(server_request.rawHeaders), request_headers);
 
@@ -161,7 +207,7 @@ export async function SendHTML(server, server_request, server_response, field){
 
 	var send;
 	if(!status_empty.includes(response.statusCode)){
-		send = Buffer.from(server.tomp.js.wrap((await DecompressResponse(response)).toString(), url, key));
+		send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
 		response_headers['content-length'] = send.byteLength;	
 	}
 
@@ -172,8 +218,6 @@ export async function SendHTML(server, server_request, server_response, field){
 	for(let remove of remove_csp_headers)delete response_headers[remove];
 	for(let remove of remove_general)delete response_headers[remove];
 	
-	response_headers['content-length'] = send.byteLength;
-	
 	const set_cookies = [].concat(response['set-cookie']);
 
 	for(let set of set_cookies){
@@ -183,8 +227,11 @@ export async function SendHTML(server, server_request, server_response, field){
 	// too much work rn
 	set_cookies.length = 0;
 
-	response_headers['set-cookie'] = set_cookies.length == 1 ? set_cookies[0] : set_cookies;
-
+	response_headers['set-cookie'] = [
+		server.get_setcookie(key),
+		...set_cookies
+	];
+	
 	const will_redirect = response.statusCode >= 300 && response.statusCode < 400 || response.statusCode == 201;
 
 	// CONTENT-LOCATION WHAT
@@ -202,7 +249,6 @@ export async function SendHTML(server, server_request, server_response, field){
 		}
 
 		if(evaluated){
-			console.log(evaluated.href);
 			response_headers['location'] = server.tomp.html.serve(evaluated.href, key);
 		}
 	}

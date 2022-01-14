@@ -6,7 +6,8 @@ import cookie from 'cookie';
 
 export class Server {
 	messages = {
-		'generic.exception.badurl': `Invalid URL`,
+		'generic.error.badurl': `Invalid URL`,
+		'generic.error.nokey': `You are missing a session key. Please navigate back to the URL form and re-enter your website.`,
 		'generic.error.notready': `Endpoint not ready`,
 		'generic.exception.request': `'TOMPServer encountered an exception while handling your request. Contact this server's administrator.`,
 		'error.unknownservice': `Service not found`,
@@ -22,6 +23,12 @@ export class Server {
 	get_key(request){
 		const cookies = typeof request.headers.cookie == 'string' ? cookie.parse(request.headers.cookie) : {};
 		return cookies.tomp$key;
+	}
+	get_setcookie(key){
+		return cookie.serialize('tomp$key', key, {
+			maxAge: 60 * 60 * 2, // 2 hours
+			path: this.tomp.prefix,
+		});
 	}
 	send_json(response, status, json){
 		const send = Buffer.from(JSON.stringify(json));
