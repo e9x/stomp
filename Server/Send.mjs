@@ -6,6 +6,11 @@ import { MapHeaderNames, ObjectFromRawHeaders } from './HeaderUtil.mjs'
 import { CompilationPath } from './Compiler.mjs';
 import { get_mime } from '../RewriteHTML.mjs';
 
+const non_html_documents = [
+	'application/pdf',
+	'text/plain',
+];
+
 const remove_general = [
 	'alt-svc',
 	'x-transfer-encoding',
@@ -192,7 +197,7 @@ export async function SendHTML(server, server_request, server_response, field){
 
 	var send;
 	if(!status_empty.includes(response.statusCode)){
-		if(get_mime(response_headers['content-type']) == 'application/pdf'){
+		if(non_html_documents.includes(get_mime(response_headers['content-type']))){
 			send = Buffer.from(await DecompressResponse(response));
 		}else{
 			send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
