@@ -7,13 +7,17 @@ import { CompilationPath } from './Compiler.mjs';
 import { html_types, get_mime } from '../RewriteHTML.mjs';
 import { Stream } from 'stream';
 
-const remove_general = [
+
+const remove_general_headers = [
 	'alt-svc',
-	'x-transfer-encoding',
 	'x-xss-protection',
 ];
 
-const remove_encoding = [
+const remove_html_headers = [
+	'x-transfer-encoding',
+];
+
+const remove_encoding_headers = [
 	'x-content-encoding',
 	'content-encoding',
 ];
@@ -78,6 +82,54 @@ export async function SendScript(server, request, response){
 	response.end();
 }
 
+function handle_common(server, server_request, server_response, url, key, response, response_headers){
+	
+	// server.tomp.log.debug(url, response_headers);
+
+	// whitelist headers soon?
+
+	for(let remove of remove_csp_headers)delete response_headers[remove];
+	for(let remove of remove_general_headers)delete response_headers[remove];
+	
+	const set_cookies = [].concat(response['set-cookie']);
+
+	for(let set of set_cookies){
+		
+	}
+
+	// too much work rn
+	set_cookies.length = 0;
+
+	response_headers['set-cookie'] = [
+		server.get_setcookie(key),
+		...set_cookies
+	];
+	
+	// todo: ~~wipe cache when the key changes?~~ not needed, key changes and url does too
+	// cache builds up
+	
+	const will_redirect = response.statusCode >= 300 && response.statusCode < 400 || response.statusCode == 201;
+
+	// CONTENT-LOCATION WHAT
+	if(will_redirect && 'location' in response_headers){
+		let location = response_headers['location'];
+		delete response_headers['location'];
+		// if new URL() fails, no redirect
+		
+		let evaluated;
+
+		try{
+			evaluated = new URL(location, url);
+		}catch(err){
+			console.error('failure', err);
+		}
+
+		if(evaluated){
+			response_headers['location'] = server.tomp.html.serve(evaluated.href, url, key);
+		}
+	}
+}
+
 function get_data(server, server_request, server_response, field){
 	const key = server.get_key(server_request);
 	
@@ -111,24 +163,9 @@ export async function SendBinary(server, server_request, server_response, field)
 	const response = await Fetch(server_request, request_headers, url);
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
 
-	for(let remove of remove_csp_headers)delete response_headers[remove];
-	for(let remove of remove_general)delete response_headers[remove];
-
-	const set_cookies = [].concat(response['set-cookie']);
-
-	for(let set of set_cookies){
-		
-	}
-
-	// too much work rn
-	set_cookies.length = 0;
-
-	response_headers['set-cookie'] = [
-		server.get_setcookie(key),
-		...set_cookies
-	];
+	handle_common(server, server_request, server_response, url, key, response, response_headers);
 	
-	server_response.writeHead(response.statusCode, response.headers);
+	server_response.writeHead(response.statusCode, response_headers);
 	response.pipe(server_response);
 }
 
@@ -149,23 +186,7 @@ async function SendRewrittenScript(rewriter, server, server_request, server_resp
 		response_headers['content-length'] = send.byteLength;	
 	}
 
-	for(let remove of remove_csp_headers)delete response_headers[remove];
-	for(let remove of remove_general)delete response_headers[remove];
-	for(let remove of remove_encoding)delete response_headers[remove];
-
-	const set_cookies = [].concat(response['set-cookie']);
-
-	for(let set of set_cookies){
-		
-	}
-
-	// too much work rn
-	set_cookies.length = 0;
-
-	response_headers['set-cookie'] = [
-		server.get_setcookie(key),
-		...set_cookies
-	];
+	handle_common(server, server_request, server_response, url, key, response, response_headers);
 	
 	MapHeaderNames(ObjectFromRawHeaders(response.rawHeaders), response_headers);
 	server_response.writeHead(response.statusCode, response_headers);
@@ -196,57 +217,14 @@ export async function SendHTML(server, server_request, server_response, field){
 		if(html_types.includes(get_mime(response_headers['content-type'] || ''))){
 			send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
 			response_headers['content-length'] = send.byteLength;
-			for(let remove of remove_encoding)delete response_headers[remove];
+			for(let remove of remove_general_headers)delete response_headers[remove];
 		}else{
 			send = response;
 		}
 	}
-
-	// server.tomp.log.debug(url, response_headers);
-
-	// whitelist headers soon?
-
-	for(let remove of remove_csp_headers)delete response_headers[remove];
-	for(let remove of remove_general)delete response_headers[remove];
 	
-	const set_cookies = [].concat(response['set-cookie']);
-
-	for(let set of set_cookies){
-		
-	}
-
-	// too much work rn
-	set_cookies.length = 0;
-
-	response_headers['set-cookie'] = [
-		server.get_setcookie(key),
-		...set_cookies
-	];
-	
-	const will_redirect = response.statusCode >= 300 && response.statusCode < 400 || response.statusCode == 201;
-
-	// todo: ~~wipe cache when the key changes?~~ not needed, key changes and url does too
-	// cache builds up
-
-	
-	// CONTENT-LOCATION WHAT
-	if(will_redirect && 'location' in response_headers){
-		let location = response_headers['location'];
-		delete response_headers['location'];
-		// if new URL() fails, no redirect
-		
-		let evaluated;
-
-		try{
-			evaluated = new URL(location, url);
-		}catch(err){
-			console.error('failure', err);
-		}
-
-		if(evaluated){
-			response_headers['location'] = server.tomp.html.serve(evaluated.href, url, key);
-		}
-	}
+	handle_common(server, server_request, server_response, url, key, response, response_headers);
+	for(let remove of remove_html_headers)delete response_headers[remove];
 
 	if('refresh' in response_headers){
 		response_headers['refresh'] = server.tomp.html.wrap_http_refresh(response_headers['refresh'], url, key);
