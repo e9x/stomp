@@ -111,9 +111,7 @@ export class RewriteHTML {
 						return this.delete_node;
 						break;
 					case'refresh':
-
-						const [time,url] = value.split(';');
-
+						return this.wrap_http_refresh(value, url, key);
 						break;
 				}
 				
@@ -180,7 +178,11 @@ export class RewriteHTML {
 		return true;
 	}
 	wrap(html, url, key){	
-		const ast = parse(html);
+		const ast = parse(html, {
+			// https://github.com/inikulin/parse5/blob/master/packages/parse5/docs/options/parser-options.md#optional-scriptingenabled
+			// <noscript>
+			scriptingEnabled: false,
+		});
 
 		var inserted_script = false;
 
@@ -224,6 +226,19 @@ export class RewriteHTML {
 		}
 
 		return serialize(ast);
+	}
+	// excellent resource
+	// https://web.archive.org/web/20210514140514/https://www.otsukare.info/2015/03/26/refresh-http-header
+	wrap_http_refresh(value, url, key){
+		const urlstart = value.indexOf('url=');
+		if(urlstart == -1)return value;
+
+		var urlend = value.indexOf(';', urlstart);
+		if(urlend == -1)urlend = value.indexOf(',', urlstart);
+		if(urlend == -1)urlend = value.length;
+		
+		const resolved = new URL(value.slice(urlstart + 4, urlend), url).href;
+		return this.serve(resolved, url, key);
 	}
 	wrap_fragment(html, key){
 

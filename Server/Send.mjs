@@ -228,8 +228,9 @@ export async function SendHTML(server, server_request, server_response, field){
 	// todo: ~~wipe cache when the key changes?~~ not needed, key changes and url does too
 	// cache builds up
 
+	
 	// CONTENT-LOCATION WHAT
-	if(will_redirect && response_headers['location']){
+	if(will_redirect && 'location' in response_headers){
 		let location = response_headers['location'];
 		delete response_headers['location'];
 		// if new URL() fails, no redirect
@@ -245,6 +246,10 @@ export async function SendHTML(server, server_request, server_response, field){
 		if(evaluated){
 			response_headers['location'] = server.tomp.html.serve(evaluated.href, url, key);
 		}
+	}
+
+	if('refresh' in response_headers){
+		response_headers['refresh'] = server.tomp.html.wrap_http_refresh(response_headers['refresh'], url, key);
 	}
 
 	MapHeaderNames(ObjectFromRawHeaders(response.rawHeaders), response_headers);
