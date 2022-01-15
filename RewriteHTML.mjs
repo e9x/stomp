@@ -106,6 +106,17 @@ export class RewriteHTML {
 			content: (value, url, key, attrs) => {
 				const resolved = new URL(value, url).href;
 				
+				switch(attrs['http-equiv']){
+					case'content-security-policy':
+						return this.delete_node;
+						break;
+					case'refresh':
+
+						const [time,url] = value.split(';');
+
+						break;
+				}
+				
 				switch(attrs.itemprop){
 					case'image':
 						return this.tomp.binary.serve(resolved, url, key);
