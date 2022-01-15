@@ -183,7 +183,8 @@ async function SendRewrittenScript(rewriter, server, server_request, server_resp
 	var send;
 	if(!status_empty.includes(response.statusCode)){
 		send = Buffer.from(rewriter.wrap((await DecompressResponse(response)).toString(), url, key));
-		response_headers['content-length'] = send.byteLength;	
+		for(let remove of remove_encoding_headers)delete response_headers[remove];
+		response_headers['content-length'] = send.byteLength;
 	}
 
 	handle_common(server, server_request, server_response, url, key, response, response_headers);
@@ -217,7 +218,7 @@ export async function SendHTML(server, server_request, server_response, field){
 		if(html_types.includes(get_mime(response_headers['content-type'] || ''))){
 			send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
 			response_headers['content-length'] = send.byteLength;
-			for(let remove of remove_general_headers)delete response_headers[remove];
+			for(let remove of remove_encoding_headers)delete response_headers[remove];
 		}else{
 			send = response;
 		}
