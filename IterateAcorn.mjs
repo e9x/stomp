@@ -33,7 +33,7 @@ export class AcornContext {
 	get type(){
 		return this.node.type;
 	}
-	// returns true if there is 1 node to replace with and if this node is attached and in parent, false otherwise
+	// If the parent was modified, this function will return new AcornContext if there is only 1 node to replace with, otherwise it will return true, if the parent wasn't modified then it will return false.
 	replace_with(...node){
 		if(this.root)throw new RangeError('Cannot replace the root.');
 		else if(!this.attached)throw new RangeError('Cannot replace a detached node.');

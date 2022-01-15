@@ -21,7 +21,9 @@ export async function Process(server, request, response){
 
 	// override tomp$key for security purposes
 	
-	const key = server.tomp.codec.generate_key();
+	const cookies = typeof request.headers.cookie == 'string' ? cookie.parse(request.headers.cookie) : {};
+
+	const key = cookies.tomp$key || server.tomp.codec.generate_key();
 
 	headers['set-cookie'] = server.get_setcookie(key);
 	

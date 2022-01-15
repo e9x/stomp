@@ -32,7 +32,10 @@ export class PlainCodec extends CodecInterface {
 // nature of xor allows wrap to be used both ways
 export class XORCodec extends CodecInterface {
 	static generate_key(){
-		var xor = ~~(Math.random() * 0xFF), frequency = ~~(Math.random() * 0xF);
+		const
+			xor = ~~(Math.random() * 0xFF),
+			// 0-5
+			frequency = Math.min(~~(Math.random() * 0xF), 5);
 
 		// SHORT xor
 		// CHAR frequency

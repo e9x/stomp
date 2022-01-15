@@ -87,7 +87,7 @@ function get_data(server, server_request, server_response, field){
 	try{
 		new URL(url);
 	}catch(err){
-		server.send_json(server_response, 400, { message: server.messages['generic.error.badurl'] });
+		server.send_json(server_response, 400, { message: server.messages['error.badurl'] });
 		return [true];
 	}
 
@@ -124,40 +124,9 @@ export async function SendBinary(server, server_request, server_response, field)
 	response.pipe(server_response);
 }
 
-// placeholder
-export async function SendCSS(server, server_request, server_response, field){
-	const [gderr,url,key] = get_data(server, server_request, server_response, field);
-	if(gderr)return;
-	
-	const request_headers = {...server_request.headers};
-	request_headers.host = url.host;
-	const response = await Fetch(server_request, request_headers, url);
-	const response_headers = Object.setPrototypeOf({...response.headers}, null);
-
-	for(let remove of remove_csp_headers)delete response_headers[remove];
-	for(let remove of remove_general)delete response_headers[remove];
-
-	const set_cookies = [].concat(response['set-cookie']);
-
-	for(let set of set_cookies){
-		
-	}
-
-	// too much work rn
-	set_cookies.length = 0;
-
-	response_headers['set-cookie'] = [
-		server.get_setcookie(key),
-		...set_cookies
-	];
-	
-	server_response.writeHead(response.statusCode, response.headers);
-	response.pipe(server_response);
-}
-
 const status_empty = [204,304];
 
-export async function SendJS(server, server_request, server_response, field){
+async function SendRewrittenScript(rewriter, server, server_request, server_response, field){
 	const [gderr,url,key] = get_data(server, server_request, server_response, field);
 	if(gderr)return;
 	
@@ -168,7 +137,7 @@ export async function SendJS(server, server_request, server_response, field){
 
 	var send;
 	if(!status_empty.includes(response.statusCode)){
-		send = Buffer.from(server.tomp.js.wrap((await DecompressResponse(response)).toString(), url, key));
+		send = Buffer.from(rewriter.wrap((await DecompressResponse(response)).toString(), url, key));
 		response_headers['content-length'] = send.byteLength;	
 	}
 
@@ -193,6 +162,14 @@ export async function SendJS(server, server_request, server_response, field){
 	server_response.writeHead(response.statusCode, response_headers);
 	if(Buffer.isBuffer(send))server_response.write(send);
 	server_response.end();
+}
+
+export async function SendJS(server, server_request, server_response, field){
+	return await SendRewrittenScript(server.tomp.js, server_request, server_response, field);
+}
+
+export async function SendCSS(server, server_request, server_response, field){
+	return await SendRewrittenScript(server.tomp.css, server_request, server_response, field);
 }
 
 export async function SendHTML(server, server_request, server_response, field){
@@ -233,6 +210,9 @@ export async function SendHTML(server, server_request, server_response, field){
 	];
 	
 	const will_redirect = response.statusCode >= 300 && response.statusCode < 400 || response.statusCode == 201;
+
+	// todo: ~~wipe cache when the key changes?~~ not needed, key changes and url does too
+	// cache builds up
 
 	// CONTENT-LOCATION WHAT
 	if(will_redirect && response_headers['location']){

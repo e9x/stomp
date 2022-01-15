@@ -37,5 +37,11 @@ export class TOMP {
 		this.js = new RewriteJS(this);
 		this.css = new RewriteCSS(this);
 		this.html = new RewriteHTML(this);
+		this.binary = {
+			tomp: this,
+			serve(url, key){
+				return `${this.tomp.prefix}binary/${encodeURIComponent(this.tomp.codec.wrap(url, key))}`;
+			}
+		};
 	}
 };
