@@ -74,7 +74,7 @@ export class AcornIterator {
 			if(typeof value?.type == 'string')entries.push([key,value]);
 			else if(Array.isArray(value)){
 				for(let sv of value){
-					entries.push([key,sv]);
+					if(typeof sv?.type == 'string')entries.push([key,sv]);
 				}
 			}
 		}

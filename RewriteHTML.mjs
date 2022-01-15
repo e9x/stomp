@@ -2,8 +2,8 @@ import { serialize, parse, parseFragment } from 'parse5';
 import { Parse5Iterator } from './IterateParse5.mjs';
 
 const essential_nodes = ['#documentType','#document','#text','html','head','body'];
-const js_types = ['text/javascript','text/javascript','application/javascript','module',undefined];
-const css_types = ['text/css',undefined];
+const js_types = ['text/javascript','text/javascript','application/javascript','module',''];
+const css_types = ['text/css',''];
 
 function P5_attribute_object(attrs){
 	const result = Object.setPrototypeOf({}, null);
@@ -41,6 +41,7 @@ export class RewriteHTML {
 			else return value;
 		},
 	};
+	delete_attribute = Symbol();
 	attribute_router = {
 		script: {
 			// attrs const
@@ -50,6 +51,8 @@ export class RewriteHTML {
 				if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.serve(resolved, key);
 				else return this.tomp.binary.serve(resolved, key);
 			},
+			nonce: () => this.delete_attribute,	
+			integrity: () => this.delete_attribute,	
 		},
 		iframe: {
 			src: (value, url, key, attrs) => {
@@ -87,6 +90,7 @@ export class RewriteHTML {
 						break;
 				}
 			},
+			integrity: () => this.delete_attribute,
 		},
 		meta: {
 			content: (value, url, key, attrs) => {
@@ -155,7 +159,8 @@ export class RewriteHTML {
 			
 			if(ctx.type in this.attribute_router)for(let name in this.attribute_router[ctx.type])if(name in attrs){
 				const result = this.attribute_router[ctx.type][name](attrs[name], url, key, attrs);
-				attrs[name] = result;
+				if(result == this.delete_attribute)delete attrs[name];
+				else attrs[name] = result;
 			}
 
 			ctx.node.attrs = P5_object_attrs(attrs);
