@@ -1,3 +1,4 @@
+import { ParseDataURI } from './DataURI.mjs'
 import { serialize, parse, parseFragment } from 'parse5';
 import { Parse5Iterator } from './IterateParse5.mjs';
 
@@ -46,10 +47,9 @@ export class RewriteHTML {
 		script: {
 			// attrs const
 			src: (value, url, key, attrs) => {
-				if(value.startsWith('data:'))return value;
 				const resolved = new URL(value, url).href;
-				if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.serve(resolved, key);
-				else return this.tomp.binary.serve(resolved, key);
+				if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.serve(resolved, url, key);
+				else return this.tomp.binary.serve(resolved, url, key);
 			},
 			nonce: () => this.delete_attribute,	
 			integrity: () => this.delete_attribute,	
@@ -58,21 +58,21 @@ export class RewriteHTML {
 			src: (value, url, key, attrs) => {
 				if(value.startsWith('data:'))return value;
 				const resolved = new URL(value, url).href;
-				return this.tomp.html.serve(resolved, key);
+				return this.tomp.html.serve(resolved, url, key);
 			},
 		},
 		img: {
 			src: (value, url, key, attrs) => {
 				if(value.startsWith('data:'))return value;
 				const resolved = new URL(value, url).href;
-				return this.tomp.binary.serve(resolved, key);
+				return this.tomp.binary.serve(resolved, url, key);
 			},
 		},
 		a: {
 			href: (value, url, key, attrs) => {
 				if(value.startsWith('data:'))return value;
 				const resolved = new URL(value, url).href;
-				return this.tomp.html.serve(resolved, key);
+				return this.tomp.html.serve(resolved, url, key);
 			},
 		},
 		link: {
@@ -83,10 +83,10 @@ export class RewriteHTML {
 				switch(attrs.rel){
 					case'alternate':
 					case'amphtml':
-						return this.tomp.html.serve(resolved, key);
+						return this.tomp.html.serve(resolved, url, key);
 						break;
 					default:
-						return this.tomp.binary.serve(resolved, key);
+						return this.tomp.binary.serve(resolved, url, key);
 						break;
 				}
 			},
@@ -103,16 +103,16 @@ export class RewriteHTML {
 					case'parsely-link':
 					case'parsely-image-url':
 					
-						return this.tomp.html.serve(resolved, key);
+						return this.tomp.html.serve(resolved, url, key);
 						break;
 					case'og:image':
 					case'twitter:image':
 					case'sailthru.image.thumb':
 					case'msapplication-TileImage':
-							return this.tomp.binary.serve(resolved, key);
+							return this.tomp.binary.serve(resolved, url, key);
 						break;
 					case'style-tools':
-						return this.tomp.css.serve(resolved, key);
+						return this.tomp.css.serve(resolved, url, key);
 						break;
 					default:
 						return value;
@@ -162,6 +162,10 @@ export class RewriteHTML {
 				if(result == this.delete_attribute)delete attrs[name];
 				else attrs[name] = result;
 			}
+			
+			for(let name in attrs)if(name.startsWith('on')){
+				attrs[name] = this.tomp.js.wrap(value, url, key);
+			}
 
 			ctx.node.attrs = P5_object_attrs(attrs);
 			
@@ -182,7 +186,11 @@ export class RewriteHTML {
 		
 		return html;
 	}
-	serve(url, key){
-		return `${this.tomp.prefix}html/${encodeURIComponent(this.tomp.codec.wrap(url, key))}`
+	serve(serve, url, key){
+		if(serve.startsWith('data:')){
+			const [mime,buffer] = ParseDataURI(value);
+			return this.wrap(buffer.toString(), url, key);
+		}
+		return `${this.tomp.prefix}html/${encodeURIComponent(this.tomp.codec.wrap(serve, key))}`
 	}
 };

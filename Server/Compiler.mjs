@@ -22,6 +22,11 @@ const frontend = webpack({
 		path: path.dirname(CompilationPath),
 		filename: path.basename(CompilationPath),
 	},
+	plugins: [
+		new webpack.ProvidePlugin({
+            Buffer: ['buffer', 'Buffer'],
+        }),
+	],
 });
 
 frontend.watch({}, (...args) => {

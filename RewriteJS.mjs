@@ -1,6 +1,7 @@
-import {parse} from 'acorn';
-import {generate} from 'escodegen';
-import {AcornIterator} from './IterateAcorn.mjs';
+import { ParseDataURI } from './DataURI.mjs'
+import { parse } from 'acorn';
+import { generate } from 'escodegen';
+import { AcornIterator } from './IterateAcorn.mjs';
 
 export const global_client = 'tompc$';
 
@@ -98,8 +99,12 @@ export class RewriteJS {
 		code = Buffer.from(code);
 		return code.slice(12 + global_client.length, -1);
 	}
-	serve(url, key){
-		return `${this.tomp.prefix}js/${encodeURIComponent(this.tomp.codec.wrap(url, key))}`
+	serve(serve, url, key){
+		if(serve.startsWith('data:')){
+			const [mime,buffer] = ParseDataURI(value);
+			return this.wrap(buffer.toString(), url, key);
+		}
+		return `${this.tomp.prefix}js/${encodeURIComponent(this.tomp.codec.wrap(serve, key))}`
 	}
 };
 

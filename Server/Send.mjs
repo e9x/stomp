@@ -73,13 +73,12 @@ export async function SendScript(server, request, response){
 	response.end();
 }
 
-// returns const [gderr,url,key]
 function get_data(server, server_request, server_response, field){
 	const key = server.get_key(server_request);
 	
 	if(!key){
 		server.send_json(server_response, 400, { message: server.messages['error.nokey'] });
-		return [true];
+		return { gd_error: true };
 	}
 
 	const url = server.tomp.codec.unwrap(decodeURIComponent(field), key);
@@ -88,15 +87,19 @@ function get_data(server, server_request, server_response, field){
 		new URL(url);
 	}catch(err){
 		server.send_json(server_response, 400, { message: server.messages['error.badurl'] });
-		return [true];
+		return { gd_error: true };
 	}
 
-	return [false,url,key];
+	return {
+		gd_error: false,
+		url,
+		key,
+	};
 }
 
 export async function SendBinary(server, server_request, server_response, field){
-	const [gderr,url,key] = get_data(server, server_request, server_response, field);
-	if(gderr)return;
+	const {gd_error,url,key} = get_data(server, server_request, server_response, field);
+	if(gd_error)return;
 	
 	const request_headers = {...server_request.headers};
 	request_headers.host = url.host;
@@ -127,8 +130,8 @@ export async function SendBinary(server, server_request, server_response, field)
 const status_empty = [204,304];
 
 async function SendRewrittenScript(rewriter, server, server_request, server_response, field){
-	const [gderr,url,key] = get_data(server, server_request, server_response, field);
-	if(gderr)return;
+	const {gd_error,url,key} = get_data(server, server_request, server_response, field);
+	if(gd_error)return;
 	
 	const request_headers = {...server_request.headers};
 	request_headers.host = url.host;
@@ -173,8 +176,8 @@ export async function SendCSS(server, server_request, server_response, field){
 }
 
 export async function SendHTML(server, server_request, server_response, field){
-	const [gderr,url,key] = get_data(server, server_request, server_response, field);
-	if(gderr)return;
+	const {gd_error,url,key} = get_data(server, server_request, server_response, field);
+	if(gd_error)return;
 	
 	const request_headers = {...server_request.headers};
 	MapHeaderNames(ObjectFromRawHeaders(server_request.rawHeaders), request_headers);

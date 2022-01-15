@@ -1,3 +1,4 @@
+import { ParseDataURI } from './DataURI.mjs'
 // import that one css lib
 
 export class RewriteCSS {
@@ -10,7 +11,11 @@ export class RewriteCSS {
 	unwrap(code, url, key){
 		return code;
 	}
-	serve(url, key){
-		return `${this.tomp.prefix}css/${encodeURIComponent(this.tomp.codec.wrap(url, key))}`
+	serve(serve, url, key){
+		if(serve.startsWith('data:')){
+			const [mime,buffer] = ParseDataURI(value);
+			return this.wrap(buffer.toString(), url, key);
+		}
+		return `${this.tomp.prefix}css/${encodeURIComponent(this.tomp.codec.wrap(serve, key))}`
 	}
 };

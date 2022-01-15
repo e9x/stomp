@@ -1,8 +1,9 @@
 import { RewriteJS } from './RewriteJS.mjs';
 import { RewriteCSS } from './RewriteCSS.mjs';
 import { RewriteHTML } from './RewriteHTML.mjs';
-import { Logger } from './Logger.mjs'
-import { CodecInterface, PlainCodec, XORCodec, RC4Codec } from './Codec.mjs'
+import { RewriteBinary } from './RewriteBinary.mjs';
+import { Logger } from './Logger.mjs';
+import { CodecInterface, PlainCodec, XORCodec, RC4Codec } from './Codec.mjs';
 
 const codecs = [ PlainCodec, XORCodec, RC4Codec ];
 
@@ -37,11 +38,6 @@ export class TOMP {
 		this.js = new RewriteJS(this);
 		this.css = new RewriteCSS(this);
 		this.html = new RewriteHTML(this);
-		this.binary = {
-			tomp: this,
-			serve(url, key){
-				return `${this.tomp.prefix}binary/${encodeURIComponent(this.tomp.codec.wrap(url, key))}`;
-			}
-		};
+		this.binary = new RewriteBinary(this);
 	}
 };
