@@ -165,11 +165,11 @@ async function SendRewrittenScript(rewriter, server, server_request, server_resp
 }
 
 export async function SendJS(server, server_request, server_response, field){
-	return await SendRewrittenScript(server.tomp.js, server_request, server_response, field);
+	return await SendRewrittenScript(server.tomp.js, server, server_request, server_response, field);
 }
 
 export async function SendCSS(server, server_request, server_response, field){
-	return await SendRewrittenScript(server.tomp.css, server_request, server_response, field);
+	return await SendRewrittenScript(server.tomp.css, server, server_request, server_response, field);
 }
 
 export async function SendHTML(server, server_request, server_response, field){

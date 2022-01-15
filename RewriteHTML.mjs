@@ -31,67 +31,94 @@ function get_mime(content_type){
 }
 
 export class RewriteHTML {
+	content_router = {
+		script: (value, url, key, attrs) => {
+			if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.wrap(value, url, key);
+			else return value;
+		},
+		style: (value, url, key, attrs) => {
+			if(css_types.includes(get_mime(attrs.type || '')))return this.tomp.css.wrap(value, url, key);
+			else return value;
+		},
+	};
+	attribute_router = {
+		script: {
+			// attrs const
+			src: (value, url, key, attrs) => {
+				if(value.startsWith('data:'))return value;
+				const resolved = new URL(value, url).href;
+				if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.serve(resolved, key);
+				else return this.tomp.binary.serve(resolved, key);
+			},
+		},
+		iframe: {
+			src: (value, url, key, attrs) => {
+				if(value.startsWith('data:'))return value;
+				const resolved = new URL(value, url).href;
+				return this.tomp.html.serve(resolved, key);
+			},
+		},
+		img: {
+			src: (value, url, key, attrs) => {
+				if(value.startsWith('data:'))return value;
+				const resolved = new URL(value, url).href;
+				return this.tomp.binary.serve(resolved, key);
+			},
+		},
+		a: {
+			href: (value, url, key, attrs) => {
+				if(value.startsWith('data:'))return value;
+				const resolved = new URL(value, url).href;
+				return this.tomp.html.serve(resolved, key);
+			},
+		},
+		link: {
+			href: (value, url, key, attrs) => {
+				if(value.startsWith('data:'))return value;
+				const resolved = new URL(value, url).href;
+				
+				switch(attrs.rel){
+					case'alternate':
+					case'amphtml':
+						return this.tomp.html.serve(resolved, key);
+						break;
+					default:
+						return this.tomp.binary.serve(resolved, key);
+						break;
+				}
+			},
+		},
+		meta: {
+			content: (value, url, key, attrs) => {
+				if(value.startsWith('data:'))return value;
+				const resolved = new URL(value, url).href;
+				
+				switch(attrs.name){
+					case'og:url':
+					case'twitter:url':
+					case'parsely-link':
+					case'parsely-image-url':
+					
+						return this.tomp.html.serve(resolved, key);
+						break;
+					case'og:image':
+					case'twitter:image':
+					case'sailthru.image.thumb':
+					case'msapplication-TileImage':
+							return this.tomp.binary.serve(resolved, key);
+						break;
+					case'style-tools':
+						return this.tomp.css.serve(resolved, key);
+						break;
+					default:
+						return value;
+						break;
+				}
+			},
+		},
+	};
 	constructor(tomp){
 		this.tomp = tomp;
-		
-		this.content_router = {
-			script: (value, url, key, attrs) => {
-				if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.wrap(value, url, key);
-				else return value;
-			},
-			style: (value, url, key, attrs) => {
-				if(css_types.includes(get_mime(attrs.type || '')))return this.tomp.css.wrap(value, url, key);
-				else return value;
-			},
-		};
-		
-		this.attribute_router = {
-			script: {
-				// attrs const
-				src: (value, url, key, attrs) => {
-					if(value.startsWith('data:'))return value;
-					const resolved = new URL(value, url).href;
-					if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.serve(resolved, key);
-					else return this.tomp.binary.serve(resolved, key);
-				},
-			},
-			iframe: {
-				src: (value, url, key, attrs) => {
-					if(value.startsWith('data:'))return value;
-					const resolved = new URL(value, url).href;
-					return this.tomp.html.serve(resolved, key);
-				},
-			},
-			img: {
-				src: (value, url, key, attrs) => {
-					if(value.startsWith('data:'))return value;
-					const resolved = new URL(value, url).href;
-					return this.tomp.binary.serve(resolved, key);
-				},
-			},
-			a: {
-				href: (value, url, key, attrs) => {
-					if(value.startsWith('data:'))return value;
-					const resolved = new URL(value, url).href;
-					return this.tomp.html.serve(resolved, key);
-				},
-			},
-			link: {
-				href: (value, url, key, attrs) => {
-					if(value.startsWith('data:'))return value;
-					const resolved = new URL(value, url).href;
-					
-					switch(attrs.rel){
-						case'alternate':
-							return this.tomp.html.serve(resolved, key);
-							break;
-						default:
-							return this.tomp.binary.serve(resolved, key);
-							break;
-					}
-				},
-			},
-		};
 	}
 	get head(){
 		return {
