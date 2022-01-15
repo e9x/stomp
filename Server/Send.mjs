@@ -1,12 +1,12 @@
 import fs from 'fs';
-
 import { Fetch } from './Fetch.mjs';
 import { DecompressResponse } from './HTTPUtil.mjs'
 import { MapHeaderNames, ObjectFromRawHeaders } from './HeaderUtil.mjs'
 import { CompilationPath } from './Compiler.mjs';
 import { html_types, get_mime } from '../RewriteHTML.mjs';
 import { Stream } from 'stream';
-
+import setcookie_parser from 'set-cookie-parser';
+import cookie from 'cookie';
 
 const remove_general_headers = [
 	'alt-svc',
@@ -42,46 +42,6 @@ const remove_csp_headers = [
 	'x-xss-protection',
 ];
 
-export async function SendScript(server, request, response){
-	try{
-		const handle = await fs.promises.open(CompilationPath, 'r');
-		
-		const { size } = await handle.stat();
-		
-		const buffer = Buffer.alloc(size);
-		
-		const { bytesRead } = await handle.read(buffer, 0, buffer.byteLength, 0);
-		
-		handle.close();
-
-		if(bytesRead < buffer.byteLength)server.tomp.log.error('Error reading file');
-		
-		let script = buffer.toString();
-		
-		script = script.replace(/client_information/g, JSON.stringify([
-			server.tomp,
-			server.get_key(request),
-		]));
-
-		var send = Buffer.from(script);
-	}catch(err){
-		if(err.code == 'ENOENT'){
-			return void server.send_json(response, 500, { message: server.messages['generic.error.notready'] });
-		}else{
-			server.tomp.log.error('Error reading backend compilation:', err);
-			return void server.send_json(response, 500, { message: server.messages['generic.exception.request'] });
-		}
-	}
-	
-	response.writeHead(200, {
-		'content-type': 'application/javascript',
-		'content-length': send.byteLength,
-	});
-	
-	response.write(send);
-	response.end();
-}
-
 function handle_common(server, server_request, server_response, url, key, response, response_headers){
 	
 	// server.tomp.log.debug(url, response_headers);
@@ -91,10 +51,14 @@ function handle_common(server, server_request, server_response, url, key, respon
 	for(let remove of remove_csp_headers)delete response_headers[remove];
 	for(let remove of remove_general_headers)delete response_headers[remove];
 	
-	const set_cookies = [].concat(response['set-cookie']);
+	const set_cookies = [].concat(response_headers['set-cookie'] || []);
 
 	for(let set of set_cookies){
-		
+		const parsed = setcookie_parser(set);
+
+		for(let set of parsed){
+			set_cookies.push(cookie.serialize(set.name + '', set));
+		}
 	}
 
 	// too much work rn
@@ -196,14 +160,6 @@ export async function SendForm(server, server_request, server_response, field){
 
 	server_response.writeHead(302, headers);
 	server_response.end();
-	/*const request_headers = {...server_request.headers};
-	request_headers.host = url.host;
-	const response = await Fetch(server_request, request_headers, url);
-	
-	handle_common(server, server_request, server_response, url, key, response, response_headers);
-	
-	server_response.writeHead(response.statusCode, response_headers);
-	response.pipe(server_response);*/
 }
 
 const status_empty = [204,304];
@@ -279,4 +235,45 @@ export async function SendHTML(server, server_request, server_response, field){
 	}else{
 		server_response.end();
 	}
+}
+
+
+export async function SendScript(server, request, response){
+	try{
+		const handle = await fs.promises.open(CompilationPath, 'r');
+		
+		const { size } = await handle.stat();
+		
+		const buffer = Buffer.alloc(size);
+		
+		const { bytesRead } = await handle.read(buffer, 0, buffer.byteLength, 0);
+		
+		handle.close();
+
+		if(bytesRead < buffer.byteLength)server.tomp.log.error('Error reading file');
+		
+		let script = buffer.toString();
+		
+		script = script.replace(/client_information/g, JSON.stringify([
+			server.tomp,
+			server.get_key(request),
+		]));
+
+		var send = Buffer.from(script);
+	}catch(err){
+		if(err.code == 'ENOENT'){
+			return void server.send_json(response, 500, { message: server.messages['generic.error.notready'] });
+		}else{
+			server.tomp.log.error('Error reading backend compilation:', err);
+			return void server.send_json(response, 500, { message: server.messages['generic.exception.request'] });
+		}
+	}
+	
+	response.writeHead(200, {
+		'content-type': 'application/javascript',
+		'content-length': send.byteLength,
+	});
+	
+	response.write(send);
+	response.end();
 }
