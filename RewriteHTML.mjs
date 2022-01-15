@@ -46,7 +46,11 @@ export class RewriteHTML {
 	};
 	delete_attribute = Symbol();
 	delete_node = Symbol();
+	all_nodes = Symbol();
 	attribute_router = {
+		[this.all_nodes]: {
+
+		},
 		script: {
 			// attrs const
 			src: (value, url, key, attrs) => {
@@ -84,6 +88,9 @@ export class RewriteHTML {
 					case'amphtml':
 					// case'profile':
 						return this.tomp.html.serve(resolved, url, key);
+						break;
+					case'stylesheet':
+						return this.tomp.css.serve(resolved, url, key);
 						break;
 					default:
 						return this.tomp.binary.serve(resolved, url, key);
@@ -144,6 +151,20 @@ export class RewriteHTML {
 			],
 		};
 	}
+	// returns false if the ctx was detached
+	route_attributes(route, ctx, attrs, url, key){
+		for(let name in route)if(name in attrs){
+			const result = this.attribute_router[ctx.type][name](attrs[name], url, key, attrs);
+			if(result == this.delete_attribute)delete attrs[name];
+			else if(result == this.delete_node){
+				ctx.detach();
+				return false;
+			}
+			else attrs[name] = result;
+		}
+
+		return true;
+	}
 	wrap(html, url, key){	
 		const ast = parse(html);
 
@@ -158,21 +179,19 @@ export class RewriteHTML {
 
 			if(Array.isArray(ctx.node?.childNodes) && ctx.type in this.content_router){
 				const text = ctx.node?.childNodes[0];
-
-				if(text){
+				
+				if(text?.value.match(/\S/) && text){
 					const result = this.content_router[ctx.type](text.value, url, key, attrs);
 					text.value = result;
 				}
 			}
 			
-			if(ctx.type in this.attribute_router)for(let name in this.attribute_router[ctx.type])if(name in attrs){
-				const result = this.attribute_router[ctx.type][name](attrs[name], url, key, attrs);
-				if(result == this.delete_attribute)delete attrs[name];
-				else if(result == this.delete_node){
-					ctx.detach();
-					continue;
-				}
-				else attrs[name] = result;
+			if(!this.route_attributes(this.attribute_router[this.all_nodes], ctx, attrs, url, key)){
+				continue;
+			}
+			
+			if(ctx.type in this.attribute_router && !this.route_attributes(this.attribute_router[ctx.type], ctx, attrs, url, key)){
+				continue;
 			}
 
 			if(!ctx.attached)continue;

@@ -1,12 +1,37 @@
-import { ParseDataURI } from './DataURI.mjs'
-// import that one css lib
+import { ParseDataURI } from './DataURI.mjs';
+import { parse, walk, generate } from 'css-tree';
+import { AcornIterator } from './IterateAcorn.mjs';
 
 export class RewriteCSS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
 	wrap(code, url, key){
-		return code;
+		try{
+			var ast = parse(code);
+		}catch(err){
+			if(err instanceof SyntaxError){
+				return `/*${JSON.stringify(err.message)}*/`;
+			}else throw err;
+		}
+
+		const that = this;
+
+		walk(ast, function(node, item, list){
+			if (this.declaration !== null && node.type === 'Url') {
+				try{
+					var resolved = new URL(node.value, url).href;
+				}catch(err){
+					var resolved = '';
+					console.error(err);
+				}
+				
+				node.value = that.tomp.binary.serve(resolved, url, key);
+				
+			}
+		});
+
+		return generate(ast);
 	}
 	unwrap(code, url, key){
 		return code;

@@ -193,7 +193,7 @@ export async function SendHTML(server, server_request, server_response, field){
 
 	var send;
 	if(!status_empty.includes(response.statusCode)){
-		if(html_types.includes(get_mime(response_headers['content-type']))){
+		if(html_types.includes(get_mime(response_headers['content-type'] || ''))){
 			send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
 			response_headers['content-length'] = send.byteLength;
 			for(let remove of remove_encoding)delete response_headers[remove];
