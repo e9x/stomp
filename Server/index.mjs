@@ -1,7 +1,7 @@
 import { TOMP } from '../TOMP.mjs';
 import { Static } from './Compiler.mjs';
 import { Process } from './Process.mjs';
-import { SendBinary, SendHTML, SendJS, SendCSS, SendScript } from './Send.mjs';
+import { SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendScript } from './Send.mjs';
 import cookie from 'cookie';
 
 export class Server {
@@ -82,6 +82,9 @@ export class Server {
 					break;
 				case 'binary':
 					return void await SendBinary(this, request, response, field)
+					break;
+				case 'form':
+					return void await SendForm(this, request, response, field)
 					break;
 				case 'html':
 					return void await SendHTML(this, request, response, field);

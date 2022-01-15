@@ -169,6 +169,43 @@ export async function SendBinary(server, server_request, server_response, field)
 	response.pipe(server_response);
 }
 
+export async function SendForm(server, server_request, server_response, field){
+	const headers = Object.setPrototypeOf({}, null);
+
+	if(server_request.method == 'GET'){
+		const query_ind = field.indexOf('?');
+		if(query_ind == -1)return void server.send_json(server_response, 400, { message: 'Invalid form GET' });
+		const query = field.slice(query_ind);
+		field = field.slice(0, query_ind);
+		
+		const {gd_error,url,key} = get_data(server, server_request, server_response, field);
+		if(gd_error)return;
+		
+		const orig_query_ind = url.indexOf('?');
+		
+		const updated = url.slice(0, orig_query_ind == -1 ? url.length : orig_query_ind) + query;
+		headers['location'] = server.tomp.html.serve(updated, updated, key);
+	}else{
+		const {gd_error,url,key} = get_data(server, server_request, server_response, field);
+		if(gd_error)return;
+		
+		// post
+
+		headers['location'] = server.tomp.html.serve(url, url, key);
+	}
+
+	server_response.writeHead(302, headers);
+	server_response.end();
+	/*const request_headers = {...server_request.headers};
+	request_headers.host = url.host;
+	const response = await Fetch(server_request, request_headers, url);
+	
+	handle_common(server, server_request, server_response, url, key, response, response_headers);
+	
+	server_response.writeHead(response.statusCode, response_headers);
+	response.pipe(server_response);*/
+}
+
 const status_empty = [204,304];
 
 async function SendRewrittenScript(rewriter, server, server_request, server_response, field){

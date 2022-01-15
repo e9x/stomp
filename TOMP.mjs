@@ -2,6 +2,7 @@ import { RewriteURL } from './RewriteURL.mjs';
 import { RewriteJS } from './RewriteJS.mjs';
 import { RewriteCSS } from './RewriteCSS.mjs';
 import { RewriteHTML } from './RewriteHTML.mjs';
+import { RewriteForm } from './RewriteForm.mjs';
 import { RewriteBinary } from './RewriteBinary.mjs';
 import { Logger } from './Logger.mjs';
 import { CodecInterface, PlainCodec, XORCodec, RC4Codec } from './Codec.mjs';
@@ -47,5 +48,6 @@ export class TOMP {
 		this.css = new RewriteCSS(this);
 		this.html = new RewriteHTML(this);
 		this.binary = new RewriteBinary(this);
+		this.form = new RewriteForm(this);
 	}
 };

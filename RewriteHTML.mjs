@@ -54,6 +54,12 @@ export class RewriteHTML {
 				return this.tomp.css.wrap(value, url, key, true);
 			},
 		},
+		use: {
+			'xlink:href': (value, url, key, attrs) => {
+				const resolved = new URL(value, url).href;
+				return this.tomp.html.serve(resolved, url, key);
+			},
+		},
 		script: {
 			// attrs const
 			src: (value, url, key, attrs) => {
@@ -191,8 +197,7 @@ export class RewriteHTML {
 				// console.log(ctx.node);
 				continue;
 			}
-
-
+			
 			if(ctx.type == 'noscript' && this.tomp.noscript){
 				// todo: move all noscript childNodes into the noscript parent
 				ctx.node.tagName = 'okscript';
@@ -222,10 +227,16 @@ export class RewriteHTML {
 
 			if(!ctx.attached)continue;
 			
+			if(ctx.type == 'form'){
+				const action_resolved = new URL(attrs.action || '', url).href;
+
+				attrs.action = this.tomp.form.serve(action_resolved, url, key);
+			}
+
 			for(let name in attrs)if(name.startsWith('on')){
 				attrs[name] = this.tomp.js.wrap(attrs[name], url, key);
 			}
-
+			
 			ctx.node.attrs = P5_object_attrs(attrs);
 			
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)

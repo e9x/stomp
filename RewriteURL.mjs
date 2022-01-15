@@ -25,7 +25,7 @@ export class RewriteURL {
 		const protocol = protocols[parseInt(url[slash + 1], 16)];
 		const path = this.tomp.codec.unwrap(unescape(url.slice(slash + 2)), key);
 		
-		console.log(`${url} =>`, { host, protocol, path });
+		// console.log(`${url} =>`, { host, protocol, path });
 		return `${protocol}//${host}${path}`;
 	}
 };

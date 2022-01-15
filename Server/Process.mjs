@@ -17,7 +17,7 @@ export async function Process(server, request, response){
 		body.input = `https://www.google.com/search?q=${encodeURIComponent(body.input)}`;
 	}
 	
-	const headers = {};
+	const headers = Object.setPrototypeOf({}, null);
 
 	// override tomp$key for security purposes
 	
@@ -29,6 +29,7 @@ export async function Process(server, request, response){
 	
 	const redirect = server.tomp.html.serve(body.input, body.input, key);
 	headers['refresh'] = `0;${redirect}`;
+	headers['content-type'] = 'text/html';
 	response.writeHead(200, headers);
 	response.end();
 }
