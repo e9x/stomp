@@ -39,10 +39,10 @@ export class XORCodec extends CodecInterface {
 
 		// SHORT xor
 		// CHAR frequency
-		return String((xor << 4) + frequency);
+		return ((xor << 4) + frequency).toString(16);
 	}
 	static wrap(input, key){
-		key = parseInt(key);
+		key = parseInt(key, 16);
 
 		const xor = key >> 0x4, frequency = key & 0xF;
 		var result = '';

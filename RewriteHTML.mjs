@@ -174,7 +174,7 @@ export class RewriteHTML {
 			if(!ctx.attached)continue;
 			
 			for(let name in attrs)if(name.startsWith('on')){
-				attrs[name] = this.tomp.js.wrap(value, url, key);
+				attrs[name] = this.tomp.js.wrap(attrs[name], url, key);
 			}
 
 			ctx.node.attrs = P5_object_attrs(attrs);
@@ -201,6 +201,6 @@ export class RewriteHTML {
 			const [mime,buffer] = ParseDataURI(value);
 			return this.wrap(buffer.toString(), url, key);
 		}
-		return `${this.tomp.prefix}html/${encodeURIComponent(this.tomp.codec.wrap(serve, key))}`
+		return `${this.tomp.prefix}html/${this.tomp.url.wrap(serve, key)}`
 	}
 };

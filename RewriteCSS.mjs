@@ -16,6 +16,6 @@ export class RewriteCSS {
 			const [mime,buffer] = ParseDataURI(value);
 			return this.wrap(buffer.toString(), url, key);
 		}
-		return `${this.tomp.prefix}css/${encodeURIComponent(this.tomp.codec.wrap(serve, key))}`
+		return `${this.tomp.prefix}css/${this.tomp.url.wrap(serve, key)}`
 	}
 };

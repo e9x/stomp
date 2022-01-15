@@ -81,7 +81,7 @@ function get_data(server, server_request, server_response, field){
 		return { gd_error: true };
 	}
 
-	const url = server.tomp.codec.unwrap(decodeURIComponent(field), key);
+	const url = server.tomp.url.unwrap(field, key); // server.tomp.codec.unwrap(decodeURIComponent(field), key);
 	
 	try{
 		new URL(url);
@@ -232,7 +232,7 @@ export async function SendHTML(server, server_request, server_response, field){
 		}
 
 		if(evaluated){
-			response_headers['location'] = server.tomp.html.serve(evaluated.href, key);
+			response_headers['location'] = server.tomp.html.serve(evaluated.href, url, key);
 		}
 	}
 
