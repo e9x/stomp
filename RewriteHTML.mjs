@@ -19,6 +19,7 @@ function P5_object_attrs(object){
 	const result = [];
 	
 	for(let [ name, value ] of Object.entries(object)){
+		if(typeof value != 'string')throw new TypeError(`Attribute ${name} was not a string.`);
 		result.push({ name, value });
 	}
 
@@ -50,7 +51,7 @@ export class RewriteHTML {
 				src: (value, url, key, attrs) => {
 					const resolved = new URL(value, url).href;
 					if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.serve(resolved, key);
-					else this.tomp.binary.serve(resolved, key);
+					else return this.tomp.binary.serve(resolved, key);
 				},
 			},
 			iframe: {
