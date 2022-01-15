@@ -49,6 +49,7 @@ export class RewriteHTML {
 			script: {
 				// attrs const
 				src: (value, url, key, attrs) => {
+					if(value.startsWith('data:'))return value;
 					const resolved = new URL(value, url).href;
 					if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.serve(resolved, key);
 					else return this.tomp.binary.serve(resolved, key);
@@ -56,24 +57,28 @@ export class RewriteHTML {
 			},
 			iframe: {
 				src: (value, url, key, attrs) => {
+					if(value.startsWith('data:'))return value;
 					const resolved = new URL(value, url).href;
 					return this.tomp.html.serve(resolved, key);
 				},
 			},
 			img: {
 				src: (value, url, key, attrs) => {
+					if(value.startsWith('data:'))return value;
 					const resolved = new URL(value, url).href;
 					return this.tomp.binary.serve(resolved, key);
 				},
 			},
 			a: {
 				href: (value, url, key, attrs) => {
+					if(value.startsWith('data:'))return value;
 					const resolved = new URL(value, url).href;
 					return this.tomp.html.serve(resolved, key);
 				},
 			},
 			link: {
 				href: (value, url, key, attrs) => {
+					if(value.startsWith('data:'))return value;
 					const resolved = new URL(value, url).href;
 					
 					switch(attrs.rel){
