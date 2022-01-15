@@ -6,13 +6,12 @@ export class RewriteURL {
 		this.tomp = tomp;
 	}
 	wrap(url, key){
-		if(url.startsWith('mailto:'))return url;
-
 		if(key == undefined)throw new TypeError('Bad key');
 
 		const og = new URL(url);
 		const protoi = protocols.indexOf(og.protocol);
-		if(protoi == -1)throw new RangeError(`Unsupported protocol '${og.protocol}'`);
+		// android-app, ios-app, mailto, many other non-browser protocols
+		if(protoi == -1)return url; // throw new RangeError(`Unsupported protocol '${og.protocol}'`);
 		const field = escape(this.tomp.codec.wrap(og.host, key)) + '/' + protoi.toString(16) + escape(this.tomp.codec.wrap(og.pathname + og.search, key));
 		
 		return field;

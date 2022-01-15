@@ -127,17 +127,24 @@ export class RewriteHTML {
 						break;
 				}
 
+				switch(attrs.property){
+					case'og:url':
+					return this.tomp.html.serve(resolved, url, key);
+					break;
+					case'og:image':
+						return this.tomp.binary.serve(resolved, url, key);
+						break;
+				}
+
 				switch(attrs.name){
 					case'referrer':
 						return this.delete_node;
 						break;
-					case'og:url':
 					case'twitter:url':
 					case'parsely-link':
 					case'parsely-image-url':
 						return this.tomp.html.serve(resolved, url, key);
 						break;
-					case'og:image':
 					case'twitter:image':
 					case'sailthru.image.thumb':
 					case'msapplication-TileImage':
@@ -172,13 +179,18 @@ export class RewriteHTML {
 	// returns false if the ctx was detached
 	route_attributes(route, ctx, attrs, url, key){
 		for(let name in route)if(name in attrs){
-			const result = route[name](attrs[name], url, key, attrs);
-			if(result == this.delete_attribute)delete attrs[name];
-			else if(result == this.delete_node){
-				ctx.detach();
-				return false;
+			try{
+				const result = route[name](attrs[name], url, key, attrs);
+				if(result == this.delete_attribute)delete attrs[name];
+				else if(result == this.delete_node){
+					ctx.detach();
+					return false;
+				}
+				else attrs[name] = result;
+			}catch(err){
+				console.error(err);
+				delete attrs[name];
 			}
-			else attrs[name] = result;
 		}
 
 		return true;
