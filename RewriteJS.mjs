@@ -12,6 +12,8 @@ export class RewriteJS {
 		this.tomp = tomp;
 	}
 	wrap(code, url, key){
+		return '';
+
 		try{
 			var ast = parse(code, { ecmaVersion: 2020 });
 		}catch(err){

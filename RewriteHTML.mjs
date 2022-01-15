@@ -3,8 +3,10 @@ import { serialize, parse, parseFragment } from 'parse5';
 import { Parse5Iterator } from './IterateParse5.mjs';
 
 const essential_nodes = ['#documentType','#document','#text','html','head','body'];
-const js_types = ['text/javascript','text/javascript','application/javascript','module',''];
-const css_types = ['text/css',''];
+
+export const js_types = ['text/javascript','application/javascript','module',''];
+export const css_types = ['text/css',''];
+export const html_types = ['text/html',''];
 
 export function get_mime(content_type){
 	return content_type.split(';')[0];
@@ -80,6 +82,7 @@ export class RewriteHTML {
 				switch(attrs.rel){
 					case'alternate':
 					case'amphtml':
+					// case'profile':
 						return this.tomp.html.serve(resolved, url, key);
 						break;
 					default:
@@ -157,7 +160,8 @@ export class RewriteHTML {
 				const text = ctx.node?.childNodes[0];
 
 				if(text){
-					text.value = this.content_router[ctx.type](text.value, url, key, attrs);
+					const result = this.content_router[ctx.type](text.value, url, key, attrs);
+					text.value = result;
 				}
 			}
 			
@@ -182,7 +186,6 @@ export class RewriteHTML {
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)
 			// on the first non-essential node (not html,head,or body), insert the client script before it
 			if(!inserted_script && !essential_nodes.includes(ctx.type)){
-				this.tomp.log.debug('inserting head injection into', ctx.type);
 				inserted_script = ctx.insert_before(this.head);
 			}
 		}

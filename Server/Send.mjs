@@ -4,12 +4,8 @@ import { Fetch } from './Fetch.mjs';
 import { DecompressResponse } from './HTTPUtil.mjs'
 import { MapHeaderNames, ObjectFromRawHeaders } from './HeaderUtil.mjs'
 import { CompilationPath } from './Compiler.mjs';
-import { get_mime } from '../RewriteHTML.mjs';
-
-const non_html_documents = [
-	'application/pdf',
-	'text/plain',
-];
+import { html_types, get_mime } from '../RewriteHTML.mjs';
+import { Stream } from 'stream';
 
 const remove_general = [
 	'alt-svc',
@@ -192,18 +188,18 @@ export async function SendHTML(server, server_request, server_response, field){
 	const request_headers = {...server_request.headers};
 	MapHeaderNames(ObjectFromRawHeaders(server_request.rawHeaders), request_headers);
 
-	const response = await Fetch(server_request, request_headers, url);
+	const response = await Fetch(server_request, request_headers, url);	
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
 
 	var send;
 	if(!status_empty.includes(response.statusCode)){
-		if(non_html_documents.includes(get_mime(response_headers['content-type']))){
-			send = Buffer.from(await DecompressResponse(response));
-		}else{
+		if(html_types.includes(get_mime(response_headers['content-type']))){
 			send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
+			response_headers['content-length'] = send.byteLength;
+			for(let remove of remove_encoding)delete response_headers[remove];
+		}else{
+			send = response;
 		}
-		
-		response_headers['content-length'] = send.byteLength;	
 	}
 
 	// server.tomp.log.debug(url, response_headers);
@@ -212,8 +208,7 @@ export async function SendHTML(server, server_request, server_response, field){
 
 	for(let remove of remove_csp_headers)delete response_headers[remove];
 	for(let remove of remove_general)delete response_headers[remove];
-	for(let remove of remove_encoding)delete response_headers[remove];
-
+	
 	const set_cookies = [].concat(response['set-cookie']);
 
 	for(let set of set_cookies){
@@ -254,6 +249,13 @@ export async function SendHTML(server, server_request, server_response, field){
 
 	MapHeaderNames(ObjectFromRawHeaders(response.rawHeaders), response_headers);
 	server_response.writeHead(response.statusCode, response_headers);
-	if(Buffer.isBuffer(send))server_response.write(send);
-	server_response.end();
+
+	if(send instanceof Buffer){
+		server_response.write(send);
+		server_response.end();
+	}else if(send instanceof Stream){
+		send.pipe(server_response);
+	}else{
+		server_response.end();
+	}
 }
