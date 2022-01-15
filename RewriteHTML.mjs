@@ -56,28 +56,24 @@ export class RewriteHTML {
 		},
 		iframe: {
 			src: (value, url, key, attrs) => {
-				if(value.startsWith('data:'))return value;
 				const resolved = new URL(value, url).href;
 				return this.tomp.html.serve(resolved, url, key);
 			},
 		},
 		img: {
 			src: (value, url, key, attrs) => {
-				if(value.startsWith('data:'))return value;
 				const resolved = new URL(value, url).href;
 				return this.tomp.binary.serve(resolved, url, key);
 			},
 		},
 		a: {
 			href: (value, url, key, attrs) => {
-				if(value.startsWith('data:'))return value;
 				const resolved = new URL(value, url).href;
 				return this.tomp.html.serve(resolved, url, key);
 			},
 		},
 		link: {
 			href: (value, url, key, attrs) => {
-				if(value.startsWith('data:'))return value;
 				const resolved = new URL(value, url).href;
 				
 				switch(attrs.rel){
@@ -94,7 +90,6 @@ export class RewriteHTML {
 		},
 		meta: {
 			content: (value, url, key, attrs) => {
-				if(value.startsWith('data:'))return value;
 				const resolved = new URL(value, url).href;
 				
 				switch(attrs.name){
