@@ -6,9 +6,9 @@ export class RewriteCSS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	wrap(code, url, key){
+	wrap(code, url, key, html){
 		try{
-			var ast = parse(code);
+			var ast = parse(code, { context: html ? 'declarationList' : 'stylesheet' });
 		}catch(err){
 			if(err instanceof SyntaxError){
 				return `/*${JSON.stringify(err.message)}*/`;
@@ -27,7 +27,6 @@ export class RewriteCSS {
 				}
 				
 				node.value = that.tomp.binary.serve(resolved, url, key);
-				
 			}
 		});
 

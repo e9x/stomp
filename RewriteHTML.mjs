@@ -49,7 +49,10 @@ export class RewriteHTML {
 	all_nodes = Symbol();
 	attribute_router = {
 		[this.all_nodes]: {
-
+			// on*
+			style: (value, url, key, attrs) => {
+				return this.tomp.css.wrap(value, url, key, true);
+			},
 		},
 		script: {
 			// attrs const
@@ -154,7 +157,7 @@ export class RewriteHTML {
 	// returns false if the ctx was detached
 	route_attributes(route, ctx, attrs, url, key){
 		for(let name in route)if(name in attrs){
-			const result = this.attribute_router[ctx.type][name](attrs[name], url, key, attrs);
+			const result = route[name](attrs[name], url, key, attrs);
 			if(result == this.delete_attribute)delete attrs[name];
 			else if(result == this.delete_node){
 				ctx.detach();
