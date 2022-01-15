@@ -43,6 +43,7 @@ export class RewriteHTML {
 		},
 	};
 	delete_attribute = Symbol();
+	delete_node = Symbol();
 	attribute_router = {
 		script: {
 			// attrs const
@@ -92,19 +93,27 @@ export class RewriteHTML {
 			content: (value, url, key, attrs) => {
 				const resolved = new URL(value, url).href;
 				
+				switch(attrs.itemprop){
+					case'image':
+						return this.tomp.binary.serve(resolved, url, key);
+						break;
+				}
+
 				switch(attrs.name){
+					case'referrer':
+						return this.delete_node;
+						break;
 					case'og:url':
 					case'twitter:url':
 					case'parsely-link':
 					case'parsely-image-url':
-					
 						return this.tomp.html.serve(resolved, url, key);
 						break;
 					case'og:image':
 					case'twitter:image':
 					case'sailthru.image.thumb':
 					case'msapplication-TileImage':
-							return this.tomp.binary.serve(resolved, url, key);
+						return this.tomp.binary.serve(resolved, url, key);
 						break;
 					case'style-tools':
 						return this.tomp.css.serve(resolved, url, key);
@@ -155,8 +164,14 @@ export class RewriteHTML {
 			if(ctx.type in this.attribute_router)for(let name in this.attribute_router[ctx.type])if(name in attrs){
 				const result = this.attribute_router[ctx.type][name](attrs[name], url, key, attrs);
 				if(result == this.delete_attribute)delete attrs[name];
+				else if(result == this.delete_node){
+					ctx.detach();
+					continue;
+				}
 				else attrs[name] = result;
 			}
+
+			if(!ctx.attached)continue;
 			
 			for(let name in attrs)if(name.startsWith('on')){
 				attrs[name] = this.tomp.js.wrap(value, url, key);

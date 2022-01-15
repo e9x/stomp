@@ -70,7 +70,7 @@ export class Parse5Context {
 		if(!this.attached)throw new RangeError('Cannot detach an already detached node. Call .attach(context) first.');
 		let place = this.parent.node.childNodes.indexOf(this.node);
 		if(place == -1) return false;
-		this.parent.node.childNodes.splice(place, 1, node);
+		this.parent.node.childNodes.splice(place, 1);
 		this.attached = false;
 		delete this.parent;
 		return true;
