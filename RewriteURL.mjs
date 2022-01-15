@@ -1,13 +1,15 @@
 // WIP
 export const protocols = ['http:','https:'];
 
-class RewriteURL {
+export class RewriteURL {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
 	wrap(url, key){
 		const og = new URL(url);
-		const protobyte = String.fromCharCode(protocols.indexOf(og.protocol));
+		const protoi = protocols.indexOf(og.protocol);
+		if(protoi == -1)throw new RangeError(`Unsupported protocol '${og.protocol}'`);
+		const protobyte = String.fromCharCode(protoi);
 		const field = encodeURIComponent(this.tomp.codec.wrap(og.host, key)) + '/' + protobyte + this.tomp.codec.wrap(og.pathname + og.search, key);
 		
 		return field;

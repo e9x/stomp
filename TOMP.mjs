@@ -1,3 +1,4 @@
+import { RewriteURL } from './RewriteURL.mjs';
 import { RewriteJS } from './RewriteJS.mjs';
 import { RewriteCSS } from './RewriteCSS.mjs';
 import { RewriteHTML } from './RewriteHTML.mjs';
@@ -35,6 +36,7 @@ export class TOMP {
 		}
 
 		this.log = new Logger(this);
+		this.url = new RewriteURL(this);
 		this.js = new RewriteJS(this);
 		this.css = new RewriteCSS(this);
 		this.html = new RewriteHTML(this);
