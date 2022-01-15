@@ -6,6 +6,10 @@ const essential_nodes = ['#documentType','#document','#text','html','head','body
 const js_types = ['text/javascript','text/javascript','application/javascript','module',''];
 const css_types = ['text/css',''];
 
+export function get_mime(content_type){
+	return content_type.split(';')[0];
+}
+
 function P5_attribute_object(attrs){
 	const result = Object.setPrototypeOf({}, null);
 	
@@ -26,10 +30,6 @@ function P5_object_attrs(object){
 
 	return result;
 };
-
-function get_mime(content_type){
-	return content_type.split(';')[0];
-}
 
 export class RewriteHTML {
 	content_router = {

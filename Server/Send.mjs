@@ -4,13 +4,17 @@ import { Fetch } from './Fetch.mjs';
 import { DecompressResponse } from './HTTPUtil.mjs'
 import { MapHeaderNames, ObjectFromRawHeaders } from './HeaderUtil.mjs'
 import { CompilationPath } from './Compiler.mjs';
+import { get_mime } from '../RewriteHTML.mjs';
 
 const remove_general = [
 	'alt-svc',
 	'x-transfer-encoding',
+	'x-xss-protection',
+];
+
+const remove_encoding = [
 	'x-content-encoding',
 	'content-encoding',
-	'x-xss-protection',
 ];
 
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers#security
@@ -146,6 +150,7 @@ async function SendRewrittenScript(rewriter, server, server_request, server_resp
 
 	for(let remove of remove_csp_headers)delete response_headers[remove];
 	for(let remove of remove_general)delete response_headers[remove];
+	for(let remove of remove_encoding)delete response_headers[remove];
 
 	const set_cookies = [].concat(response['set-cookie']);
 
@@ -187,7 +192,12 @@ export async function SendHTML(server, server_request, server_response, field){
 
 	var send;
 	if(!status_empty.includes(response.statusCode)){
-		send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
+		if(get_mime(response_headers['content-type']) == 'application/pdf'){
+			send = Buffer.from(await DecompressResponse(response));
+		}else{
+			send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
+		}
+		
 		response_headers['content-length'] = send.byteLength;	
 	}
 
@@ -197,7 +207,8 @@ export async function SendHTML(server, server_request, server_response, field){
 
 	for(let remove of remove_csp_headers)delete response_headers[remove];
 	for(let remove of remove_general)delete response_headers[remove];
-	
+	for(let remove of remove_encoding)delete response_headers[remove];
+
 	const set_cookies = [].concat(response['set-cookie']);
 
 	for(let set of set_cookies){
