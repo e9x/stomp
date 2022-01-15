@@ -27,7 +27,7 @@ export async function Process(server, request, response){
 
 	headers['set-cookie'] = server.get_setcookie(key);
 	
-	const redirect = '/tomp/html/' + encodeURIComponent(server.tomp.codec.wrap(body.input, key));
+	const redirect = server.tomp.html.serve(body.input, body.input, key);
 	const send = Buffer.from(`<!DOCTYPE HTML><html><head><meta charset='utf-8' /><meta http-equiv="refresh" content=${JSON.stringify('0;' + redirect)} /></head><body></body></html>`);
 	headers['content-length'] = send.byteLength;
 	response.writeHead(200, headers);

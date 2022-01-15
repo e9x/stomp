@@ -11,6 +11,7 @@ export class RewriteBinary {
 		return code;
 	}
 	serve(serve, url, key){
+		if(serve.startsWith('data:'))return serve;
 		return `${this.tomp.prefix}binary/${encodeURIComponent(this.tomp.codec.wrap(serve, key))}`
 	}
 };
