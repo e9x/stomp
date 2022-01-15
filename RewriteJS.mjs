@@ -12,7 +12,7 @@ export class RewriteJS {
 		this.tomp = tomp;
 	}
 	wrap(code, url, key){
-		return '';
+		if(this.tomp.noscript)return '';
 
 		try{
 			var ast = parse(code, { ecmaVersion: 2020 });

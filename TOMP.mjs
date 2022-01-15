@@ -13,11 +13,13 @@ export class TOMP {
 		return {
 			codec: codecs.indexOf(this.wrap),
 			prefix: this.prefix,
+			noscript: this.noscript,
 		};
 	}
 	prefix = '/tomp/';
 	codec = PlainCodec;
 	loglevel = 0;
+	noscript = false;
 	constructor(config){
 		if(typeof config.prefix == 'string'){
 			this.prefix = config.prefix;
@@ -32,7 +34,11 @@ export class TOMP {
 		}
 
 		if(typeof config.loglevel == 'number'){
-			this.loglevel = config.loglevel;
+			this.loglevel = true;
+		}
+
+		if(config.noscript == true){
+			this.noscript = config.noscript;
 		}
 
 		this.log = new Logger(this);

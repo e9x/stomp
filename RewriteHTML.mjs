@@ -187,7 +187,17 @@ export class RewriteHTML {
 		var inserted_script = false;
 
 		for(let ctx of new Parse5Iterator(ast)) {
-			if(!ctx.node.attrs)continue;
+			if(!ctx.node.attrs){ // #text node
+				// console.log(ctx.node);
+				continue;
+			}
+
+
+			if(ctx.type == 'noscript' && this.tomp.noscript){
+				// todo: move all noscript childNodes into the noscript parent
+				ctx.node.tagName = 'okscript';
+				continue;
+			}
 
 			let attrs = P5_attribute_object(ctx.node.attrs);
 			// remove from memory
@@ -238,7 +248,7 @@ export class RewriteHTML {
 		if(urlend == -1)urlend = value.length;
 		
 		const resolved = new URL(value.slice(urlstart + 4, urlend), url).href;
-		return this.serve(resolved, url, key);
+		return value.slice(0, urlstart) + this.serve(resolved, url, key) + value.slice(urlend);
 	}
 	wrap_fragment(html, key){
 
