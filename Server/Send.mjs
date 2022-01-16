@@ -67,9 +67,12 @@ function handle_common(server, server_request, server_response, url, key, respon
 
 			delete set.cookie;
 
-			// set.path = server.tomp.prefix + '/html/server.tomp.url.wrap_host(set.domain || host, key);
+			delete set.domain;
 			
-			set_cookies.push(cookie.serialize(set.name, set));
+			set.name = set.name + '@' + set.path;
+			set.path = server.tomp.prefix + server.tomp.url.wrap_host(set.domain || host, key);
+			
+			set_cookies.push(cookie.serialize(set.name, set.value, set));
 		}
 	}
 
@@ -142,27 +145,21 @@ export async function SendBinary(server, server_request, server_response, query,
 export async function SendForm(server, server_request, server_response, query, field){
 	const headers = Object.setPrototypeOf({}, null);
 
-	if(server_request.method == 'GET'){
-		const query_ind = field.indexOf('?');
-		if(query_ind == -1)return void server.send_json(server_response, 400, { message: server.messages['error.badform.get'] });
-		const query = field.slice(query_ind);
-		field = field.slice(0, query_ind);
-		
-		const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
-		if(gd_error)return;
-		
-		const orig_query_ind = url.indexOf('?');
-		
-		const updated = url.slice(0, orig_query_ind == -1 ? url.length : orig_query_ind) + query;
-		headers['location'] = server.tomp.html.serve(updated, updated, key);
-	}else{
-		const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
-		if(gd_error)return;
-		
-		// post
+	const search_ind = field.indexOf('?');
+	if(search_ind == -1)return void server.send_json(server_response, 400, { message: server.messages['error.badform.get'] });
+	const search = field.slice(search_ind);
+	field = field.slice(0, search_ind);
+	
+	console.log(field);
 
-		headers['location'] = server.tomp.html.serve(url, url, key);
-	}
+	const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
+	if(gd_error)return;
+	
+	const orig_search_ind = url.indexOf('?');
+	
+	const updated = url.slice(0, orig_search_ind == -1 ? url.length : orig_search_ind) + search;
+	headers['location'] = server.tomp.html.serve(updated, updated, key);
+
 
 	server_response.writeHead(302, headers);
 	server_response.end();

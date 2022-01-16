@@ -242,7 +242,11 @@ export class RewriteHTML {
 			if(ctx.type == 'form'){
 				const action_resolved = new URL(attrs.action || '', url).href;
 
-				attrs.action = this.tomp.form.serve(action_resolved, url, key);
+				if(attrs.method == 'POST'){
+					attrs.action = this.tomp.html.serve(action_resolved, url, key);
+				}else{
+					attrs.action = this.tomp.form.serve(action_resolved, url, key);
+				}
 			}
 
 			for(let name in attrs)if(name.startsWith('on')){
