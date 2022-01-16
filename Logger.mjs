@@ -11,7 +11,6 @@ const info = console.info.bind(console);
 const warn = console.warn.bind(console);
 const error = console.error.bind(console);
 
-
 export class Logger {
 	levels = ['trace','debug','info','warn','error','silent'];
 	constructor(tomp){

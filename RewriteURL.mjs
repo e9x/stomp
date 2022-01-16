@@ -19,7 +19,7 @@ export class RewriteURL {
 		// android-app, ios-app, mailto, many other non-browser protocols
 		if(protoi == -1)return url; // throw new RangeError(`Unsupported protocol '${og.protocol}'`);
 		
-		const field = this.tomp.prefix + this.wrap_host(og.host, key) + service + '/' + protoi.toString(16) + escape(this.tomp.codec.wrap(og.pathname + og.search, key));
+		const field = this.tomp.prefix + this.wrap_host(og.host, key) + service + '/' + protoi.toString(16) + escape(this.tomp.codec.wrap(og.pathname + og.search, key)) + og.hash;
 		return field;
 	}
 	// only called in send.js get_data

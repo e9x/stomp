@@ -15,7 +15,7 @@ export async function Fetch(server_request, request_headers, input){
 	const options = {
 		url: url.href,
 		hostname: url.host,
-		port: url.port,
+		port: url.port ? parseInt(url.port) : (url.protocol == 'https:' ? 443 : 80),
 		path: url.pathname + url.search, // include query
 		method: server_request.method,
 		headers: request_headers,

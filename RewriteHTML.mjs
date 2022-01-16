@@ -66,7 +66,7 @@ export class RewriteHTML {
 		},
 		use: {
 			'xlink:href': this.html_src,
-			'href': this.binary_src,
+			'href': this.html_src,
 		},
 		script: {
 			// attrs const
