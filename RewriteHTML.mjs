@@ -49,6 +49,7 @@ export class RewriteHTML {
 	delete_attribute = Symbol();
 	delete_node = Symbol();
 	all_nodes = Symbol();
+	set_attributes = Symbol();
 	binary_src = (value, url, key, attrs) => {
 		const resolved = new URL(value, url).href;
 		return this.tomp.binary.serve(resolved, url, key);
@@ -79,6 +80,9 @@ export class RewriteHTML {
 			'href': this.html_src,
 		},
 		script: {
+			[this.set_attributes]: {
+				crossorigin: (url, key, attrs) => 'use-credentials',
+			},
 			// attrs const
 			src: (value, url, key, attrs) => {
 				const resolved = new URL(value, url).href;
@@ -92,10 +96,16 @@ export class RewriteHTML {
 			src: this.html_src,
 		},
 		img: {
+			[this.set_attributes]: {
+				crossorigin: (url, key, attrs) => 'use-credentials',
+			},
 			src: this.binary_src,
 			srcset: this.binary_srcset,
 		},
 		audio: {
+			[this.set_attributes]: {
+				crossorigin: (url, key, attrs) => 'use-credentials',
+			},
 			src: this.binary_src,
 		},
 		source: {
@@ -103,17 +113,21 @@ export class RewriteHTML {
 			srcset: this.binary_srcset,
 		},
 		video: {
+			[this.set_attributes]: {
+				crossorigin: (url, key, attrs) => 'use-credentials',
+			},
 			poster: this.binary_src,
 		},
 		a: {
 			href: this.html_src,
 		},
 		link: {
+			[this.set_attributes]: {
+				crossorigin: (url, key, attrs) => 'use-credentials',
+			},
 			href: (value, url, key, attrs) => {
 				const resolved = new URL(value, url).href;
 				
-				attrs.crossorigin = 'use-credentials';
-
 				switch(attrs.rel){
 					case'preload':
 						switch(attrs.as){
@@ -237,6 +251,23 @@ export class RewriteHTML {
 
 		return nodes;
 	}
+	route_set_attributes(route, ctx, attrs, url, key){
+		for(let name in route)if(name in attrs){
+			try{
+				const result = route[name](url, key, attrs);
+				if(result == this.delete_node){
+					ctx.detach();
+					return false;
+				}
+				else attrs[name] = result;
+			}catch(err){
+				console.error(err);
+				delete attrs[name];
+			}
+		}
+
+		return true;
+	}
 	// returns false if the ctx was detached
 	route_attributes(route, ctx, attrs, url, key){
 		for(let name in route)if(name in attrs){
@@ -293,8 +324,9 @@ export class RewriteHTML {
 				continue;
 			}
 			
-			if(ctx.type in this.attribute_router && !this.route_attributes(this.attribute_router[ctx.type], ctx, attrs, url, key)){
-				continue;
+			if(ctx.type in this.attribute_router){
+				if(!this.route_attributes(this.attribute_router[ctx.type], ctx, attrs, url, key))continue;
+				if(!this.route_set_attributes(this.attribute_router[ctx.type][this.set_attributes], ctx, attrs, url, key))continue;
 			}
 
 			if(!ctx.attached)continue;
