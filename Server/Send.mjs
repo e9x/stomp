@@ -47,11 +47,14 @@ function rewrite_setcookie(setcookie, server, url, key){
 	const set_cookies = [];
 	const parsed = setcookie_parser(setcookie);
 
+	// wip pathing
+	// will not work for subdomains
 	for(let set of parsed){
 		// $cookie@/path
 		// no need to include host when set.path
-					
-		const host = new URL(url).host;
+		
+		const host = /*set.domain || */ new URL(url).host;
+		// console.log('host of', host);
 		// test host and set.domain ownership
 
 		delete set.cookie;
@@ -61,7 +64,7 @@ function rewrite_setcookie(setcookie, server, url, key){
 		const setp = set.path == '/' || !set.path ? '' : set.path;
 
 		set.name = set.name + '/' + encodeURIComponent(setp);
-		set.path = server.tomp.prefix + server.tomp.url.wrap_host(set.domain || host, key);
+		set.path = server.tomp.prefix + server.tomp.url.wrap_host(host, key);
 		
 		set_cookies.push(cookie.serialize(set.name, set.value, set));
 	}
@@ -72,6 +75,7 @@ function rewrite_setcookie(setcookie, server, url, key){
 function handle_common_request(server, server_request, request_headers, url, key){
 	// if(cookie in request_headers){
 	const parsed_cookies = cookie.parse(request_headers['cookie']);
+	console.log(parsed_cookies, request_headers['cookie']);
 	const new_cookies = {};
 	const pathname = new URL(url).pathname;
 
@@ -180,8 +184,6 @@ export async function SendForm(server, server_request, server_response, query, f
 	const search = field.slice(search_ind);
 	field = field.slice(0, search_ind);
 	
-	console.log(field);
-
 	const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
 	if(gd_error)return;
 	
@@ -227,6 +229,10 @@ export async function SendJS(server, server_request, server_response, query, fie
 
 export async function SendCSS(server, server_request, server_response, query, field){
 	return await SendRewrittenScript(server.tomp.css, server, server_request, server_response, query, field);
+}
+
+export async function SendManifest(server, server_request, server_response, query, field){
+	return await SendRewrittenScript(server.tomp.manifest, server, server_request, server_response, query, field);
 }
 
 export async function SendHTML(server, server_request, server_response, query, field){

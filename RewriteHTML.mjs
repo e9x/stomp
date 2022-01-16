@@ -8,7 +8,7 @@ const essential_nodes = ['#documentType','#document','#text','html','head','body
 
 export const js_types = ['text/javascript','application/javascript','module',''];
 export const css_types = ['text/css',''];
-export const html_types = ['text/html',''];
+export const html_types = ['image/svg+xml', 'text/html',''];
 
 export function get_mime(content_type){
 	return content_type.split(';')[0];
@@ -57,6 +57,16 @@ export class RewriteHTML {
 		const resolved = new URL(value, url).href;
 		return this.tomp.html.serve(resolved, url, key);
 	};
+	binary_srcset = (value, url, key, attrs) => {
+		const parsed = parseSrcset(value);
+
+		for(let src of parsed){
+			const resolved = new URL(src.url, url).href;
+			src.url = this.tomp.binary.serve(resolved, url, key);
+		}
+
+		return stringifySrcset(parsed);
+	};
 	attribute_router = {
 		[this.all_nodes]: {
 			// on*
@@ -83,22 +93,14 @@ export class RewriteHTML {
 		},
 		img: {
 			src: this.binary_src,
-			srcset: (value, url, key, attrs) => {
-				const parsed = parseSrcset(value);
-
-				for(let src of parsed){
-					const resolved = new URL(src.url, url).href;
-					src.url = this.tomp.binary.serve(resolved, url, key);
-				}
-
-				return stringifySrcset(parsed);
-			},
+			srcset: this.binary_srcset,
 		},
 		audio: {
 			src: this.binary_src,
 		},
 		source: {
 			src: this.binary_src,
+			srcset: this.binary_srcset,
 		},
 		video: {
 			poster: this.binary_src,
@@ -110,7 +112,12 @@ export class RewriteHTML {
 			href: (value, url, key, attrs) => {
 				const resolved = new URL(value, url).href;
 				
+				attrs.crossorigin = 'use-credentials';
+
 				switch(attrs.rel){
+					case'manifest':
+						return this.tomp.manifest.serve(resolved, url, key);
+						break;
 					case'alternate':
 					case'amphtml':
 					// case'profile':
@@ -182,19 +189,10 @@ export class RewriteHTML {
 		this.tomp = tomp;
 	}
 	get_head(url, key){
-		return [
-			{
-				nodeName: 'script',
-				tagName: 'script',
-				childNodes: [],
-				attrs: [	
-					{
-						name: 'src',
-						value: `${this.tomp.prefix}about:/static/main.js`,
-					},
-				],
-			},
-			{
+		const nodes = [];
+
+		if(!this.tomp.noscript){
+			nodes.push({
 				nodeName: 'script',
 				tagName: 'script',
 				childNodes: [
@@ -204,8 +202,22 @@ export class RewriteHTML {
 					}
 				],
 				attrs: [],
-			}
-		];
+			});
+			
+			nodes.push({
+				nodeName: 'script',
+				tagName: 'script',
+				childNodes: [],
+				attrs: [	
+					{
+						name: 'src',
+						value: `${this.tomp.prefix}about:/static/main.js`,
+					},
+				],
+			});
+		}
+
+		return nodes;
 	}
 	// returns false if the ctx was detached
 	route_attributes(route, ctx, attrs, url, key){
