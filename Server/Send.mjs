@@ -8,6 +8,7 @@ import { Stream } from 'stream';
 import setcookie_parser from 'set-cookie-parser';
 import cookie from 'cookie';
 import { parse } from 'path';
+import { request } from 'http';
 
 const remove_general_headers = [
 	'alt-svc',
@@ -73,7 +74,6 @@ function rewrite_setcookie(setcookie, server, url, key){
 		set.name = set.name + '/' + encodeURIComponent(setp);
 		set.path = server.tomp.prefix + server.tomp.url.wrap_host(host, key);
 		if(host_fixed)set.path += ']/';
-		console.log(set.path);
 
 		set_cookies.push(cookie.serialize(set.name, set.value, set));
 	}
@@ -130,8 +130,8 @@ function handle_common_request(server, server_request, request_headers, url, key
 			}
 		}
 
-		request_headers['cookie'] += new_cookies.join('; ');
-		console.log(request_headers['cookie']);
+		if(new_cookies.length)request_headers['cookie'] += new_cookies.join('; ');
+		else delete request_headers['cookie'];
 	}else{
 		delete request_headers['cookie'];
 	}

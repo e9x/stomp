@@ -31,9 +31,11 @@ export class PlainCodec extends CodecInterface {
 
 // nature of xor allows wrap to be used both ways
 export class XORCodec extends CodecInterface {
+	static URI_max = 0x7F;
+	static URI_min = 0x01;
 	static generate_key(){
 		const
-			xor = ~~(Math.random() * 0xFF),
+			xor = ~~(Math.random() * (this.URI_max - 1)),
 			// 0-5
 			frequency = Math.min(~~(Math.random() * 0xF), 5);
 
@@ -49,7 +51,8 @@ export class XORCodec extends CodecInterface {
 		
 		for(let i = 0; i < input.length; i++){
 			if(i % frequency == 0){
-				result += String.fromCharCode(input[i].charCodeAt() ^ xor);
+				const char = (input[i].charCodeAt() ^ xor) + this.URI_min;
+				result += String.fromCharCode(char);
 			}else{
 				result += input[i];
 			}
@@ -58,7 +61,21 @@ export class XORCodec extends CodecInterface {
 		return result;
 	}
 	static unwrap(input, key){
-		return this.wrap(input, key);
+		key = parseInt(key, 16);
+
+		const xor = key >> 0x4, frequency = key & 0xF;
+		var result = '';
+		
+		for(let i = 0; i < input.length; i++){
+			if(i % frequency == 0){
+				const char = (input[i].charCodeAt() - this.URI_min) ^ xor;
+				result += String.fromCharCode(char);
+			}else{
+				result += input[i];
+			}
+		}
+
+		return result;
 	}
 };
 
