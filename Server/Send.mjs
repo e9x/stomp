@@ -44,7 +44,7 @@ const remove_csp_headers = [
 	'x-xss-protection',
 ];
 
-function rewrite_setcookie(setcookie, server, url, key){
+function rewrite_setcookie(setcookie, server, host, key){
 	const set_cookies = [];
 	const parsed = setcookie_parser(setcookie);
 
@@ -53,7 +53,7 @@ function rewrite_setcookie(setcookie, server, url, key){
 		// $cookie@/path
 		// no need to include host when set.path
 		
-		let host = set.domain || new URL(url).host;
+		let host = set.domain || host;
 		let host_fixed = true;
 		if(host.startsWith('.')){
 			host_fixed = false;
@@ -80,7 +80,7 @@ function rewrite_setcookie(setcookie, server, url, key){
 	return set_cookies;
 }
 
-function handle_common_request(server, server_request, request_headers, url, key, crossorigin){
+function handle_common_request(server, server_request, request_headers, parsed, key, crossorigin){
 	if('referer' in server_request.headers){
 		const ref = new URL(server_request.headers.referer);
 		const {service,query,field} = server.get_attributes(ref.pathname);
@@ -105,7 +105,7 @@ function handle_common_request(server, server_request, request_headers, url, key
 		case'use-credentials':
 
 			if('referer' in server_request.headers){
-				send_cookies = new URL(request_headers.referer).host == new URL(url).host;
+				send_cookies = new URL(request_headers.referer).host == parsed.host;
 			}
 
 			break;
@@ -114,8 +114,7 @@ function handle_common_request(server, server_request, request_headers, url, key
 	if(send_cookies){
 		const parsed_cookies = cookie.parse(request_headers['cookie']);
 		const new_cookies = [];
-		const { pathname } = new URL(url);
-
+		
 		request_headers['cookie'] = '';
 
 		for(let cname in parsed_cookies){
@@ -124,7 +123,7 @@ function handle_common_request(server, server_request, request_headers, url, key
 			const name = cname.slice(0, pathind);
 			const path = decodeURIComponent(cname.slice(pathind + 1) || '/');
 			
-			if(pathname.startsWith(path)){
+			if(parsed.path.startsWith(path)){
 				new_cookies.push(cookie.serialize(name, parsed_cookies[cname]));
 			}
 		}
@@ -150,7 +149,7 @@ function handle_common_response(server, server_request, server_response, url, ke
 	];
 
 	for(let set of response_headers['set-cookie'] || []){
-		set_cookies.push(...rewrite_setcookie(set, server, url, key));
+		set_cookies.push(...rewrite_setcookie(set, server, url.host, key));
 	}
 
 	response_headers['set-cookie'] = set_cookies;
@@ -207,12 +206,12 @@ function get_data(server, server_request, server_response, query, field){
 
 	const url = server.tomp.url.unwrap(query, field, key);
 	
-	try{
+	/*try{
 		new URL(url);
 	}catch(err){
 		server.send_json(server_response, 400, { message: server.messages['error.badurl'] });
 		return { gd_error: true };
-	}
+	}*/
 	
 	handle_common_request(server, server_request, request_headers, url, key, crossorigin);
 	
@@ -269,7 +268,7 @@ async function SendRewrittenScript(rewriter, server, server_request, server_resp
 
 	var send;
 	if(!status_empty.includes(response.statusCode)){
-		send = Buffer.from(rewriter.wrap((await DecompressResponse(response)).toString(), url, key));
+		send = Buffer.from(rewriter.wrap((await DecompressResponse(response)).toString(), url.toString(), key));
 		for(let remove of remove_encoding_headers)delete response_headers[remove];
 		response_headers['content-length'] = send.byteLength;
 	}
@@ -306,7 +305,7 @@ export async function SendHTML(server, server_request, server_response, query, f
 	var send;
 	if(!status_empty.includes(response.statusCode)){
 		if(html_types.includes(get_mime(response_headers['content-type'] || ''))){
-			var send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
+			var send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url.toString(), key));
 			response_headers['content-length'] = send.byteLength;
 			for(let remove of remove_encoding_headers)delete response_headers[remove];
 		}else{

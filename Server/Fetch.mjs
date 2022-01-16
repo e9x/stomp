@@ -7,25 +7,24 @@ import https from 'https';
 
 const post_methods = ['PATCH','POST','PUT'];
 
-export async function Fetch(server_request, request_headers, input){
-	const url = new URL(input);
-
-	request_headers.host = url.hostname;
-
+export async function Fetch(server_request, request_headers, { protocol, host, port, path }){
+	const colon = host.lastIndexOf(':');
+	
+	request_headers['host'] = host;
+	
 	const options = {
-		url: url.href,
-		hostname: url.host,
-		port: url.port ? parseInt(url.port) : (url.protocol == 'https:' ? 443 : 80),
-		path: url.pathname + url.search, // include query
+		host,
+		port,
+		path, 
 		method: server_request.method,
 		headers: request_headers,
 	};
 	
 	var request_stream;
 	
-	if(url.protocol == 'https:')var response_promise = new Promise((resolve, reject) => request_stream = https.request(options, resolve).on('error', reject));
-	else if(url.protocol == 'http:')var response_promise =  new Promise((resolve, reject) => request_stream = http.request(options, resolve).on('error', reject));
-	else throw new RangeError(`Unsupported protocol: '${url.protocol}'`);
+	if(protocol == 'https:')var response_promise = new Promise((resolve, reject) => request_stream = https.request(options, resolve).on('error', reject));
+	else if(protocol == 'http:')var response_promise =  new Promise((resolve, reject) => request_stream = http.request(options, resolve).on('error', reject));
+	else throw new RangeError(`Unsupported protocol: '${protocol}'`);
 
 	if(post_methods.includes(options.method)){
 		server_request.pipe(request_stream);
