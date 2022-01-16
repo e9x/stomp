@@ -2,6 +2,7 @@ import { ParseDataURI } from './DataURI.mjs'
 import { serialize, parse, parseFragment } from 'parse5';
 import { Parse5Iterator } from './IterateParse5.mjs';
 import { global_client } from './RewriteJS.mjs';
+import { parseSrcset, stringifySrcset } from 'srcset';
 
 const essential_nodes = ['#documentType','#document','#text','html','head','body'];
 
@@ -48,6 +49,14 @@ export class RewriteHTML {
 	delete_attribute = Symbol();
 	delete_node = Symbol();
 	all_nodes = Symbol();
+	binary_src = (value, url, key, attrs) => {
+		const resolved = new URL(value, url).href;
+		return this.tomp.binary.serve(resolved, url, key);
+	};
+	html_src = (value, url, key, attrs) => {
+		const resolved = new URL(value, url).href;
+		return this.tomp.html.serve(resolved, url, key);
+	};
 	attribute_router = {
 		[this.all_nodes]: {
 			// on*
@@ -56,10 +65,7 @@ export class RewriteHTML {
 			},
 		},
 		use: {
-			'xlink:href': (value, url, key, attrs) => {
-				const resolved = new URL(value, url).href;
-				return this.tomp.html.serve(resolved, url, key);
-			},
+			'xlink:href': this.html_src,
 		},
 		script: {
 			// attrs const
@@ -72,22 +78,32 @@ export class RewriteHTML {
 			integrity: () => this.delete_attribute,	
 		},
 		iframe: {
-			src: (value, url, key, attrs) => {
-				const resolved = new URL(value, url).href;
-				return this.tomp.html.serve(resolved, url, key);
-			},
+			src: this.html_src,
 		},
 		img: {
-			src: (value, url, key, attrs) => {
-				const resolved = new URL(value, url).href;
-				return this.tomp.binary.serve(resolved, url, key);
+			src: this.binary_src,
+			srcset: (value, url, key, attrs) => {
+				const parsed = parseSrcset(value);
+
+				for(let src of parsed){
+					const resolved = new URL(src.url, url).href;
+					src.url = this.tomp.binary.serve(resolved, url, key);
+				}
+				
+				return stringifySrcset(parsed);
 			},
 		},
+		audio: {
+			src: this.binary_src,
+		},
+		source: {
+			src: this.binary_src,
+		},
+		video: {
+			poster: this.binary_src,
+		},
 		a: {
-			href: (value, url, key, attrs) => {
-				const resolved = new URL(value, url).href;
-				return this.tomp.html.serve(resolved, url, key);
-			},
+			href: this.html_src,
 		},
 		link: {
 			href: (value, url, key, attrs) => {
