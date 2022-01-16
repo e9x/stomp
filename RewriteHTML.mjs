@@ -200,6 +200,8 @@ export class RewriteHTML {
 
 				switch(attrs.property){
 					case'og:url':
+					case'og:video:url':
+					case'og:video:secure_url':
 						return this.tomp.html.serve(resolved, url, key);
 						break;
 					case'og:image':
@@ -211,6 +213,7 @@ export class RewriteHTML {
 					case'referrer':
 						return this.delete_node;
 						break;
+					case'twitter:app:url:googleplay':
 					case'twitter:url':
 					case'parsely-link':
 					case'parsely-image-url':
@@ -311,11 +314,13 @@ export class RewriteHTML {
 
 		var inserted_script = false;
 
+		var one_base = false;
+
 		for(let ctx of new Parse5Iterator(ast)) {
 			if(!ctx.node.attrs){ // #text node
 				continue;
 			}
-			
+
 			if(ctx.type == 'noscript' && this.tomp.noscript){
 				// todo: move all noscript childNodes into the noscript parent
 				ctx.node.tagName = 'span';
@@ -325,6 +330,14 @@ export class RewriteHTML {
 			let attrs = P5_attribute_object(ctx.node.attrs);
 			// remove from memory
 			delete ctx.node.attrs;
+			
+			if(ctx.type == 'base' && ctx.parent?.type == 'head' && !one_base){
+				one_base = true;
+				if(attrs.href)url = new URL(url, attrs.href);
+				// todo handle target
+				ctx.detach();
+				continue;
+			}
 
 			if(Array.isArray(ctx.node?.childNodes) && ctx.type in this.content_router){
 				const text = ctx.node?.childNodes[0];
