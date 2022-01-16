@@ -85,7 +85,11 @@ function handle_common_request(server, server_request, request_headers, url, key
 	if('referer' in server_request.headers){
 		const ref = new URL(server_request.headers.referer);
 		const {service,query,field} = server.get_attributes(ref.pathname);
-		request_headers.referer = server.tomp.url.unwrap(query, field, key);
+		if(service == 'html'){
+			request_headers.referer = server.tomp.url.unwrap(query, field, key);
+		}else{
+			delete request_headers.referer;
+		}
 	}
 	
 	var send_cookies = true;
@@ -103,7 +107,6 @@ function handle_common_request(server, server_request, request_headers, url, key
 
 			if('referer' in server_request.headers){
 				send_cookies = new URL(request_headers.referer).host == new URL(url).host;
-				console.log(send_cookies);
 			}
 
 			break;
@@ -114,7 +117,6 @@ function handle_common_request(server, server_request, request_headers, url, key
 		const new_cookies = [];
 		const { pathname } = new URL(url);
 
-		console.log(request_headers['cookie']);
 		request_headers['cookie'] = '';
 
 		for(let cname in parsed_cookies){
