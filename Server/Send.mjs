@@ -57,7 +57,17 @@ function handle_common(server, server_request, server_response, url, key, respon
 		const parsed = setcookie_parser(set);
 
 		for(let set of parsed){
-			set_cookies.push(cookie.serialize(set.name + '', set));
+			// $cookie @ /path
+			// no need to include host when set.path
+						
+			const host = new URL(url).host;
+			// test host and set.domain ownership
+
+			delete set.cookie;
+
+			set.path = server.tomp.prefix + '/html/server.tomp.url.wrap_host(set.domain || host, key);
+			
+			set_cookies.push(cookie.serialize(set.name, set));
 		}
 	}
 
