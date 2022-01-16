@@ -7,6 +7,8 @@ import { html_types, get_mime } from '../RewriteHTML.mjs';
 import { Stream } from 'stream';
 import setcookie_parser from 'set-cookie-parser';
 import cookie from 'cookie';
+import { decode } from 'punycode';
+import { parse } from 'path';
 
 const remove_general_headers = [
 	'alt-svc',
@@ -57,7 +59,9 @@ function rewrite_setcookie(setcookie, server, url, key){
 
 		delete set.domain;
 		
-		set.name = set.name + '@' + set.path;
+		const setp = set.path == '/' || !set.path ? '' : set.path;
+
+		set.name = set.name + '/' + encodeURIComponent(setp);
 		set.path = server.tomp.prefix + server.tomp.url.wrap_host(set.domain || host, key);
 		
 		set_cookies.push(cookie.serialize(set.name, set.value, set));
@@ -66,7 +70,27 @@ function rewrite_setcookie(setcookie, server, url, key){
 	return set_cookies;
 }
 
-function handle_common(server, server_request, server_response, url, key, response, response_headers){
+function handle_common_request(server, server_request, request_headers, url, key){
+	// if(cookie in request_headers){
+	const parsed_cookies = cookie.parse(request_headers['cookie']);
+	const new_cookies = {};
+	const pathname = new URL(url).pathname;
+
+	for(let cname in parsed_cookies){
+		const pathind = cname.lastIndexOf('/');
+		if(pathind == -1)continue;
+		const name = cname.slice(0, pathind);
+		const path = decodeURIComponent(cname.slice(pathind + 1) || '/');
+		
+		if(pathname.startsWith(path)){
+			new_cookies[name] = parsed_cookies[cname];
+		}
+	}
+	
+	request_headers['cookie'] = cookie.serialize(new_cookies);
+}
+
+function handle_common_response(server, server_request, server_response, url, key, response, response_headers){
 	
 	// server.tomp.log.debug(url, response_headers);
 
@@ -139,11 +163,11 @@ export async function SendBinary(server, server_request, server_response, query,
 	if(gd_error)return;
 	
 	const request_headers = {...server_request.headers};
-	request_headers.host = url.host;
+	handle_common_request(server, server_request, request_headers, url, key);
 	const response = await Fetch(server_request, request_headers, url);
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
 
-	handle_common(server, server_request, server_response, url, key, response, response_headers);
+	handle_common_response(server, server_request, server_response, url, key, response, response_headers);
 	
 	server_response.writeHead(response.statusCode, response_headers);
 	response.pipe(server_response);
@@ -179,7 +203,7 @@ async function SendRewrittenScript(rewriter, server, server_request, server_resp
 	if(gd_error)return;
 	
 	const request_headers = {...server_request.headers};
-	request_headers.host = url.host;
+	handle_common_request(server, server_request, request_headers, url, key);
 	const response = await Fetch(server_request, request_headers, url);
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
 
@@ -190,7 +214,7 @@ async function SendRewrittenScript(rewriter, server, server_request, server_resp
 		response_headers['content-length'] = send.byteLength;
 	}
 
-	handle_common(server, server_request, server_response, url, key, response, response_headers);
+	handle_common_response(server, server_request, server_response, url, key, response, response_headers);
 	
 	MapHeaderNames(ObjectFromRawHeaders(response.rawHeaders), response_headers);
 	server_response.writeHead(response.statusCode, response_headers);
@@ -227,7 +251,7 @@ export async function SendHTML(server, server_request, server_response, query, f
 		}
 	}
 	
-	handle_common(server, server_request, server_response, url, key, response, response_headers);
+	handle_common_response(server, server_request, server_response, url, key, response, response_headers);
 	
 	for(let remove of remove_html_headers)delete response_headers[remove];
 
