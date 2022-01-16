@@ -48,13 +48,19 @@ function rewrite_setcookie(setcookie, server, url, key){
 	const parsed = setcookie_parser(setcookie);
 
 	// wip pathing
-	// will not work for subdomains
 	for(let set of parsed){
 		// $cookie@/path
 		// no need to include host when set.path
 		
-		const host = /*set.domain || */ new URL(url).host;
-		// console.log('host of', host);
+		let host = set.domain || new URL(url).host;
+		let host_fixed = true;
+		if(host.startsWith('.')){
+			host_fixed = false;
+			host = host.slice(1);
+			// dont append ']'
+		}
+
+		console.log('host of', host);
 		// test host and set.domain ownership
 
 		delete set.cookie;
@@ -63,9 +69,12 @@ function rewrite_setcookie(setcookie, server, url, key){
 		
 		const setp = set.path == '/' || !set.path ? '' : set.path;
 
+		// set.name.lastIndexOf('/') must be (set.name + '/') not whats in setp
 		set.name = set.name + '/' + encodeURIComponent(setp);
 		set.path = server.tomp.prefix + server.tomp.url.wrap_host(host, key);
-		
+		if(host_fixed)set.path += ']/';
+		console.log(set.path);
+
 		set_cookies.push(cookie.serialize(set.name, set.value, set));
 	}
 
@@ -79,8 +88,11 @@ function handle_common_request(server, server_request, request_headers, url, key
 		request_headers.referer = server.tomp.url.unwrap(query, field, key);
 	}
 	
-	var send_cookies = false;
+	var send_cookies = true;
 	switch(crossorigin){
+		case'unknown':
+			send_cookies = true;
+			break;
 		case undefined:
 			send_cookies = true;
 		case'anonymous':
@@ -99,8 +111,11 @@ function handle_common_request(server, server_request, request_headers, url, key
 
 	if(send_cookies){
 		const parsed_cookies = cookie.parse(request_headers['cookie']);
-		const new_cookies = {};
-		const pathname = new URL(url).pathname;
+		const new_cookies = [];
+		const { pathname } = new URL(url);
+
+		console.log(request_headers['cookie']);
+		request_headers['cookie'] = '';
 
 		for(let cname in parsed_cookies){
 			const pathind = cname.lastIndexOf('/');
@@ -109,11 +124,12 @@ function handle_common_request(server, server_request, request_headers, url, key
 			const path = decodeURIComponent(cname.slice(pathind + 1) || '/');
 			
 			if(pathname.startsWith(path)){
-				new_cookies[name] = parsed_cookies[cname];
+				new_cookies.push(cookie.serialize(name, parsed_cookies[cname]));
 			}
 		}
 
-		request_headers['cookie'] = cookie.serialize(new_cookies);
+		request_headers['cookie'] += new_cookies.join('; ');
+		console.log(request_headers['cookie']);
 	}else{
 		delete request_headers['cookie'];
 	}
@@ -177,7 +193,7 @@ function get_data(server, server_request, server_response, query, field){
 
 	const request_headers = {...server_request.headers};
 	
-	var crossorigin = undefined;
+	var crossorigin = 'unknown';
 
 	const search_ind = field.indexOf('?');
 	if(search_ind != -1){

@@ -47,15 +47,15 @@ export class Server {
 	get_attributes(url){
 		const path = url.substr(this.tomp.prefix.length);
 		
-		const queryind = path.indexOf('/', 1);
-		const serviceind = path.indexOf('/', queryind + 1);
+		const queryind = path.indexOf(']/', 1);
+		const serviceind = path.indexOf('/', queryind + 2);
 
 		if(queryind == -1 || serviceind == -1){
-			throw { message: this.messages['generic.exception.request'] };
+			throw { message: this.messages['error.badurl'] };
 		}
 
 		return {
-			service: path.slice(queryind + 1, serviceind),
+			service: path.slice(queryind + 2, serviceind),
 			query: path.slice(0, queryind),
 			field: path.slice(serviceind),
 		};
@@ -75,13 +75,13 @@ export class Server {
 		response.on('finish', () => finished = true);
 		
 		try{
-			var ret = this.get_attributes(request.url);
+			var {service,query,field} = this.get_attributes(request.url);
 		}catch(err){
 			return void this.send_json(response, 400, err);
 		}
-
-		const {service,query,field} = ret;
 		
+		// this.log.debug({ service, query, field });
+
 		try{
 			switch(service){
 				case 'process':

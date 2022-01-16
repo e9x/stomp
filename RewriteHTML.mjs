@@ -260,7 +260,7 @@ export class RewriteHTML {
 				attrs: [	
 					{
 						name: 'src',
-						value: `${this.tomp.prefix}about:/static/main.js`,
+						value: `${this.tomp.prefix}about:/]/static/main.js`,
 					},
 				],
 			});
