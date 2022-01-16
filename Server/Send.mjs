@@ -7,7 +7,6 @@ import { html_types, get_mime } from '../RewriteHTML.mjs';
 import { Stream } from 'stream';
 import setcookie_parser from 'set-cookie-parser';
 import cookie from 'cookie';
-import { decode } from 'punycode';
 import { parse } from 'path';
 
 const remove_general_headers = [
@@ -86,7 +85,7 @@ function handle_common_request(server, server_request, request_headers, url, key
 			new_cookies[name] = parsed_cookies[cname];
 		}
 	}
-	
+
 	request_headers['cookie'] = cookie.serialize(new_cookies);
 }
 
