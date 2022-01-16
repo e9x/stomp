@@ -28,7 +28,7 @@ export async function Fetch(server_request, request_headers, input){
 	else throw new RangeError(`Unsupported protocol: '${url.protocol}'`);
 
 	if(post_methods.includes(options.method)){
-		request_stream.pipe(server_request);
+		server_request.pipe(request_stream);
 		// const body = await ReadStream(request_stream);
 	}
 	else{

@@ -70,8 +70,6 @@ export class Server {
 		const query = path.slice(0, queryind);
 		const service = path.slice(queryind + 1, serviceind);
 		const field = path.slice(serviceind);
-
-		// console.log({ query, service, field });
 		
 		try{
 			switch(service){

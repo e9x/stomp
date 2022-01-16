@@ -30,7 +30,7 @@ export class RewriteURL {
 		const protocol = protocols[parseInt(field[1], 16)];
 		const path = this.tomp.codec.unwrap(unescape(field.slice(2)), key);
 		
-		console.log(`=>`, { protocol, host, path });
+		// this.tomp.log.debug(`=>`, { protocol, host, path });
 		return `${protocol}//${host}${path}`;
 	}
 };

@@ -43,7 +43,7 @@ export class Parse5Context {
 		
 		let place = this.parent.node.childNodes.indexOf(this.node);
 		if(place == -1) return false;
-		this.parent.node.childNodes.splice(place, 0, ...nodes);
+		this.parent.node.childNodes.splice(place, 1, ...nodes);
 		this.attached = false;
 		
 		let created = nodes.length > 1 ? true : new Parse5Context(nodes[0], this.parent);

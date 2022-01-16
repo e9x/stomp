@@ -66,6 +66,7 @@ export class RewriteHTML {
 		},
 		use: {
 			'xlink:href': this.html_src,
+			'href': this.binary_src,
 		},
 		script: {
 			// attrs const
@@ -89,7 +90,7 @@ export class RewriteHTML {
 					const resolved = new URL(src.url, url).href;
 					src.url = this.tomp.binary.serve(resolved, url, key);
 				}
-				
+
 				return stringifySrcset(parsed);
 			},
 		},
@@ -236,13 +237,12 @@ export class RewriteHTML {
 
 		for(let ctx of new Parse5Iterator(ast)) {
 			if(!ctx.node.attrs){ // #text node
-				// console.log(ctx.node);
 				continue;
 			}
 			
 			if(ctx.type == 'noscript' && this.tomp.noscript){
 				// todo: move all noscript childNodes into the noscript parent
-				ctx.node.tagName = 'okscript';
+				ctx.node.tagName = 'span';
 				continue;
 			}
 
@@ -272,7 +272,7 @@ export class RewriteHTML {
 			if(ctx.type == 'form'){
 				const action_resolved = new URL(attrs.action || '', url).href;
 
-				if(attrs.method == 'POST'){
+				if(attrs.method?.toUpperCase() == 'POST'){
 					attrs.action = this.tomp.html.serve(action_resolved, url, key);
 				}else{
 					attrs.action = this.tomp.form.serve(action_resolved, url, key);
