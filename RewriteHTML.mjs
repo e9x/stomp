@@ -71,7 +71,7 @@ export class RewriteHTML {
 		return stringifySrcset(parsed);
 	};
 	crossorigin = urlattr => (value, url, key, attrs) => {
-		if(urlattr in attrs){
+		if(urlattr in attrs && !attrs[urlattr].startsWith('data:')){
 			if('crossorigin' in attrs){
 				if(!value)value = '';
 			}
