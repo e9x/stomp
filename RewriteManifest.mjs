@@ -23,6 +23,11 @@ export class RewriteManifest {
 		}
 
 		if('shortcuts' in manifest)for(let shortcut of manifest.shortcuts){
+			if('icons' in shortcut)for(let icon of shortcut.icons){
+				const resolved = new URL(icon.src, url).href;
+				icon.src = this.tomp.binary.serve(resolved, url, key);
+			}
+			
 			const resolved = new URL(shortcut.url, url).href;
 			shortcut.url = this.tomp.binary.serve(resolved, url, key);
 		}
