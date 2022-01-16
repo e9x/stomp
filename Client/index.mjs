@@ -8,7 +8,6 @@ export class Client {
 	}
 	constructor(config = {}, key){
 		this.tomp = new TOMP(config);
-		console.log(key);
 		this.#key = key;
 		this.window = {};
 		this.define = new Define(this);
