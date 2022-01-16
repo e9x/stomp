@@ -35,6 +35,8 @@ function P5_object_attrs(object){
 	return result;
 };
 
+export const crossorigins = ['anonymous','use-credentials','',undefined];
+
 export class RewriteHTML {
 	content_router = {
 		script: (value, url, key, attrs) => {
@@ -68,7 +70,17 @@ export class RewriteHTML {
 
 		return stringifySrcset(parsed);
 	};
-	crossorigin = (value, url, key, attrs) => this.delete_attribute;
+	crossorigin = urlattr => (value, url, key, attrs) => {
+		if(urlattr in attrs){
+			if('crossorigin' in attrs){
+				if(!value)value = '';
+			}
+			attrs[urlattr] += '?crossorigin=' + crossorigins.indexOf(value).toString(16);
+
+		}
+
+		return 'use-credentials';
+	};
 	attribute_router = {
 		[this.all_nodes]: {
 			// on*
@@ -82,7 +94,7 @@ export class RewriteHTML {
 		},
 		script: {
 			[this.set_attributes]: {
-				crossorigin: this.crossorigin,
+				crossorigin: this.crossorigin('src'),
 			},
 			// attrs const
 			src: (value, url, key, attrs) => {
@@ -98,14 +110,14 @@ export class RewriteHTML {
 		},
 		img: {
 			[this.set_attributes]: {
-				crossorigin: this.crossorigin,
+				crossorigin: this.crossorigin('src'),
 			},
 			src: this.binary_src,
 			srcset: this.binary_srcset,
 		},
 		audio: {
 			[this.set_attributes]: {
-				crossorigin: this.crossorigin,
+				crossorigin: this.crossorigin('src'),
 			},
 			src: this.binary_src,
 		},
@@ -115,8 +127,9 @@ export class RewriteHTML {
 		},
 		video: {
 			[this.set_attributes]: {
-				crossorigin: this.crossorigin,
+				crossorigin: this.crossorigin('src'),
 			},
+			src: this.binary_src,
 			poster: this.binary_src,
 		},
 		a: {
@@ -124,7 +137,7 @@ export class RewriteHTML {
 		},
 		link: {
 			[this.set_attributes]: {
-				crossorigin: this.crossorigin,
+				crossorigin: this.crossorigin('href'),
 			},
 			href: (value, url, key, attrs) => {
 				const resolved = new URL(value, url).href;

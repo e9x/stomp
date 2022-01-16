@@ -44,6 +44,22 @@ export class Server {
 		response.write(send);
 		response.end();
 	}
+	get_attributes(url){
+		const path = url.substr(this.tomp.prefix.length);
+		
+		const queryind = path.indexOf('/', 1);
+		const serviceind = path.indexOf('/', queryind + 1);
+
+		if(queryind == -1 || serviceind == -1){
+			throw { message: this.messages['generic.exception.request'] };
+		}
+
+		return {
+			service: path.slice(queryind + 1, serviceind),
+			query: path.slice(0, queryind),
+			field: path.slice(serviceind),
+		};
+	}
 	async request(request, response){
 		if(!request.url.startsWith(this.tomp.prefix)){
 			this.send_json(response, 500, { message: this.messages['generic.exception.request'] });
@@ -58,18 +74,13 @@ export class Server {
 
 		response.on('finish', () => finished = true);
 		
-		const path = request.url.substr(this.tomp.prefix.length);
-		
-		const queryind = path.indexOf('/', 1);
-		const serviceind = path.indexOf('/', queryind + 1);
-
-		if(queryind == -1 || serviceind == -1){
-			return void this.send_json(response, 400, { message: this.messages['generic.exception.request'] });
+		try{
+			var ret = this.get_attributes(request.url);
+		}catch(err){
+			return void this.send_json(response, 400, err);
 		}
 
-		const query = path.slice(0, queryind);
-		const service = path.slice(queryind + 1, serviceind);
-		const field = path.slice(serviceind);
+		const {service,query,field} = ret;
 		
 		try{
 			switch(service){

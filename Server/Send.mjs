@@ -3,7 +3,7 @@ import { Fetch } from './Fetch.mjs';
 import { DecompressResponse } from './HTTPUtil.mjs'
 import { MapHeaderNames, ObjectFromRawHeaders } from './HeaderUtil.mjs'
 import { CompilationPath } from './Compiler.mjs';
-import { html_types, get_mime } from '../RewriteHTML.mjs';
+import { crossorigins, html_types, get_mime } from '../RewriteHTML.mjs';
 import { Stream } from 'stream';
 import setcookie_parser from 'set-cookie-parser';
 import cookie from 'cookie';
@@ -72,24 +72,51 @@ function rewrite_setcookie(setcookie, server, url, key){
 	return set_cookies;
 }
 
-function handle_common_request(server, server_request, request_headers, url, key){
-	// if(cookie in request_headers){
-	const parsed_cookies = cookie.parse(request_headers['cookie']);
-	const new_cookies = {};
-	const pathname = new URL(url).pathname;
+function handle_common_request(server, server_request, request_headers, url, key, crossorigin){
+	if('referer' in server_request.headers){
+		const ref = new URL(server_request.headers.referer);
+		const {service,query,field} = server.get_attributes(ref.pathname);
+		request_headers.referer = server.tomp.url.unwrap(query, field, key);
+	}
+	
+	var send_cookies = false;
+	switch(crossorigin){
+		case undefined:
+			send_cookies = true;
+		case'anonymous':
+		case'':
+			send_cookies = false;
+			break;
+		case'use-credentials':
 
-	for(let cname in parsed_cookies){
-		const pathind = cname.lastIndexOf('/');
-		if(pathind == -1)continue;
-		const name = cname.slice(0, pathind);
-		const path = decodeURIComponent(cname.slice(pathind + 1) || '/');
-		
-		if(pathname.startsWith(path)){
-			new_cookies[name] = parsed_cookies[cname];
-		}
+			if('referer' in server_request.headers){
+				send_cookies = new URL(request_headers.referer).host == new URL(url).host;
+				console.log(send_cookies);
+			}
+
+			break;
 	}
 
-	request_headers['cookie'] = cookie.serialize(new_cookies);
+	if(send_cookies){
+		const parsed_cookies = cookie.parse(request_headers['cookie']);
+		const new_cookies = {};
+		const pathname = new URL(url).pathname;
+
+		for(let cname in parsed_cookies){
+			const pathind = cname.lastIndexOf('/');
+			if(pathind == -1)continue;
+			const name = cname.slice(0, pathind);
+			const path = decodeURIComponent(cname.slice(pathind + 1) || '/');
+			
+			if(pathname.startsWith(path)){
+				new_cookies[name] = parsed_cookies[cname];
+			}
+		}
+
+		request_headers['cookie'] = cookie.serialize(new_cookies);
+	}else{
+		delete request_headers['cookie'];
+	}
 }
 
 function handle_common_response(server, server_request, server_response, url, key, response, response_headers){
@@ -134,14 +161,31 @@ function handle_common_response(server, server_request, server_response, url, ke
 			response_headers['location'] = server.tomp.html.serve(evaluated.href, url, key);
 		}
 	}
+
+	response_headers['referrer-policy'] = 'same-origin';
 }
 
 function get_data(server, server_request, server_response, query, field){
+	// documents should NOT have queries.
+	
 	const key = server.get_key(server_request);
 	
 	if(!key){
 		server.send_json(server_response, 400, { message: server.messages['error.nokey'] });
 		return { gd_error: true };
+	}
+
+	const request_headers = {...server_request.headers};
+	
+	var crossorigin = undefined;
+
+	const search_ind = field.indexOf('?');
+	if(search_ind != -1){
+		const search = field.slice(search_ind);
+		field = field.slice(0, search_ind);
+		
+		const params = new URLSearchParams(search);
+		crossorigin = crossorigins[parseInt(params.get('crossorigin'), 16)];
 	}
 
 	const url = server.tomp.url.unwrap(query, field, key);
@@ -152,20 +196,21 @@ function get_data(server, server_request, server_response, query, field){
 		server.send_json(server_response, 400, { message: server.messages['error.badurl'] });
 		return { gd_error: true };
 	}
-
+	
+	handle_common_request(server, server_request, request_headers, url, key, crossorigin);
+	
 	return {
 		gd_error: false,
 		url,
 		key,
+		request_headers,
 	};
 }
 
 export async function SendBinary(server, server_request, server_response, query, field){
-	const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
+	const {gd_error,url,key,request_headers} = get_data(server, server_request, server_response, query, field);
 	if(gd_error)return;
 	
-	const request_headers = {...server_request.headers};
-	handle_common_request(server, server_request, request_headers, url, key);
 	const response = await Fetch(server_request, request_headers, url);
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
 
@@ -199,11 +244,9 @@ export async function SendForm(server, server_request, server_response, query, f
 const status_empty = [204,304];
 
 async function SendRewrittenScript(rewriter, server, server_request, server_response, query, field){
-	const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
+	const {gd_error,url,key,request_headers} = get_data(server, server_request, server_response, query, field);
 	if(gd_error)return;
 	
-	const request_headers = {...server_request.headers};
-	handle_common_request(server, server_request, request_headers, url, key);
 	const response = await Fetch(server_request, request_headers, url);
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
 
@@ -235,10 +278,9 @@ export async function SendManifest(server, server_request, server_response, quer
 }
 
 export async function SendHTML(server, server_request, server_response, query, field){
-	const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
+	const {gd_error,url,key,request_headers} = get_data(server, server_request, server_response, query, field);
 	if(gd_error)return;
 	
-	const request_headers = {...server_request.headers};
 	MapHeaderNames(ObjectFromRawHeaders(server_request.rawHeaders), request_headers);
 	
 	const response = await Fetch(server_request, request_headers, url);	
