@@ -51,9 +51,11 @@ function handle_common(server, server_request, server_response, url, key, respon
 	for(let remove of remove_csp_headers)delete response_headers[remove];
 	for(let remove of remove_general_headers)delete response_headers[remove];
 	
-	const set_cookies = [].concat(response_headers['set-cookie'] || []);
+	const set_cookies = [
+		server.get_setcookie(key),
+	];
 
-	for(let set of set_cookies){
+	for(let set of response_headers['set-cookie'] || []){
 		const parsed = setcookie_parser(set);
 
 		for(let set of parsed){
@@ -65,19 +67,13 @@ function handle_common(server, server_request, server_response, url, key, respon
 
 			delete set.cookie;
 
-			set.path = server.tomp.prefix + '/html/server.tomp.url.wrap_host(set.domain || host, key);
+			// set.path = server.tomp.prefix + '/html/server.tomp.url.wrap_host(set.domain || host, key);
 			
 			set_cookies.push(cookie.serialize(set.name, set));
 		}
 	}
 
-	// too much work rn
-	set_cookies.length = 0;
-
-	response_headers['set-cookie'] = [
-		server.get_setcookie(key),
-		...set_cookies
-	];
+	response_headers['set-cookie'] = set_cookies;
 	
 	// todo: ~~wipe cache when the key changes?~~ not needed, key changes and url does too
 	// cache builds up
@@ -104,7 +100,7 @@ function handle_common(server, server_request, server_response, url, key, respon
 	}
 }
 
-function get_data(server, server_request, server_response, field){
+function get_data(server, server_request, server_response, query, field){
 	const key = server.get_key(server_request);
 	
 	if(!key){
@@ -112,7 +108,7 @@ function get_data(server, server_request, server_response, field){
 		return { gd_error: true };
 	}
 
-	const url = server.tomp.url.unwrap(field, key); // server.tomp.codec.unwrap(decodeURIComponent(field), key);
+	const url = server.tomp.url.unwrap(query, field, key);
 	
 	try{
 		new URL(url);
@@ -128,8 +124,8 @@ function get_data(server, server_request, server_response, field){
 	};
 }
 
-export async function SendBinary(server, server_request, server_response, field){
-	const {gd_error,url,key} = get_data(server, server_request, server_response, field);
+export async function SendBinary(server, server_request, server_response, query, field){
+	const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
 	if(gd_error)return;
 	
 	const request_headers = {...server_request.headers};
@@ -143,16 +139,16 @@ export async function SendBinary(server, server_request, server_response, field)
 	response.pipe(server_response);
 }
 
-export async function SendForm(server, server_request, server_response, field){
+export async function SendForm(server, server_request, server_response, query, field){
 	const headers = Object.setPrototypeOf({}, null);
 
 	if(server_request.method == 'GET'){
 		const query_ind = field.indexOf('?');
-		if(query_ind == -1)return void server.send_json(server_response, 400, { message: 'Invalid form GET' });
+		if(query_ind == -1)return void server.send_json(server_response, 400, { message: server.messages['error.badform.get'] });
 		const query = field.slice(query_ind);
 		field = field.slice(0, query_ind);
 		
-		const {gd_error,url,key} = get_data(server, server_request, server_response, field);
+		const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
 		if(gd_error)return;
 		
 		const orig_query_ind = url.indexOf('?');
@@ -160,7 +156,7 @@ export async function SendForm(server, server_request, server_response, field){
 		const updated = url.slice(0, orig_query_ind == -1 ? url.length : orig_query_ind) + query;
 		headers['location'] = server.tomp.html.serve(updated, updated, key);
 	}else{
-		const {gd_error,url,key} = get_data(server, server_request, server_response, field);
+		const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
 		if(gd_error)return;
 		
 		// post
@@ -174,8 +170,8 @@ export async function SendForm(server, server_request, server_response, field){
 
 const status_empty = [204,304];
 
-async function SendRewrittenScript(rewriter, server, server_request, server_response, field){
-	const {gd_error,url,key} = get_data(server, server_request, server_response, field);
+async function SendRewrittenScript(rewriter, server, server_request, server_response, query, field){
+	const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
 	if(gd_error)return;
 	
 	const request_headers = {...server_request.headers};
@@ -198,36 +194,38 @@ async function SendRewrittenScript(rewriter, server, server_request, server_resp
 	server_response.end();
 }
 
-export async function SendJS(server, server_request, server_response, field){
-	return await SendRewrittenScript(server.tomp.js, server, server_request, server_response, field);
+export async function SendJS(server, server_request, server_response, query, field){
+	return await SendRewrittenScript(server.tomp.js, server, server_request, server_response, query, field);
 }
 
-export async function SendCSS(server, server_request, server_response, field){
-	return await SendRewrittenScript(server.tomp.css, server, server_request, server_response, field);
+export async function SendCSS(server, server_request, server_response, query, field){
+	return await SendRewrittenScript(server.tomp.css, server, server_request, server_response, query, field);
 }
 
-export async function SendHTML(server, server_request, server_response, field){
-	const {gd_error,url,key} = get_data(server, server_request, server_response, field);
+export async function SendHTML(server, server_request, server_response, query, field){
+	const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
 	if(gd_error)return;
 	
 	const request_headers = {...server_request.headers};
 	MapHeaderNames(ObjectFromRawHeaders(server_request.rawHeaders), request_headers);
-
+	
 	const response = await Fetch(server_request, request_headers, url);	
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
 
 	var send;
 	if(!status_empty.includes(response.statusCode)){
 		if(html_types.includes(get_mime(response_headers['content-type'] || ''))){
-			send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
+			var send = Buffer.from(server.tomp.html.wrap((await DecompressResponse(response)).toString(), url, key));
 			response_headers['content-length'] = send.byteLength;
 			for(let remove of remove_encoding_headers)delete response_headers[remove];
 		}else{
-			send = response;
+			var send = response;
 		}
 	}
 	
+	console.log('what');
 	handle_common(server, server_request, server_response, url, key, response, response_headers);
+	console.log('what');
 	for(let remove of remove_html_headers)delete response_headers[remove];
 
 	if('refresh' in response_headers){

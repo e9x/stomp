@@ -106,7 +106,7 @@ export class RewriteJS {
 			const [mime,buffer] = ParseDataURI(value);
 			return this.wrap(buffer.toString(), url, key);
 		}
-		return `${this.tomp.prefix}js/${this.tomp.url.wrap(serve, key)}`
+		return this.tomp.url.wrap(serve, key, 'js');
 	}
 };
 

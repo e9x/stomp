@@ -12,6 +12,6 @@ export class RewriteForm {
 	}
 	serve(serve, url, key){
 		if(serve.startsWith('data:'))return serve;
-		return `${this.tomp.prefix}form/${this.tomp.url.wrap(serve, key)}`
+		return this.tomp.url.wrap(serve, key, 'form');
 	}
 };

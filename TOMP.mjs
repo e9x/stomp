@@ -35,11 +35,11 @@ export class TOMP {
 		}
 
 		if(typeof config.loglevel == 'number'){
-			this.loglevel = true;
+			this.loglevel = config.loglevel;
 		}
 
 		if(config.noscript == true){
-			this.noscript = config.noscript;
+			this.noscript = true;
 		}
 
 		this.log = new Logger(this);

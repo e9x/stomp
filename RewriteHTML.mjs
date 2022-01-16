@@ -171,7 +171,7 @@ export class RewriteHTML {
 			attrs: [
 				{
 					name: 'src',
-					value: this.tomp.prefix + 'script',
+					value: `${this.tomp.prefix}about:/script/`,
 				},
 			],
 		};
@@ -195,7 +195,7 @@ export class RewriteHTML {
 
 		return true;
 	}
-	wrap(html, url, key){	
+	wrap(html, url, key){
 		const ast = parse(html, {
 			// https://github.com/inikulin/parse5/blob/master/packages/parse5/docs/options/parser-options.md#optional-scriptingenabled
 			// <noscript>
@@ -285,6 +285,6 @@ export class RewriteHTML {
 			const [mime,buffer] = ParseDataURI(value);
 			return this.wrap(buffer.toString(), url, key);
 		}
-		return `${this.tomp.prefix}html/${this.tomp.url.wrap(serve, key)}`
+		return this.tomp.url.wrap(serve, key, 'html');
 	}
 };

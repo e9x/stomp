@@ -9,8 +9,9 @@ export class Server {
 		'error.badurl': `Invalid URL`,
 		'error.nokey': `You are missing a session key. Please navigate back to the URL form and re-enter your website.`,
 		'generic.error.notready': `Endpoint not ready`,
-		'generic.exception.request': `'TOMPServer encountered an exception while handling your request. Contact this server's administrator.`,
+		'generic.exception.request': `TOMPServer encountered an exception while handling your request. Contact this server's administrator.`,
 		'error.unknownservice': `Service not found`,
+		'error.badform.get': `Invalid form GET`,
 	};
 	constructor(config = {}){
 		this.tomp = new TOMP(config);
@@ -37,7 +38,7 @@ export class Server {
 			'content-length': send.byteLength,
 		});
 		
-		// this.tomp.log.trace(json);
+		this.tomp.log.trace(json);
 
 		response.write(send);
 		response.end();
@@ -56,18 +57,20 @@ export class Server {
 
 		response.on('finish', () => finished = true);
 		
-		var path = request.url.substr(this.tomp.prefix.length);
-		var service;
+		const path = request.url.substr(this.tomp.prefix.length);
 		
-		let ind = path.indexOf('/', 1);
+		const queryind = path.indexOf('/', 1);
+		const serviceind = path.indexOf('/', queryind + 1);
 
-		if(ind == -1){
-			service = path;
-		}else{
-			service = path.substr(0, ind);
+		if(queryind == -1 || serviceind == -1){
+			return void this.send_json(response, 400, { message: this.messages['generic.exception.request'] });
 		}
 
-		const field = path.substr(service.length + 1);
+		const query = path.slice(0, queryind);
+		const service = path.slice(queryind + 1, serviceind);
+		const field = path.slice(serviceind);
+
+		// console.log({ query, service, field });
 		
 		try{
 			switch(service){
@@ -77,23 +80,24 @@ export class Server {
 				case 'script':
 					return void await SendScript(this, request, response);
 					break;
-				case 'static':
-					return void await Static(request, response);
-					break;
+				// case 'static':
+				// 	todo: rework
+				//  return void await Static(request, response);
+				// 	break;
 				case 'binary':
-					return void await SendBinary(this, request, response, field)
+					return void await SendBinary(this, request, response, query, field)
 					break;
 				case 'form':
-					return void await SendForm(this, request, response, field)
+					return void await SendForm(this, request, response, query, field)
 					break;
 				case 'html':
-					return void await SendHTML(this, request, response, field);
+					return void await SendHTML(this, request, response, query, field);
 					break;
 				case 'js':
-					return void await SendJS(this, request, response, field);
+					return void await SendJS(this, request, response, query, field);
 					break;
 				case 'css':
-					return void await SendCSS(this, request, response, field);
+					return void await SendCSS(this, request, response, query, field);
 					break;
 				default:
 					return void await this.send_json(response, 404, { message: this.messages['error.unknownservice']});
