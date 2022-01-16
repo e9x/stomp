@@ -26,7 +26,7 @@ export class RewriteCSS {
 					console.error(err);
 				}
 				
-				if(this.atrule.name == 'import')node.value = that.tomp.css.serve(resolved, url, key);
+				if(this.atrule?.name == 'import')node.value = that.tomp.css.serve(resolved, url, key);
 				else node.value = that.tomp.binary.serve(resolved, url, key);
 			}
 		});

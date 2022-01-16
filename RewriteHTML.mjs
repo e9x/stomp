@@ -115,6 +115,24 @@ export class RewriteHTML {
 				attrs.crossorigin = 'use-credentials';
 
 				switch(attrs.rel){
+					case'preload':
+						switch(attrs.as){
+							case'style':
+								return this.tomp.css.serve(resolved, url, key);
+								break;
+							case'worker':
+							case'script':
+								return this.tomp.js.serve(resolved, url, key);
+								break;
+							case'object':
+							case'document':
+								return this.tomp.html.serve(resolved, url, key);
+								break;
+							default:
+								return this.tomp.binary.serve(resolved, url, key);
+								break;
+						}
+						break;
 					case'manifest':
 						return this.tomp.manifest.serve(resolved, url, key);
 						break;

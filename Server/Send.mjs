@@ -75,7 +75,6 @@ function rewrite_setcookie(setcookie, server, url, key){
 function handle_common_request(server, server_request, request_headers, url, key){
 	// if(cookie in request_headers){
 	const parsed_cookies = cookie.parse(request_headers['cookie']);
-	console.log(parsed_cookies, request_headers['cookie']);
 	const new_cookies = {};
 	const pathname = new URL(url).pathname;
 

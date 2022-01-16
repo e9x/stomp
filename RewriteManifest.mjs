@@ -47,7 +47,7 @@ export class RewriteManifest {
 			app.url = this.tomp.binary.serve(resolved, url, key);
 		}
 
-		return JSON.stringify(code);
+		return JSON.stringify(manifest);
 	}
 	unwrap(code, url, key){
 		return code;
