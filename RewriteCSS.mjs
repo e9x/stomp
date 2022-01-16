@@ -18,7 +18,7 @@ export class RewriteCSS {
 		const that = this;
 
 		walk(ast, function(node, item, list){
-			if (this.declaration !== null && node.type === 'Url') {
+			if (node.type === 'Url') {
 				try{
 					var resolved = new URL(node.value, url).href;
 				}catch(err){
@@ -26,7 +26,8 @@ export class RewriteCSS {
 					console.error(err);
 				}
 				
-				node.value = that.tomp.binary.serve(resolved, url, key);
+				if(this.atrule.name == 'import')node.value = that.tomp.css.serve(resolved, url, key);
+				else node.value = that.tomp.binary.serve(resolved, url, key);
 			}
 		});
 
