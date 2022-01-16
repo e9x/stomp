@@ -269,7 +269,7 @@ export class RewriteHTML {
 		return nodes;
 	}
 	route_set_attributes(route, ctx, attrs, url, key){
-		for(let name in route)if(name in attrs){
+		for(let name in route){
 			try{
 				const result = route[name](attrs[name], url, key, attrs);
 				if(result == this.delete_attribute)delete attrs[name];
