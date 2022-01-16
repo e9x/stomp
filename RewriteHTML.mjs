@@ -68,6 +68,7 @@ export class RewriteHTML {
 
 		return stringifySrcset(parsed);
 	};
+	crossorigin = (value, url, key, attrs) => this.delete_attribute;
 	attribute_router = {
 		[this.all_nodes]: {
 			// on*
@@ -81,7 +82,7 @@ export class RewriteHTML {
 		},
 		script: {
 			[this.set_attributes]: {
-				crossorigin: (url, key, attrs) => 'use-credentials',
+				crossorigin: this.crossorigin,
 			},
 			// attrs const
 			src: (value, url, key, attrs) => {
@@ -97,14 +98,14 @@ export class RewriteHTML {
 		},
 		img: {
 			[this.set_attributes]: {
-				crossorigin: (url, key, attrs) => 'use-credentials',
+				crossorigin: this.crossorigin,
 			},
 			src: this.binary_src,
 			srcset: this.binary_srcset,
 		},
 		audio: {
 			[this.set_attributes]: {
-				crossorigin: (url, key, attrs) => 'use-credentials',
+				crossorigin: this.crossorigin,
 			},
 			src: this.binary_src,
 		},
@@ -114,7 +115,7 @@ export class RewriteHTML {
 		},
 		video: {
 			[this.set_attributes]: {
-				crossorigin: (url, key, attrs) => 'use-credentials',
+				crossorigin: this.crossorigin,
 			},
 			poster: this.binary_src,
 		},
@@ -123,7 +124,7 @@ export class RewriteHTML {
 		},
 		link: {
 			[this.set_attributes]: {
-				crossorigin: (url, key, attrs) => 'use-credentials',
+				crossorigin: this.crossorigin,
 			},
 			href: (value, url, key, attrs) => {
 				const resolved = new URL(value, url).href;
@@ -254,8 +255,9 @@ export class RewriteHTML {
 	route_set_attributes(route, ctx, attrs, url, key){
 		for(let name in route)if(name in attrs){
 			try{
-				const result = route[name](url, key, attrs);
-				if(result == this.delete_node){
+				const result = route[name](attrs[name], url, key, attrs);
+				if(result == this.delete_attribute)delete attrs[name];
+				else if(result == this.delete_node){
 					ctx.detach();
 					return false;
 				}
