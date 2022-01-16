@@ -61,9 +61,8 @@ function rewrite_setcookie(setcookie, server, url, key){
 			// dont append ']'
 		}
 
-		console.log('host of', host);
 		// test host and set.domain ownership
-
+		
 		delete set.cookie;
 
 		delete set.domain;
