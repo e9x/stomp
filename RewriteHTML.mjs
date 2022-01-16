@@ -168,10 +168,10 @@ export class RewriteHTML {
 			nodeName: 'script',
 			tagName: 'script',
 			childNodes: [],
-			attrs: [
+			attrs: [	
 				{
 					name: 'src',
-					value: `${this.tomp.prefix}about:/script/`,
+					value: `${this.tomp.prefix}about:/static/main.js`,
 				},
 			],
 		};

@@ -42,6 +42,30 @@ const remove_csp_headers = [
 	'x-xss-protection',
 ];
 
+function rewrite_setcookie(setcookie, server, url, key){
+	const set_cookies = [];
+	const parsed = setcookie_parser(setcookie);
+
+	for(let set of parsed){
+		// $cookie@/path
+		// no need to include host when set.path
+					
+		const host = new URL(url).host;
+		// test host and set.domain ownership
+
+		delete set.cookie;
+
+		delete set.domain;
+		
+		set.name = set.name + '@' + set.path;
+		set.path = server.tomp.prefix + server.tomp.url.wrap_host(set.domain || host, key);
+		
+		set_cookies.push(cookie.serialize(set.name, set.value, set));
+	}
+
+	return set_cookies;
+}
+
 function handle_common(server, server_request, server_response, url, key, response, response_headers){
 	
 	// server.tomp.log.debug(url, response_headers);
@@ -56,24 +80,7 @@ function handle_common(server, server_request, server_response, url, key, respon
 	];
 
 	for(let set of response_headers['set-cookie'] || []){
-		const parsed = setcookie_parser(set);
-
-		for(let set of parsed){
-			// $cookie @ /path
-			// no need to include host when set.path
-						
-			const host = new URL(url).host;
-			// test host and set.domain ownership
-
-			delete set.cookie;
-
-			delete set.domain;
-			
-			set.name = set.name + '@' + set.path;
-			set.path = server.tomp.prefix + server.tomp.url.wrap_host(set.domain || host, key);
-			
-			set_cookies.push(cookie.serialize(set.name, set.value, set));
-		}
+		set_cookies.push(...rewrite_setcookie(set, server, url, key));
 	}
 
 	response_headers['set-cookie'] = set_cookies;

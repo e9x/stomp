@@ -10,6 +10,7 @@ export class Server {
 		'error.nokey': `You are missing a session key. Please navigate back to the URL form and re-enter your website.`,
 		'generic.error.notready': `Endpoint not ready`,
 		'generic.exception.request': `TOMPServer encountered an exception while handling your request. Contact this server's administrator.`,
+		'exception.nostatic': `Unable to serve static data.`,
 		'error.unknownservice': `Service not found`,
 		'error.badform.get': `Invalid form GET`,
 	};
@@ -80,10 +81,12 @@ export class Server {
 				case 'script':
 					return void await SendScript(this, request, response);
 					break;
-				// case 'static':
-				// 	todo: rework
-				//  return void await Static(request, response);
-				// 	break;
+				case 'static':
+					request.url = field;
+					return void await Static(request, response, err => {
+						this.send_json(response, 500, { message: this.messages['exception.nostatic'] })
+					});
+					break;
 				case 'binary':
 					return void await SendBinary(this, request, response, query, field)
 					break;
