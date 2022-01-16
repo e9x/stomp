@@ -17,17 +17,17 @@ export class Parse5Context {
 		return this.node.nodeName;
 	}
 	// returns new context if this node is attached and in parent, false otherwise
-	insert_before(node){
+	insert_before(...nodes){
 		if(this.root)throw new RangeError('Cannot insert before the root.');
 		else if(!this.attached)throw new RangeError('Cannot insert before a detached node.');
 
 		let place = this.parent.node.childNodes.indexOf(this.node);
 		if(place == -1) return false;
-		this.parent.node.childNodes.splice(place, 0, node);
-		return new Parse5Context(node, this.parent);
+		this.parent.node.childNodes.splice(place, 0, ...nodes);
+		return nodes.length > 1 ? true : new Parse5Context(nodes[0], this.parent);
 	}
 	// returns new context if this node is attached and in parent, false otherwise
-	insert_after(node){
+	insert_after(...nodes){
 		if(this.root)throw new RangeError('Cannot insert after the root.');
 		else if(!this.attached)throw new RangeError('Cannot insert after a detached node.');
 		
@@ -37,21 +37,22 @@ export class Parse5Context {
 		return new Parse5Context(node, this.parent);
 	}
 	// returns new context if this node is attached and in parent, false otherwise
-	replace_with(node){
+	replace_with(...nodes){
 		if(this.root)throw new RangeError('Cannot replace the root.');
 		else if(!this.attached)throw new RangeError('Cannot replace a detached node.');
 		
 		let place = this.parent.node.childNodes.indexOf(this.node);
 		if(place == -1) return false;
-		this.parent.node.childNodes.splice(place, 0, node);
+		this.parent.node.childNodes.splice(place, 0, ...nodes);
 		this.attached = false;
-		var created = new Parse5Context(node, this.parent);
+		
+		let created = nodes.length > 1 ? true : new Parse5Context(nodes[0], this.parent);
 		delete this.parent;
 		return created;
 	}
-	append(node){
-		this.node.childNodes.push(node);
-		return new Parse5Context(node, this);
+	append(...nodes){
+		this.node.childNodes.push(...nodes);
+		return nodes.length > 1 ? true : new Parse5Context(nodes[0], this);
 	}
 	// appends this to a context
 	// returns true if successful, false otherwise

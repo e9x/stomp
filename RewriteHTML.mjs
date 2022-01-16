@@ -1,6 +1,7 @@
 import { ParseDataURI } from './DataURI.mjs'
 import { serialize, parse, parseFragment } from 'parse5';
 import { Parse5Iterator } from './IterateParse5.mjs';
+import { global_client } from './RewriteJS.mjs';
 
 const essential_nodes = ['#documentType','#document','#text','html','head','body'];
 
@@ -129,8 +130,8 @@ export class RewriteHTML {
 
 				switch(attrs.property){
 					case'og:url':
-					return this.tomp.html.serve(resolved, url, key);
-					break;
+						return this.tomp.html.serve(resolved, url, key);
+						break;
 					case'og:image':
 						return this.tomp.binary.serve(resolved, url, key);
 						break;
@@ -163,18 +164,31 @@ export class RewriteHTML {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	get head(){
-		return {
-			nodeName: 'script',
-			tagName: 'script',
-			childNodes: [],
-			attrs: [	
-				{
-					name: 'src',
-					value: `${this.tomp.prefix}about:/static/main.js`,
-				},
-			],
-		};
+	get_head(url, key){
+		return [
+			{
+				nodeName: 'script',
+				tagName: 'script',
+				childNodes: [],
+				attrs: [	
+					{
+						name: 'src',
+						value: `${this.tomp.prefix}about:/static/main.js`,
+					},
+				],
+			},
+			{
+				nodeName: 'script',
+				tagName: 'script',
+				childNodes: [
+					{
+						nodeName: '#text',
+						value: `window.${global_client}=new ${global_client}(${JSON.stringify(this.tomp)},${JSON.stringify(key)})`,
+					}
+				],
+				attrs: [],
+			}
+		];
 	}
 	// returns false if the ctx was detached
 	route_attributes(route, ctx, attrs, url, key){
@@ -258,7 +272,7 @@ export class RewriteHTML {
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)
 			// on the first non-essential node (not html,head,or body), insert the client script before it
 			if(!inserted_script && !essential_nodes.includes(ctx.type)){
-				inserted_script = ctx.insert_before(this.head);
+				inserted_script = ctx.insert_before(...this.get_head(url, key));
 			}
 		}
 

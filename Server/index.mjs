@@ -1,7 +1,7 @@
 import { TOMP } from '../TOMP.mjs';
 import { Static } from './Compiler.mjs';
 import { Process } from './Process.mjs';
-import { SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendScript } from './Send.mjs';
+import { SendBinary, SendForm, SendHTML, SendJS, SendCSS } from './Send.mjs';
 import cookie from 'cookie';
 
 export class Server {
@@ -78,12 +78,10 @@ export class Server {
 				case 'process':
 					return void await Process(this, request, response);
 					break;
-				case 'script':
-					return void await SendScript(this, request, response);
-					break;
 				case 'static':
 					request.url = field;
 					return void await Static(request, response, err => {
+						if(err)this.tomp.log.error(err);
 						this.send_json(response, 500, { message: this.messages['exception.nostatic'] })
 					});
 					break;

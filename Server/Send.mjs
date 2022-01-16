@@ -227,9 +227,8 @@ export async function SendHTML(server, server_request, server_response, query, f
 		}
 	}
 	
-	console.log('what');
 	handle_common(server, server_request, server_response, url, key, response, response_headers);
-	console.log('what');
+	
 	for(let remove of remove_html_headers)delete response_headers[remove];
 
 	if('refresh' in response_headers){
@@ -247,45 +246,4 @@ export async function SendHTML(server, server_request, server_response, query, f
 	}else{
 		server_response.end();
 	}
-}
-
-
-export async function SendScript(server, request, response){
-	try{
-		const handle = await fs.promises.open(CompilationPath, 'r');
-		
-		const { size } = await handle.stat();
-		
-		const buffer = Buffer.alloc(size);
-		
-		const { bytesRead } = await handle.read(buffer, 0, buffer.byteLength, 0);
-		
-		handle.close();
-
-		if(bytesRead < buffer.byteLength)server.tomp.log.error('Error reading file');
-		
-		let script = buffer.toString();
-		
-		script = script.replace(/client_information/g, JSON.stringify([
-			server.tomp,
-			server.get_key(request),
-		]));
-
-		var send = Buffer.from(script);
-	}catch(err){
-		if(err.code == 'ENOENT'){
-			return void server.send_json(response, 500, { message: server.messages['generic.error.notready'] });
-		}else{
-			server.tomp.log.error('Error reading backend compilation:', err);
-			return void server.send_json(response, 500, { message: server.messages['generic.exception.request'] });
-		}
-	}
-	
-	response.writeHead(200, {
-		'content-type': 'application/javascript',
-		'content-length': send.byteLength,
-	});
-	
-	response.write(send);
-	response.end();
 }

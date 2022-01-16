@@ -12,7 +12,7 @@ const codecs = [ PlainCodec, XORCodec, RC4Codec ];
 export class TOMP {
 	toJSON(){
 		return {
-			codec: codecs.indexOf(this.wrap),
+			codec: codecs.indexOf(this.codec),
 			prefix: this.prefix,
 			noscript: this.noscript,
 		};
