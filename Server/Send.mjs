@@ -250,7 +250,7 @@ export async function SendForm(server, server_request, server_response, query, f
 	const orig_search_ind = url.path.indexOf('?');
 	
 	url.path = url.path.slice(0, orig_search_ind == -1 ? url.length : orig_search_ind) + search;
-	headers['location'] = url.wrap(server.tomp, key, 'html');
+	headers['location'] = server.tomp.url.wrap_parsed(url, key, 'html');
 	// server.tomp.html.serve(updated, updated, key);
 
 
