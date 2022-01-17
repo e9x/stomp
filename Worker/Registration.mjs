@@ -6,7 +6,6 @@ export class Registration {
 	}
 	async work(){
 		for(let registration of await navigator.serviceWorker.getRegistrations()){
-			this.tomp.log.debug('Unregistering', registration.scope, registration.active?.scriptURL);
 			await registration.unregister();
 			this.tomp.log.debug('Unregistered', registration.scope, registration.active?.scriptURL);
 		}

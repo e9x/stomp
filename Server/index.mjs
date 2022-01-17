@@ -1,6 +1,6 @@
 import { TOMP } from '../TOMP.mjs';
 import { PublicDir } from './Compiler.mjs';
-import { Process } from './Send.js';
+import { Process } from './Process.js';
 import messages from '../Messages.mjs'
 import serveStatic from 'serve-static';
 
@@ -26,7 +26,7 @@ export class Server {
 			'content-length': send.byteLength,
 		});
 		
-		this.tomp.log.trace(json);
+		// this.tomp.log.trace(json);
 
 		response.write(send);
 		response.end();

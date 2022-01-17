@@ -3,8 +3,32 @@ import cookie from 'cookie';
 const whitespace = /\s/;
 const http_s_protocol = /^https?:\/\//;
 
+async function DecodePOST(request){
+	const decoded = {};
+
+	Object.setPrototypeOf(decoded, null);
+
+	const body = await request.text();
+
+	try{
+		switch(request.headers.get('content-type')){
+			case'application/x-www-form-urlencoded':
+				Object.assign(decoded, Object.fromEntries([...new URLSearchParams(body).entries()]));
+				break;
+			case'application/json':
+				Object.assign(decoded, JSON.parse(body));
+				break;
+		}
+	}catch(err){
+		console.error(err);
+		// error is only caused by intentionally bad body
+	}
+	
+	return decoded;
+}
+
 export async function Process(server, request, response){
-	const body = await DecodePOSTStream(request, request.headers['content-type']);
+	const body = await DecodePOST(request);
 	
 	if(typeof body.input != 'string'){
 		return server.send_json(response, 400, { error: 'body.input was not a string' })
@@ -16,19 +40,14 @@ export async function Process(server, request, response){
 		body.input = `https://www.google.com/search?q=${encodeURIComponent(body.input)}`;
 	}
 	
-	const headers = Object.setPrototypeOf({}, null);
+	const headers = new Headers();
 
 	// override tomp$key for security purposes
 	
 	const cookies = typeof request.headers.cookie == 'string' ? cookie.parse(request.headers.cookie) : {};
 
-	const key = cookies.tomp$key || server.tomp.codec.generate_key();
-
-	headers['set-cookie'] = server.get_setcookie(key);
-	
-	const redirect = server.tomp.html.serve(body.input, body.input, key);
-	headers['refresh'] = `0;${redirect}`;
-	headers['content-type'] = 'text/html';
-	response.writeHead(200, headers);
-	response.end();
+	const redirect = server.tomp.html.serve(body.input, body.input, server.key);
+	headers.set('refresh', `0;${redirect}`);
+	headers.set('content-type', 'text/html');
+	return new Response(new Uint8Array(), { headers, status: 200 });
 }
