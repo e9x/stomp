@@ -311,7 +311,7 @@ export class RewriteHTML {
 			// <noscript>
 			scriptingEnabled: false,
 		});
-
+			
 		var inserted_script = false;
 
 		var one_base = false;

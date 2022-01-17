@@ -53,11 +53,11 @@ function rewrite_setcookie(setcookie, server, host, key){
 		// $cookie@/path
 		// no need to include host when set.path
 		
-		let host = set.domain || host;
-		let host_fixed = true;
-		if(host.startsWith('.')){
-			host_fixed = false;
-			host = host.slice(1);
+		let domain = set.domain || host;
+		let domain_fixed = true;
+		if(domain.startsWith('.')){
+			domain_fixed = false;
+			domain = host.slice(1);
 			// dont append ']'
 		}
 
@@ -71,8 +71,8 @@ function rewrite_setcookie(setcookie, server, host, key){
 
 		// set.name.lastIndexOf('/') must be (set.name + '/') not whats in setp
 		set.name = set.name + '/' + encodeURIComponent(setp);
-		set.path = server.tomp.prefix + server.tomp.url.wrap_host(host, key);
-		if(host_fixed)set.path += ']/';
+		set.path = server.tomp.prefix + server.tomp.url.wrap_host(domain, key);
+		if(domain_fixed)set.path += ']/';
 
 		set_cookies.push(cookie.serialize(set.name, set.value, set));
 	}
@@ -247,10 +247,11 @@ export async function SendForm(server, server_request, server_response, query, f
 	const {gd_error,url,key} = get_data(server, server_request, server_response, query, field);
 	if(gd_error)return;
 	
-	const orig_search_ind = url.indexOf('?');
+	const orig_search_ind = url.path.indexOf('?');
 	
-	const updated = url.slice(0, orig_search_ind == -1 ? url.length : orig_search_ind) + search;
-	headers['location'] = server.tomp.html.serve(updated, updated, key);
+	url.path = url.path.slice(0, orig_search_ind == -1 ? url.length : orig_search_ind) + search;
+	headers['location'] = url.wrap(server.tomp, key, 'html');
+	// server.tomp.html.serve(updated, updated, key);
 
 
 	server_response.writeHead(302, headers);

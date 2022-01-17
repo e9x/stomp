@@ -8,6 +8,12 @@ export class ParsedRewrittenURL {
 	toString(){
 		return `${this.protocol}//${this.host}${this.path}`;
 	}
+	wrap(tomp, key, service){
+		if(key == undefined)throw new TypeError('Bad key');
+		const protoi = protocols.indexOf(this.protocol);
+		const field = this.port.toString(16) + '/' + protoi.toString(16) + encodeURIComponent(tomp.codec.wrap(this.path, key));
+		return tomp.prefix + tomp.url.wrap_host(this.host, key) + ']/' + service + '/' + field;
+	}
 };
 
 export class RewriteURL {
