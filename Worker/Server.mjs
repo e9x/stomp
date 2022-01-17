@@ -69,8 +69,6 @@ export class Server {
 		const request = event.request;
 		const url = request.url.slice(request.url.indexOf(this.tomp.prefix));
 		
-		console.log(service);
-
 		try{
 			var {service,query,field} = this.tomp.url.get_attributes(url);
 		}catch(err){
