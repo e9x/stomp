@@ -3,7 +3,6 @@ import { TOMP } from '../TOMP.mjs'
 export class Registration {
 	constructor(config){
 		this.tomp = new TOMP(config);
-		this.work();
 	}
 	async work(){
 		for(let registration of await navigator.serviceWorker.getRegistrations()){
@@ -20,8 +19,7 @@ export class Registration {
 		});
 
 		this.tomp.log.debug('Registered new service worker.');
-	}
-	redirect(){
-		
+
+		// throw '';
 	}
 };
