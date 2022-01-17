@@ -1,8 +1,10 @@
 import { TOMP } from '../TOMP.mjs';
 import { PublicDir } from './Compiler.mjs';
 import { Process } from './Process.js';
+import { SendBare } from './Send.mjs';
 import messages from '../Messages.mjs';
 import serveStatic from 'serve-static';
+import cookie from 'cookie';
 
 export class Server {
 	constructor(config = {}){
@@ -18,6 +20,10 @@ export class Server {
 	}
 	upgrade(req, socket, head){
 		socket.end();
+	}
+	get_key(request){
+		const cookies = typeof request.headers.cookie == 'string' ? cookie.parse(request.headers.cookie) : {};
+		return cookies.tomp$key;
 	}
 	send_json(response, status, json){
 		const send = Buffer.from(JSON.stringify(json));
@@ -64,6 +70,9 @@ export class Server {
 						'content-length': send.length,
 					});
 					response.end(send);
+					break;
+				case'bare':
+					return void await SendBare(this, request, response, query, field);
 					break;
 				case'static':
 					request.url = field;

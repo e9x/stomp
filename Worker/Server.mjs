@@ -32,17 +32,7 @@ export class Server {
 			},
 		});
 	}
-	async request(request){
-		const url = request.url.slice(request.url.indexOf(this.tomp.prefix));
-		
-		try{
-			var {service,query,field} = this.tomp.url.get_attributes(url);
-		}catch(err){
-			return this.send_json(response, 400, err);
-		}
-		
-		// this.log.debug({ service, query, field });
-		
+	async send(request, service, query, field){
 		try{
 			switch(service){
 				case 'process':
@@ -73,6 +63,22 @@ export class Server {
 		}catch(err){
 			this.tomp.log.error(err);
 			return this.send_json(500, { message: messages['generic.exception.request'] });
+		}
+	}
+	request(event){
+		const request = event.request;
+		const url = request.url.slice(request.url.indexOf(this.tomp.prefix));
+		
+		try{
+			var {service,query,field} = this.tomp.url.get_attributes(url);
+		}catch(err){
+			return;
+		}
+		
+		// this.log.debug({ service, query, field });
+		
+		if(!(['bare','config','static'].includes(service))){
+			event.respondWith(this.send(request, service, query, field));
 		}
 	}
 };
