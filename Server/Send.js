@@ -29,7 +29,7 @@ export async function Process(server, request, response){
 	</head>
 	<body>
 		<form id='ready' action=${JSON.stringify(server.tomp.prefix + 'about:/]/process')}' method='POST'>
-			<input style='visbility:hidden' type='text' value=${JSON.stringify(body.input)} name='url'></input>
+			<input style='visibility:hidden' type='text' value=${JSON.stringify(body.input)} name='url'></input>
 		</form>
 		<script src=${JSON.stringify(server.tomp.prefix + 'about:/]/static/worker_register.js')}></script>
 		<script>window.${global_client}=new ${global_client}(${JSON.stringify(server.tomp)});${global_client}.work().then(()=>ready.submit())</script>
