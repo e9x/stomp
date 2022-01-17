@@ -5,3 +5,8 @@ import { Server } from './index.mjs';
 self.addEventListener('install', () => {
 	console.log('Installed, now what?');
 });
+
+self.addEventListener('fetch', event => {
+	console.log(event);
+	
+});

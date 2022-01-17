@@ -45,12 +45,20 @@ export class Server {
 			this.tomp.log.error(error);
 		});
 
-
+		const sub_url = '/' + request.url.slice(this.tomp.prefix.length);
+		
 		try{
-			if(request.url == this.tomp.prefix){
+			if(sub_url == '/'){
 				return void await Process(this, request, response);
-			}else if(request.url.startsWith(this.tomp.prefix + 'about:/]/static/')){
-				request.url = request.url.substr((this.tomp.prefix + 'about:/]/static').length);
+			}else if(sub_url.startsWith('/about:/]/config/')){
+				const send = Buffer.from(JSON.stringify(this.tomp));
+				response.writeHead(200, {
+					'content-type': 'application/javascript',
+					'content-length': send.length,
+				});
+				return void response.end(send);
+			}else if(sub_url.startsWith('/about:/]/static/')){
+				request.url = sub_url.substr('/about:/]/static/'.length);
 				return void await this.static(request, response, err => {
 					if(err)this.tomp.log.error(err);
 					this.send_json(response, 404, { message: messages['error.notfound'] })
