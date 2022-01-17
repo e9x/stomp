@@ -1,11 +1,18 @@
 import { TOMP } from '../TOMP.mjs';
-import { Static } from './Compiler.mjs';
+import { PublicDir } from './Compiler.mjs';
 import { Process } from './Send.js';
 import messages from '../Messages.mjs'
+import serveStatic from 'serve-static';
 
 export class Server {
 	constructor(config = {}){
 		this.tomp = new TOMP(config);
+		this.static = serveStatic(PublicDir, {
+			setHeaders: (res, path, stat) => {
+				res.setHeader('service-worker-allowed', this.tomp.prefix);
+			}
+		});
+		
 		this.request = this.request.bind(this);
 		this.upgrade = this.upgrade.bind(this);
 	}
@@ -40,13 +47,13 @@ export class Server {
 
 
 		try{
-			if(request.url.startsWith(this.tomp.prefix + 'about:/]/process/')){
+			if(request.url == this.tomp.prefix){
 				return void await Process(this, request, response);
 			}else if(request.url.startsWith(this.tomp.prefix + 'about:/]/static/')){
 				request.url = request.url.substr((this.tomp.prefix + 'about:/]/static').length);
-				return void await Static(request, response, err => {
+				return void await this.static(request, response, err => {
 					if(err)this.tomp.log.error(err);
-					this.send_json(response, 500, { message: messages['exception.nostatic'] })
+					this.send_json(response, 404, { message: messages['error.notfound'] })
 				});
 			}else{
 				return void await this.send_json(response, 404, { message: messages['error.unknownservice']});

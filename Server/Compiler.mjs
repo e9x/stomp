@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import webpack from "webpack";
-import serveStatic from 'serve-static';
 import { fileURLToPath } from 'node:url';
 import { CompilationErrors, CompileCommon } from '../WebpackUtil.mjs';
 
@@ -10,17 +9,13 @@ const __dirname = path.dirname(__filename);
 
 export const PublicDir = path.resolve(__dirname, 'public');
 
-export const CompilationPath = path.join(PublicDir, 'main.js'); 
-
-export const Static = serveStatic(PublicDir);
-
-const backend = webpack({
+const client = webpack({
 	...CompileCommon,
 	entry: path.join(__dirname, '..', 'Client', 'Entry.mjs'),
 	context: __dirname,
 	output: {
-		path: path.dirname(CompilationPath),
-		filename: path.basename(CompilationPath),
+		path: PublicDir,
+		filename: 'client.js',
 	},
 	plugins: [
 		new webpack.ProvidePlugin({
@@ -29,7 +24,42 @@ const backend = webpack({
 	],
 });
 
-backend.watch({}, (...args) => {
-	if (!CompilationErrors(...args)) console.log('Successful build of backend.');
-	else console.error('Failure building backend.');
+client.watch({}, (...args) => {
+	if (!CompilationErrors(...args)) console.log('Successful build of client.');
+	else console.error('Failure building client.');
+});
+
+const worker = webpack({
+	...CompileCommon,
+	entry: path.join(__dirname, '..', 'Worker', 'Entry.mjs'),
+	context: __dirname,
+	output: {
+		path: PublicDir,
+		filename: 'worker.js',
+	},
+	plugins: [
+		new webpack.ProvidePlugin({
+            Buffer: ['buffer', 'Buffer'],
+        }),
+	],
+});
+
+worker.watch({}, (...args) => {
+	if (!CompilationErrors(...args)) console.log('Successful build of worker.');
+	else console.error('Failure building worker.');
+});
+
+const worker_register = webpack({
+	...CompileCommon,
+	entry: path.join(__dirname, '..', 'Worker', 'EntryRegister.mjs'),
+	context: __dirname,
+	output: {
+		path: PublicDir,
+		filename: 'worker_register.js',
+	},
+});
+
+worker_register.watch({}, (...args) => {
+	if (!CompilationErrors(...args)) console.log('Successful build of worker_register.');
+	else console.error('Failure building worker_register.');
 });

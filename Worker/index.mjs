@@ -1,7 +1,7 @@
 import { TOMP } from '../TOMP.mjs';
 import { Process } from './Process.mjs';
 import { SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendManifest } from './Send.mjs';
-import { messages } from '../Messages.mjs'
+import messages from '../Messages.mjs'
 import cookie from 'cookie';
 
 export class Server {

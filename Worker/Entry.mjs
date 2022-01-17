@@ -1,4 +1,7 @@
-import { Registration } from "./Registration.mjs";
-import { global_client } from '../RewriteJS.mjs'
+import { Server } from './index.mjs';
 
-window[global_client] = Registration;
+// new Server();
+
+self.addEventListener('install', () => {
+
+});

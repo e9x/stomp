@@ -1,15 +1,7 @@
-import fs from 'fs';
-import { Fetch } from './Fetch.mjs';
-import { DecompressResponse } from '../Server/HTTPUtil.mjs'
-import { MapHeaderNames, ObjectFromRawHeaders } from '../Server/HeaderUtil.mjs'
-import { CompilationPath } from '../Server/Compiler.mjs';
+import { MapHeaderNames, ObjectFromRawHeaders } from './HeaderUtil.mjs'
 import { crossorigins, html_types, get_mime } from '../RewriteHTML.mjs';
-import { Stream } from 'stream';
 import setcookie_parser from 'set-cookie-parser';
 import cookie from 'cookie';
-import { parse } from 'path';
-import { request } from 'http';
-import messages from '../Messages.mjs';
 import messages from '../Messages.mjs';
 
 const remove_general_headers = [
@@ -238,7 +230,7 @@ export async function SendBinary(server, server_request, server_response, query,
 	const {gd_error,url,key,request_headers} = get_data(server, server_request, server_response, query, field);
 	if(gd_error)return;
 	
-	const response = await Fetch(server_request, request_headers, url);
+	const response = await fetch(server_request, request_headers, url);
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
 
 	handle_common_response(server, server_request, server_response, url, key, response, response_headers);
@@ -275,7 +267,7 @@ async function SendRewrittenScript(rewriter, server, server_request, server_resp
 	const {gd_error,url,key,request_headers} = get_data(server, server_request, server_response, query, field);
 	if(gd_error)return;
 	
-	const response = await Fetch(server_request, request_headers, url);
+	const response = await fetch(server_request, request_headers, url);
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
 
 	var send;
@@ -311,7 +303,7 @@ export async function SendHTML(server, server_request, server_response, query, f
 	
 	MapHeaderNames(ObjectFromRawHeaders(server_request.rawHeaders), request_headers);
 	
-	const response = await Fetch(server_request, request_headers, url);	
+	const response = await fetch(server_request, request_headers, url);	
 	const response_headers = Object.setPrototypeOf({...response.headers}, null);
 
 	var send;

@@ -20,14 +20,6 @@ export async function Process(server, request, response){
 	
 	const headers = Object.setPrototypeOf({}, null);
 
-	// override tomp$key for security purposes
-	
-	const cookies = typeof request.headers.cookie == 'string' ? cookie.parse(request.headers.cookie) : {};
-
-	const key = cookies.tomp$key || server.tomp.codec.generate_key();
-
-	headers['set-cookie'] = server.get_setcookie(key);
-	
 	// const redirect = server.tomp.html.serve(body.input, body.input, key);
 	// headers['refresh'] = `0;${redirect}`;
 	let send = Buffer.from(`<!DOCTYPE HTML>
@@ -36,12 +28,14 @@ export async function Process(server, request, response){
 		<meta charset="utf-8" />
 	</head>
 	<body>
-		<script src=${JSON.stringify(server.tomp.prefix)}></script>
-		<script>window.${global_client}=new ${global_client}(${JSON.stringify(this.tomp)},${JSON.stringify(key)})</script>
+		<form id='ready' action=${JSON.stringify(server.tomp.prefix + 'about:/]/process')}' method='POST'>
+			<input style='visbility:hidden' type='text' value=${JSON.stringify(body.input)} name='url'></input>
+		</form>
+		<script src=${JSON.stringify(server.tomp.prefix + 'about:/]/static/worker_register.js')}></script>
+		<script>window.${global_client}=new ${global_client}(${JSON.stringify(server.tomp)});${global_client}.work().then(()=>ready.submit())</script>
 	</body>
 </html>`);
 
-	headers['service-worker-allowed'] = server.tomp.prefix;
 	headers['content-type'] = 'text/html';
 	headers['content-length'] = send.byteLength;
 	response.writeHead(200, headers);

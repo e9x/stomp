@@ -1,5 +1,4 @@
 import cookie from 'cookie';
-import { DecodePOSTStream } from './HTTPUtil.mjs'
 
 const whitespace = /\s/;
 const http_s_protocol = /^https?:\/\//;

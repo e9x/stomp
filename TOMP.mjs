@@ -16,6 +16,7 @@ export class TOMP {
 			codec: codecs.indexOf(this.codec),
 			prefix: this.prefix,
 			noscript: this.noscript,
+			loglevel: this.loglevel,
 		};
 	}
 	prefix = '/tomp/';

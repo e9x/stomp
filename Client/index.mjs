@@ -6,7 +6,7 @@ export class Client {
 	get_key(){
 		return this.#key;
 	}
-	constructor(config = {}, key){
+	constructor(config, key){
 		this.tomp = new TOMP(config);
 		this.#key = key;
 		this.window = {};
