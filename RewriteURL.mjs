@@ -1,4 +1,4 @@
-import { parse } from "acorn";
+import messages from './Messages.mjs';
 
 // WIP
 export const protocols =     ['http:','https:'];
@@ -69,5 +69,21 @@ export class RewriteURL {
 			port,
 			host: host.join('.'),
 		}, ParsedRewrittenURL.prototype);
+	}
+	get_attributes(url){
+		const path = url.slice(this.tomp.prefix.length);
+		
+		const queryind = path.indexOf(']/', 1);
+		const serviceind = path.indexOf('/', queryind + 2);
+
+		if(queryind == -1 || serviceind == -1){
+			throw { message: messages['error.badurl'] };
+		}
+
+		return {
+			service: path.slice(queryind + 2, serviceind),
+			query: path.slice(0, queryind),
+			field: path.slice(serviceind),
+		};
 	}
 };

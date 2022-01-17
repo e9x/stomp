@@ -2,18 +2,20 @@ import { Server } from './Server.mjs';
 
 const prefix = self.registration.scope;
 
-const server_pending = new Promise((resolve, reject) => {
+const server_pending = new Promise(resolve => {
 	async function install(){
+		console.log('Fetching config');
 		const request = await fetch(prefix + 'about:/]/config/');
 		const config = await request.json();
 		console.log(config);
-		const server = new Server(config);;
+		const server = new Server(config);
 		await server.work();
-		return server;
+		resolve(server);
+		console.log('OK');
 	}
 
 	self.addEventListener('install', event => {
-		event.waitUntil(install().then(resolve));
+		event.waitUntil(install());
 	});
 });
 
@@ -23,7 +25,6 @@ self.addEventListener('activate', event => {
 
 async function on_fetch(request){
 	const server = await server_pending;
-	
 	return await server.request(request);
 }
 

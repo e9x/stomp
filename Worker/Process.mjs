@@ -28,8 +28,10 @@ async function DecodePOST(request){
 }
 
 export async function Process(server, request, response){
+	console.log('processing');
 	const body = await DecodePOST(request);
-	
+	console.log('processed');
+
 	if(typeof body.input != 'string'){
 		return server.send_json(response, 400, { error: 'body.input was not a string' })
 	}

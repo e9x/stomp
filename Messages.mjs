@@ -5,5 +5,5 @@ export default {
 	'generic.exception.request': `TOMPServer encountered an exception while handling your request. Contact this server's administrator.`,
 	'error.unknownservice': `Service not found`,
 	'error.badform.get': `Invalid form GET`,
-	'error.notfound': `Not found`,
+	'generic.error.notfound': `Not found`,
 };

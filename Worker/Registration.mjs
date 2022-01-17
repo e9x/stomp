@@ -16,7 +16,7 @@ export class Registration {
 			scope: this.tomp.prefix,
 			updateViaCache: 'none',
 		});
-
+		
 		this.tomp.log.debug('Registered new service worker.');
 
 		// throw '';

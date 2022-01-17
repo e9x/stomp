@@ -5,7 +5,7 @@ import messages from '../Messages.mjs'
 import cookie from 'cookie';
 
 export class Server {
-	constructor(config = {}){
+	constructor(config){
 		this.tomp = new TOMP(config);
 		this.request = this.request.bind(this);
 	}
@@ -32,27 +32,11 @@ export class Server {
 			},
 		});
 	}
-	get_attributes(url){
-		const path = url.substr(this.tomp.prefix.length);
-		
-		const queryind = path.indexOf(']/', 1);
-		const serviceind = path.indexOf('/', queryind + 2);
-
-		if(queryind == -1 || serviceind == -1){
-			throw { message: messages['error.badurl'] };
-		}
-
-		return {
-			service: path.slice(queryind + 2, serviceind),
-			query: path.slice(0, queryind),
-			field: path.slice(serviceind),
-		};
-	}
 	async request(request){
 		const url = request.url.slice(request.url.indexOf(this.tomp.prefix));
 		
 		try{
-			var {service,query,field} = this.get_attributes(url);
+			var {service,query,field} = this.tomp.url.get_attributes(url);
 		}catch(err){
 			return this.send_json(response, 400, err);
 		}

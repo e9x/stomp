@@ -1,7 +1,7 @@
 import { TOMP } from '../TOMP.mjs';
 import { PublicDir } from './Compiler.mjs';
 import { Process } from './Process.js';
-import messages from '../Messages.mjs'
+import messages from '../Messages.mjs';
 import serveStatic from 'serve-static';
 
 export class Server {
@@ -28,8 +28,7 @@ export class Server {
 		
 		// this.tomp.log.trace(json);
 
-		response.write(send);
-		response.end();
+		response.end(send);
 	}
 	async request(request, response){
 		if(!request.url.startsWith(this.tomp.prefix)){
@@ -45,26 +44,37 @@ export class Server {
 			this.tomp.log.error(error);
 		});
 
-		const sub_url = '/' + request.url.slice(this.tomp.prefix.length);
-
 		try{
-			if(sub_url == '/'){
-				return void await Process(this, request, response);
-			}else if(sub_url.startsWith('/about:/]/config/')){
-				const send = Buffer.from(JSON.stringify(this.tomp));
-				response.writeHead(200, {
-					'content-type': 'application/javascript',
-					'content-length': send.length,
-				});
-				return void response.end(send);
-			}else if(sub_url.startsWith('/about:/]/static/')){
-				request.url = sub_url.slice('/about:/]/static/'.length);
-				return void await this.static(request, response, err => {
-					if(err)this.tomp.log.error(err);
-					this.send_json(response, 404, { message: messages['error.notfound'] })
-				});
-			}else{
-				return void await this.send_json(response, 404, { message: messages['error.unknownservice']});
+			if(request.url == this.tomp.prefix)return void await Process(this, request, response);
+
+			try{
+				var {service,query,field} = this.tomp.url.get_attributes(request.url);
+			}catch(err){
+				return this.send_json(response, 400, err);
+			}
+			
+			// this.log.debug({ service, query, field });
+			
+			
+			switch(service){
+				case'config':
+					const send = Buffer.from(JSON.stringify(this.tomp));
+					response.writeHead(200, {
+						'content-type': 'application/javascript',
+						'content-length': send.length,
+					});
+					response.end(send);
+					break;
+				case'static':
+					request.url = field;
+					return void await this.static(request, response, err => {
+						if(err)this.tomp.log.error(err);
+						this.send_json(response, 404, { message: messages['generic.error.notfound'] })
+					});
+					break;
+				default:
+					return void await this.send_json(response, 404, { message: messages['error.unknownservice']});
+					break;
 			}
 		}catch(err){
 			setTimeout(async () => {
