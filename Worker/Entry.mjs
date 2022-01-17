@@ -1,12 +1,18 @@
 import { Server } from './index.mjs';
 
-// new Server();
-
-self.addEventListener('install', () => {
-	console.log('Installed, now what?');
+const server_pending = new Promise((resolve, reject) => {
+	self.addEventListener('install', async () => {
+		const request = await fetch(self.registration.scope + 'about:/]/config/');
+		const config = await request.json();
+		resolve(new Server(config));
+	});
 });
 
-self.addEventListener('fetch', event => {
+self.addEventListener('push', async event => {
+	console.log(event.request.url);
+
+	const server = await server_pending;
+	// event.respondWith()
 	console.log(event);
-	
+
 });

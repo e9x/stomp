@@ -46,7 +46,7 @@ export class Server {
 		});
 
 		const sub_url = '/' + request.url.slice(this.tomp.prefix.length);
-		
+
 		try{
 			if(sub_url == '/'){
 				return void await Process(this, request, response);
@@ -58,7 +58,7 @@ export class Server {
 				});
 				return void response.end(send);
 			}else if(sub_url.startsWith('/about:/]/static/')){
-				request.url = sub_url.substr('/about:/]/static/'.length);
+				request.url = sub_url.slice('/about:/]/static/'.length);
 				return void await this.static(request, response, err => {
 					if(err)this.tomp.log.error(err);
 					this.send_json(response, 404, { message: messages['error.notfound'] })
