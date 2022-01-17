@@ -57,7 +57,7 @@ function rewrite_setcookie(setcookie, server, host, key){
 		let domain_fixed = true;
 		if(domain.startsWith('.')){
 			domain_fixed = false;
-			domain = host.slice(1);
+			domain = domain.slice(1);
 			// dont append ']'
 		}
 
@@ -74,9 +74,11 @@ function rewrite_setcookie(setcookie, server, host, key){
 		set.path = server.tomp.prefix + server.tomp.url.wrap_host(domain, key);
 		if(domain_fixed)set.path += ']/';
 
-		set_cookies.push(cookie.serialize(set.name, set.value, set));
+		console.log(domain, set.name, set.value);
+		
+		set_cookies.push(cookie.serialize(set.name, set.value, { decode: x => x, encode: x => x, ...set }));
 	}
-
+	
 	return set_cookies;
 }
 
@@ -85,7 +87,7 @@ function handle_common_request(server, server_request, request_headers, url, key
 		const ref = new URL(server_request.headers.referer);
 		const {service,query,field} = server.get_attributes(ref.pathname);
 		if(service == 'html'){
-			request_headers.referer = server.tomp.url.unwrap(query, field, key);
+			request_headers.referer = server.tomp.url.unwrap(query, field, key).toString();
 		}else{
 			delete request_headers.referer;
 		}
@@ -112,11 +114,10 @@ function handle_common_request(server, server_request, request_headers, url, key
 	}
 
 	if(url.protocol == 'http:')request_headers['upgrade-insecure-requests'] = '1';
-	request_headers['referrer-policy'] = 'same-origin';
 	request_headers['host'] = url.host;
 	
 	if(send_cookies){
-		const parsed_cookies = cookie.parse(request_headers['cookie']);
+		const parsed_cookies = cookie.parse(request_headers['cookie'], { decode: x => x, encode: x => x });
 		const new_cookies = [];
 		
 		request_headers['cookie'] = '';
@@ -128,12 +129,14 @@ function handle_common_request(server, server_request, request_headers, url, key
 			const path = decodeURIComponent(cname.slice(pathind + 1) || '/');
 			
 			if(url.path.startsWith(path)){
-				new_cookies.push(cookie.serialize(name, parsed_cookies[cname]));
+				new_cookies.push(cookie.serialize(name, parsed_cookies[cname], { decode: x => x, encode: x => x }));
 			}
 		}
 
 		if(new_cookies.length)request_headers['cookie'] += new_cookies.join('; ');
 		else delete request_headers['cookie'];
+		// console.log('send', request_headers['cookie']);
+		
 	}else{
 		delete request_headers['cookie'];
 	}
@@ -155,7 +158,8 @@ function handle_common_response(server, server_request, server_response, url, ke
 	for(let set of response_headers['set-cookie'] || []){
 		set_cookies.push(...rewrite_setcookie(set, server, url.host, key));
 	}
-
+	
+	response_headers['referrer-policy'] = 'same-origin';
 	response_headers['set-cookie'] = set_cookies;
 	
 	// todo: ~~wipe cache when the key changes?~~ not needed, key changes and url does too

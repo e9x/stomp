@@ -361,7 +361,7 @@ export class RewriteHTML {
 			
 			if(ctx.type == 'form'){
 				const action_resolved = new URL(attrs.action || '', url).href;
-
+				
 				if(attrs.method?.toUpperCase() == 'POST'){
 					attrs.action = this.tomp.html.serve(action_resolved, url, key);
 				}else{
