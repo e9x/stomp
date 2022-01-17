@@ -80,7 +80,7 @@ function rewrite_setcookie(setcookie, server, host, key){
 	return set_cookies;
 }
 
-function handle_common_request(server, server_request, request_headers, parsed, key, crossorigin){
+function handle_common_request(server, server_request, request_headers, url, key, crossorigin){
 	if('referer' in server_request.headers){
 		const ref = new URL(server_request.headers.referer);
 		const {service,query,field} = server.get_attributes(ref.pathname);
@@ -105,12 +105,16 @@ function handle_common_request(server, server_request, request_headers, parsed, 
 		case'use-credentials':
 
 			if('referer' in server_request.headers){
-				send_cookies = new URL(request_headers.referer).host == parsed.host;
+				send_cookies = new URL(request_headers.referer).host == url.host;
 			}
 
 			break;
 	}
 
+	if(url.protocol == 'http:')request_headers['upgrade-insecure-requests'] = '1';
+	request_headers['referrer-policy'] = 'same-origin';
+	request_headers['host'] = url.host;
+	
 	if(send_cookies){
 		const parsed_cookies = cookie.parse(request_headers['cookie']);
 		const new_cookies = [];
@@ -123,7 +127,7 @@ function handle_common_request(server, server_request, request_headers, parsed, 
 			const name = cname.slice(0, pathind);
 			const path = decodeURIComponent(cname.slice(pathind + 1) || '/');
 			
-			if(parsed.path.startsWith(path)){
+			if(url.path.startsWith(path)){
 				new_cookies.push(cookie.serialize(name, parsed_cookies[cname]));
 			}
 		}
@@ -177,8 +181,6 @@ function handle_common_response(server, server_request, server_response, url, ke
 			response_headers['location'] = server.tomp.html.serve(evaluated.href, url, key);
 		}
 	}
-
-	response_headers['referrer-policy'] = 'same-origin';
 }
 
 function get_data(server, server_request, server_response, query, field){
