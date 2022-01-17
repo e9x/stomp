@@ -22,8 +22,6 @@ self.addEventListener('activate', event => {
 async function on_fetch(request){
 	const server = await server_pending;
 	
-	console.log(request);
-
 	return new Response('k', { status: 200 });
 }
 
@@ -31,12 +29,11 @@ self.addEventListener('fetch', event => {
 	const {request} = event;
 	// only handle process on about:
 	if(request.url == prefix || !request.url.startsWith(prefix) || request.url.startsWith(`${prefix}about:/]/`) && !request.url.startsWith(`${prefix}about:/]/process`)){
-		console.log('not handling', request.url);
 		return false;
 	}
 
 	event.respondWith(on_fetch(request));
-	console.log('handled');
+	return true;
 });
 
 self.addEventListener('push', event => {
