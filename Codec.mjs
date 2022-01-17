@@ -36,8 +36,8 @@ export class XORCodec extends CodecInterface {
 	static generate_key(){
 		const
 			xor = ~~(Math.random() * (this.URI_max - 1)),
-			// 0-5
-			frequency = Math.min(~~(Math.random() * 0xF), 5);
+			// 0-4
+			frequency = Math.min(~~(Math.random() * 0xF), 4);
 
 		// SHORT xor
 		// CHAR frequency

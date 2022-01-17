@@ -46,7 +46,10 @@ const remove_csp_headers = [
 
 function rewrite_setcookie(setcookie, server, host, key){
 	const set_cookies = [];
-	const parsed = setcookie_parser(setcookie);
+	const parsed = setcookie_parser(setcookie, {
+		decodeValues: false,
+		silent: true,
+	});
 
 	// wip pathing
 	for(let set of parsed){
