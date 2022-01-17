@@ -1,14 +1,16 @@
 import fs from 'fs';
 import { Fetch } from './Fetch.mjs';
-import { DecompressResponse } from './HTTPUtil.mjs'
-import { MapHeaderNames, ObjectFromRawHeaders } from './HeaderUtil.mjs'
-import { CompilationPath } from './Compiler.mjs';
+import { DecompressResponse } from '../Server/HTTPUtil.mjs'
+import { MapHeaderNames, ObjectFromRawHeaders } from '../Server/HeaderUtil.mjs'
+import { CompilationPath } from '../Server/Compiler.mjs';
 import { crossorigins, html_types, get_mime } from '../RewriteHTML.mjs';
 import { Stream } from 'stream';
 import setcookie_parser from 'set-cookie-parser';
 import cookie from 'cookie';
 import { parse } from 'path';
 import { request } from 'http';
+import messages from '../Messages.mjs';
+import messages from '../Messages.mjs';
 
 const remove_general_headers = [
 	'alt-svc',
@@ -196,7 +198,7 @@ function get_data(server, server_request, server_response, query, field){
 	const key = server.get_key(server_request);
 	
 	if(!key){
-		server.send_json(server_response, 400, { message: server.messages['error.nokey'] });
+		server.send_json(server_response, 400, { message: messages['error.nokey'] });
 		return { gd_error: true };
 	}
 
@@ -218,7 +220,7 @@ function get_data(server, server_request, server_response, query, field){
 	/*try{
 		new URL(url);
 	}catch(err){
-		server.send_json(server_response, 400, { message: server.messages['error.badurl'] });
+		server.send_json(server_response, 400, { message: messages['error.badurl'] });
 		return { gd_error: true };
 	}*/
 	
@@ -249,7 +251,7 @@ export async function SendForm(server, server_request, server_response, query, f
 	const headers = Object.setPrototypeOf({}, null);
 
 	const search_ind = field.indexOf('?');
-	if(search_ind == -1)return void server.send_json(server_response, 400, { message: server.messages['error.badform.get'] });
+	if(search_ind == -1)return void server.send_json(server_response, 400, { message: messages['error.badform.get'] });
 	const search = field.slice(search_ind);
 	field = field.slice(0, search_ind);
 	

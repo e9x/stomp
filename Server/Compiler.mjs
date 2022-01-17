@@ -14,7 +14,7 @@ export const CompilationPath = path.join(PublicDir, 'main.js');
 
 export const Static = serveStatic(PublicDir);
 
-const frontend = webpack({
+const backend = webpack({
 	...CompileCommon,
 	entry: path.join(__dirname, '..', 'Client', 'Entry.mjs'),
 	context: __dirname,
@@ -29,7 +29,7 @@ const frontend = webpack({
 	],
 });
 
-frontend.watch({}, (...args) => {
+backend.watch({}, (...args) => {
 	if (!CompilationErrors(...args)) console.log('Successful build of backend.');
 	else console.error('Failure building backend.');
 });
