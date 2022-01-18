@@ -2,9 +2,6 @@ import cookie from 'cookie';
 import { DecodePOSTStream } from './HTTPUtil.mjs'
 import { global_client } from '../RewriteJS.mjs';
 
-const whitespace = /\s/;
-const http_s_protocol = /^https?:\/\//;
-
 export async function Process(server, request, response){
 	const body = await DecodePOSTStream(request, request.headers['content-type']);
 	
@@ -12,12 +9,6 @@ export async function Process(server, request, response){
 		return server.send_json(response, 400, { error: 'body.input was not a string' })
 	}
 
-	if(body.input.includes('.') && !body.input.match(http_s_protocol)){
-		body.input = `http://${body.input}`;
-	}else if(body.input.match(whitespace) || !body.input.match(http_s_protocol)) {
-		body.input = `https://www.google.com/search?q=${encodeURIComponent(body.input)}`;
-	}
-	
 	const headers = Object.setPrototypeOf({}, null);
 
 	// const redirect = server.tomp.html.serve(body.input, body.input, key);

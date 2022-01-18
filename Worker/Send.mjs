@@ -270,7 +270,7 @@ const status_empty = [204,304];
 async function Fetch(server, url, request_headers, key){
 	request_headers.set('x-tomp$key', key);
 
-	const response = await fetch(server.tomp.url.wrap_parsed(url, key, 'bare'), {
+	const response = await fetch(server.tomp.url.wrap_parsed(url, key, 'server:bare'), {
 		headers: request_headers,
 	});
 

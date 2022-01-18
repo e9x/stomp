@@ -51,11 +51,11 @@ worker.watch({}, (...args) => {
 
 const worker_register = webpack({
 	...CompileCommon,
-	entry: path.join(__dirname, '..', 'Worker', 'EntryRegister.mjs'),
+	entry: path.join(__dirname, '..', 'Bootstrap.mjs'),
 	context: __dirname,
 	output: {
 		path: PublicDir,
-		filename: 'worker_register.js',
+		filename: 'bootstrap.js',
 	},
 });
 

@@ -6,7 +6,7 @@ var server;
 
 async function install(){
 	console.log('Fetching config');
-	const request = await fetch(prefix + 'about:/]/config/');
+	const request = await fetch(prefix + 'about:/]/server:config/');
 	const config = await request.json();
 	server = new Server(config);
 	await server.work();
@@ -29,8 +29,6 @@ self.addEventListener('fetch', event => {
 	}
 	server.request(event);
 });
-
-
 
 self.addEventListener('activate', event => {
 	console.log('now ready to handle fetches');

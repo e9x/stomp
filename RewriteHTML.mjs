@@ -257,10 +257,10 @@ export class RewriteHTML {
 				nodeName: 'script',
 				tagName: 'script',
 				childNodes: [],
-				attrs: [	
+				attrs: [
 					{
 						name: 'src',
-						value: `${this.tomp.prefix}about:/]/static/client.js`,
+						value: `${this.tomp.prefix}about:/]/server:static/client.js`,
 					},
 				],
 			});

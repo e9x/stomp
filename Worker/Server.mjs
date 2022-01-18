@@ -83,7 +83,7 @@ export class Server {
 		
 		// this.log.debug({ service, query, field });
 		
-		if(!(['bare','config','static'].includes(service))){
+		if(!service.startsWith('server:')){
 			event.respondWith(this.send(request, service, query, field));
 		}
 	}

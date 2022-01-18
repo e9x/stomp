@@ -18,6 +18,9 @@ export class Server {
 		this.request = this.request.bind(this);
 		this.upgrade = this.upgrade.bind(this);
 	}
+	get bootstrap(){
+		return `${this.tomp.prefix}about:/]/server:static/bootstrap.js`;
+	}
 	upgrade(req, socket, head){
 		socket.end();
 	}
@@ -59,7 +62,7 @@ export class Server {
 			
 			
 			switch(service){
-				case'config':
+				case'server:config':
 					const send = Buffer.from(JSON.stringify(this.tomp));
 					response.writeHead(200, {
 						'content-type': 'application/javascript',
@@ -67,10 +70,10 @@ export class Server {
 					});
 					response.end(send);
 					break;
-				case'bare':
+				case'server:bare':
 					return void await SendBare(this, request, response, query, field);
 					break;
-				case'static':
+				case'server:static':
 					request.url = field;
 					return void await this.static(request, response, err => {
 						if(err)this.tomp.log.error(err);
