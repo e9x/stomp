@@ -1,6 +1,7 @@
 import { MapHeaderNamesFromArray, ObjectFromRawHeaders } from '../HeaderUtil.mjs'
 import { crossorigins, html_types, get_mime } from '../RewriteHTML.mjs';
 import { TOMPError } from '../TOMPError.mjs';
+import { TOMPFetch } from './TOMPFetch.mjs';
 import setcookie_parser from 'set-cookie-parser';
 import cookie from 'cookie';
 import messages from '../Messages.mjs';
@@ -127,7 +128,7 @@ function handle_common_request(server, server_request, request_headers, url, key
 				new_cookies.push(cookie.serialize(name, parsed_cookies[cname], { decode: x => x, encode: x => x }));
 			}
 		}
-
+		
 		if(new_cookies.length)request_headers.set('cookie', new_cookies.join('; '));
 		else request_headers.delete('cookie');
 		
@@ -135,8 +136,6 @@ function handle_common_request(server, server_request, request_headers, url, key
 		request_headers.delete('cookie');
 	}
 }
-
-const header_prefix = 'x-$';
 
 function handle_common_response(server, server_request, url, key, response){
 	const response_headers = new Headers(response.headers);
@@ -149,7 +148,7 @@ function handle_common_response(server, server_request, url, key, response){
 	for(let remove of remove_general_headers)response_headers.delete(remove);
 	
 	const setcookies = [];
-	for(let set of [].concat(response.raw_values['set-cookie'] || [])){
+	for(let set of [].concat(response.json_headers['set-cookie'] || [])){
 		for(let cookie of rewrite_setcookie(set, server, url.host, key)){
 			cookieStore.set(cookie);
 		}
@@ -188,10 +187,6 @@ function get_data(server, server_request, query, field){
 	
 	const key = server.key;
 	
-	if(!key){
-		return { gd_error: server.send_json(400, { message: messages['error.nokey'] }) };
-	}
-
 	const request_headers = new Headers(server_request.headers);
 	
 	var crossorigin = 'unknown';
@@ -206,13 +201,6 @@ function get_data(server, server_request, query, field){
 	}
 
 	const url = server.tomp.url.unwrap(query, field, key);
-	
-	/*try{
-		new URL(url);
-	}catch(err){
-		server.send_json(400, { message: messages['error.badurl'] });
-		return { gd_error: server.send_json(400, { message: messages['error.nokey'] }) };
-	}*/
 	
 	handle_common_request(server, server_request, request_headers, url, key, crossorigin);
 	
@@ -229,7 +217,7 @@ export async function SendBinary(server, server_request, query, field){
 	if(gd_error)return gd_error;
 	
 	try{
-		var response = await Fetch(server, url, request_headers, key);
+		var response = await TOMPFetch(server, url, request_headers, key);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.message);
 		else throw err;
@@ -267,51 +255,12 @@ export async function SendForm(server, server_request, query, field){
 
 const status_empty = [204,304];
 
-async function Fetch(server, url, request_headers, key){
-	request_headers.set('x-tomp$key', key);
-
-	const response = await fetch(server.tomp.url.wrap_parsed(url, key, 'server:bare'), {
-		headers: request_headers,
-	});
-
-	if(!response.ok){
-		throw new TOMPError(response.status, await response.json());
-	}
-
-	const headers = new Headers();
-	var status = 200;
-	const raw_array = [];
-	const raw_values = {};
-	
-	for(let [header,value] of response.headers.entries()){
-		if(header == 'x-tomp$status'){
-			status = parseInt(value, 16);
-		}else if(header == 'x-tomp$raw'){
-			raw_array.push(...JSON.parse(value));
-		}else if(header.startsWith(header_prefix)){
-			const name = header.slice(header_prefix.length);
-			const parsed = JSON.parse(value);
-			headers.set(name, parsed);
-			raw_values[name] = parsed;
-		}
-	}
-
-	const new_response = new Response(response.body, {
-		status,
-		headers,
-	});
-
-	new_response.raw_array = raw_array;
-	new_response.raw_values = raw_values;
-	return new_response;
-}
-
 async function SendRewrittenScript(rewriter, server, server_request, query, field){
 	const {gd_error,url,key,request_headers} = get_data(server, server_request, query, field);
 	if(gd_error)return gd_error;
 	
 	try{
-		var response = await Fetch(server, url, request_headers, key);
+		var response = await TOMPFetch(server, url, request_headers, key);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.message);
 		else throw err;
@@ -347,7 +296,7 @@ export async function SendHTML(server, server_request, query, field){
 	if(gd_error)return gd_error;
 	
 	try{
-		var response = await Fetch(server, url, request_headers, key);
+		var response = await TOMPFetch(server, url, request_headers, key);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
 		else throw err;
