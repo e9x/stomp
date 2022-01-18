@@ -298,7 +298,7 @@ export class RewriteHTML {
 				}
 				else attrs[name] = result;
 			}catch(err){
-				console.error(err);
+				this.tomp.log.error(err);
 				delete attrs[name];
 			}
 		}
@@ -333,8 +333,12 @@ export class RewriteHTML {
 			
 			if(ctx.type == 'base' && ctx.parent?.type == 'head' && !one_base){
 				one_base = true;
-				if(attrs.href)url = new URL(url, attrs.href);
-				// todo handle target
+				if('href' in attrs)try{
+					url = new URL(attrs.href, url);
+				}catch(err){
+					this.tomp.log.error(err);
+				}
+				// todo: handle target
 				ctx.detach();
 				continue;
 			}
