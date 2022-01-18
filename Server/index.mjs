@@ -21,10 +21,6 @@ export class Server {
 	upgrade(req, socket, head){
 		socket.end();
 	}
-	get_key(request){
-		const cookies = typeof request.headers.cookie == 'string' ? cookie.parse(request.headers.cookie) : {};
-		return cookies.tomp$key;
-	}
 	send_json(response, status, json){
 		const send = Buffer.from(JSON.stringify(json));
 		response.writeHead(status, { 

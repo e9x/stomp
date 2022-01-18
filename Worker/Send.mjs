@@ -1,5 +1,6 @@
 import { MapHeaderNamesFromArray, ObjectFromRawHeaders } from '../HeaderUtil.mjs'
 import { crossorigins, html_types, get_mime } from '../RewriteHTML.mjs';
+import { TOMPError } from '../TOMPError.mjs';
 import setcookie_parser from 'set-cookie-parser';
 import cookie from 'cookie';
 import messages from '../Messages.mjs';
@@ -227,9 +228,12 @@ export async function SendBinary(server, server_request, query, field){
 	const {gd_error,url,key,request_headers} = get_data(server, server_request, query, field);
 	if(gd_error)return gd_error;
 	
-	const response = await Fetch(server, url, {
-		headers: request_headers,
-	}, key);
+	try{
+		var response = await Fetch(server, url, request_headers, key);
+	}catch(err){
+		if(err instanceof TOMPError)return server.send_json(err.status, err.message);
+		else throw err;
+	}
 	const response_headers = handle_common_response(server, server_request, url, key, response);
 	
 	var exact_response_headers = Object.setPrototypeOf(Object.fromEntries([...response_headers.entries()]), null);
@@ -263,17 +267,26 @@ export async function SendForm(server, server_request, query, field){
 
 const status_empty = [204,304];
 
-async function Fetch(server, url, options, key){
-	const response = await fetch(server.tomp.url.wrap_parsed(url, key, 'bare'), options);
+async function Fetch(server, url, request_headers, key){
+	request_headers.set('tomp$key', key);
+
+	const response = await fetch(server.tomp.url.wrap_parsed(url, key, 'bare'), {
+		headers: request_headers,
+	});
+
+	if(!response.ok){
+		throw new TOMPError(response.status, await response.json());
+	}
+
 	const headers = new Headers();
 	var status = 200;
 	const raw_array = [];
 	const raw_values = {};
 	
 	for(let [header,value] of response.headers.entries()){
-		if(header == 'x-status$'){
+		if(header == 'x-tomp$status'){
 			status = parseInt(value, 16);
-		}else if(header == 'x-raw$'){
+		}else if(header == 'x-tomp$raw'){
 			raw_array.push(...JSON.parse(value));
 		}else if(header.startsWith(header_prefix)){
 			const name = header.slice(header_prefix.length);
@@ -297,9 +310,12 @@ async function SendRewrittenScript(rewriter, server, server_request, query, fiel
 	const {gd_error,url,key,request_headers} = get_data(server, server_request, query, field);
 	if(gd_error)return gd_error;
 	
-	const response = await Fetch(server, url, {
-		headers: request_headers,
-	}, key);
+	try{
+		var response = await Fetch(server, url, request_headers, key);
+	}catch(err){
+		if(err instanceof TOMPError)return server.send_json(err.status, err.message);
+		else throw err;
+	}
 	const response_headers = handle_common_response(server, server_request, url, key, response);
 	
 	var send = new Uint8Array();
@@ -330,9 +346,12 @@ export async function SendHTML(server, server_request, query, field){
 	const {gd_error,url,key,request_headers} = get_data(server, server_request, query, field);
 	if(gd_error)return gd_error;
 	
-	const response = await Fetch(server, url, {
-		headers: request_headers,
-	}, key);
+	try{
+		var response = await Fetch(server, url, request_headers, key);
+	}catch(err){
+		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
+		else throw err;
+	}
 	const response_headers = handle_common_response(server, server_request, url, key, response);
 
 	var send = new Uint8Array();

@@ -44,7 +44,7 @@ export async function Fetch(server_request, request_headers, url){
 }
 
 function get_data(server, server_request, server_response, query, field){
-	const key = server.get_key(server_request);
+	const key = server_request.headers['x-tomp$key'];
 	
 	if(!key){
 		server.send_json(server_response, 400, { message: messages['error.nokey'] });
@@ -80,9 +80,9 @@ export async function SendBare(server, server_request, server_response, query, f
 	}
 
 
-	response_headers['x-raw$'] = JSON.stringify(RawHeaderNames(response.rawHeaders));
+	response_headers['x-tomp$raw'] = JSON.stringify(RawHeaderNames(response.rawHeaders));
 
-	response_headers['x-status$'] = response.statusCode.toString(16);
+	response_headers['x-tomp$status'] = response.statusCode.toString(16);
 
 	server_response.writeHead(200, response_headers);
 	response.pipe(server_response);
