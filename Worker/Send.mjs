@@ -1,4 +1,4 @@
-import { MapHeaderNames, ObjectFromRawHeaders } from './HeaderUtil.mjs'
+import { MapHeaderNamesFromArray, ObjectFromRawHeaders } from '../HeaderUtil.mjs'
 import { crossorigins, html_types, get_mime } from '../RewriteHTML.mjs';
 import setcookie_parser from 'set-cookie-parser';
 import cookie from 'cookie';
@@ -71,9 +71,8 @@ function rewrite_setcookie(setcookie, server, host, key){
 		set.path = server.tomp.prefix + server.tomp.url.wrap_host(domain, key);
 		if(domain_fixed)set.path += ']/';
 
-		console.log(domain, set.name, set.value);
-		
-		set_cookies.push(cookie.serialize(set.name, set.value, { decode: x => x, encode: x => x, ...set }));
+		// cookie.serialize(set.name, set.value, { decode: x => x, encode: x => x, ...set })
+		set_cookies.push(set);
 	}
 	
 	return set_cookies;
@@ -84,9 +83,9 @@ function handle_common_request(server, server_request, request_headers, url, key
 		const ref = new URL(server_request.headers.get('referer'));
 		const {service,query,field} = server.get_attributes(ref.pathname);
 		if(service == 'html'){
-			request_headers.referer = server.tomp.url.unwrap(query, field, key).toString();
+			request_headers.set('referer', server.tomp.url.unwrap(query, field, key).toString());
 		}else{
-			delete request_headers.referer;
+			request_headers.delete('referer');
 		}
 	}
 	
@@ -103,8 +102,8 @@ function handle_common_request(server, server_request, request_headers, url, key
 			break;
 		case'use-credentials':
 
-			if('referer' in server_request.headers){
-				send_cookies = new URL(request_headers.referer).host == url.host;
+			if(server_request.headers.has('referer')){
+				send_cookies = new URL(request_headers.get('referer')).host == url.host;
 			}
 
 			break;
@@ -130,15 +129,17 @@ function handle_common_request(server, server_request, request_headers, url, key
 
 		if(new_cookies.length)request_headers.set('cookie', new_cookies.join('; '));
 		else request_headers.delete('cookie');
-		// console.log('send', request_headers['cookie']);
 		
 	}else{
 		request_headers.delete('cookie');
 	}
 }
 
+const header_prefix = 'x-$';
+
 function handle_common_response(server, server_request, url, key, response){
-	const response_headers = new Headers(server_request.headers);
+	const response_headers = new Headers(response.headers);
+	
 	// server.tomp.log.debug(url, response_headers);
 
 	// whitelist headers soon?
@@ -146,7 +147,12 @@ function handle_common_response(server, server_request, url, key, response){
 	for(let remove of remove_csp_headers)response_headers.delete(remove);
 	for(let remove of remove_general_headers)response_headers.delete(remove);
 	
-	console.log(rewrite_setcookie(response_headers.get('set-cookie'), server, url.host, key));
+	const setcookies = [];
+	for(let set of [].concat(response.raw_values['set-cookie'] || [])){
+		for(let cookie of rewrite_setcookie(set, server, url.host, key)){
+			cookieStore.set(cookie);
+		}
+	}
 	
 	response_headers.delete('set-cookie');
 	
@@ -155,7 +161,7 @@ function handle_common_response(server, server_request, url, key, response){
 	// todo: ~~wipe cache when the key changes?~~ not needed, key changes and url does too
 	// cache builds up
 	
-	const will_redirect = response.statusCode >= 300 && response.statusCode < 400 || response.statusCode == 201;
+	const will_redirect = response.status >= 300 && response.status < 400 || response.status == 201;
 
 	// CONTENT-LOCATION WHAT
 	if(will_redirect && response_headers.has('location')){
@@ -221,13 +227,17 @@ export async function SendBinary(server, server_request, query, field){
 	const {gd_error,url,key,request_headers} = get_data(server, server_request, query, field);
 	if(gd_error)return gd_error;
 	
-	const response = await fetch(url, {
+	const response = await Fetch(server, url, {
 		headers: request_headers,
-	});
+	}, key);
 	const response_headers = handle_common_response(server, server_request, url, key, response);
 	
+	var exact_response_headers = Object.setPrototypeOf(Object.fromEntries([...response_headers.entries()]), null);
+	MapHeaderNamesFromArray(response.raw_array, exact_response_headers);
+	
 	return new Response(response.body, {
-		headers: response_headers,
+		headers: exact_response_headers,
+		status: response.status,
 	});
 }
 
@@ -253,23 +263,51 @@ export async function SendForm(server, server_request, query, field){
 
 const status_empty = [204,304];
 
+async function Fetch(server, url, options, key){
+	const response = await fetch(server.tomp.url.wrap_parsed(url, key, 'bare'), options);
+	const headers = new Headers();
+	var status = 200;
+	const raw_array = [];
+	const raw_values = {};
+	
+	for(let [header,value] of response.headers.entries()){
+		if(header == 'x-status$'){
+			status = parseInt(value, 16);
+		}else if(header == 'x-raw$'){
+			raw_array.push(...JSON.parse(value));
+		}else if(header.startsWith(header_prefix)){
+			const name = header.slice(header_prefix.length);
+			const parsed = JSON.parse(value);
+			headers.set(name, parsed);
+			raw_values[name] = parsed;
+		}
+	}
+
+	const new_response = new Response(response.body, {
+		status,
+		headers,
+	});
+
+	new_response.raw_array = raw_array;
+	new_response.raw_values = raw_values;
+	return new_response;
+}
+
 async function SendRewrittenScript(rewriter, server, server_request, query, field){
 	const {gd_error,url,key,request_headers} = get_data(server, server_request, query, field);
 	if(gd_error)return gd_error;
 	
-	const response = await fetch(url, {
+	const response = await Fetch(server, url, {
 		headers: request_headers,
-	});
+	}, key);
 	const response_headers = handle_common_response(server, server_request, url, key, response);
 	
 	var send = new Uint8Array();
 	if(!status_empty.includes(response.statusCode)){
 		send = rewriter.wrap(await response.text(), url.toString(), key);
-		for(let remove of remove_encoding_headers)delete response_headers[remove];
+		for(let remove of remove_encoding_headers)response_headers.delete(remove);
 	}
 
-	// MapHeaderNames(ObjectFromRawHeaders(response.rawHeaders), response_headers);
-	
 	return new Response(send, {
 		headers: response_headers,
 		status: response.status,
@@ -292,29 +330,25 @@ export async function SendHTML(server, server_request, query, field){
 	const {gd_error,url,key,request_headers} = get_data(server, server_request, query, field);
 	if(gd_error)return gd_error;
 	
-	// MapHeaderNames(ObjectFromRawHeaders(server_request.rawHeaders), request_headers);
-	
-	const response = await fetch(url, {
+	const response = await Fetch(server, url, {
 		headers: request_headers,
-	});
+	}, key);
 	const response_headers = handle_common_response(server, server_request, url, key, response);
 
 	var send = new Uint8Array();
 	if(!status_empty.includes(response.statusCode)){
 		if(html_types.includes(get_mime(response_headers.get('content-type') || ''))){
-			send = Buffer.from(server.tomp.html.wrap(await response.text(), url.toString(), key));
-			for(let remove of remove_encoding_headers)delete response_headers[remove];
+			send = server.tomp.html.wrap(await response.text(), url.toString(), key);
+			for(let remove of remove_encoding_headers)response_headers.delete(remove);
 		}else{
 			send = response;
 		}
 	}
-	for(let remove of remove_html_headers)delete response_headers[remove];
+	for(let remove of remove_html_headers)response_headers.delete(remove);
 
 	if(response_headers.has('refresh')){
-		response_headers.set('refresh', server.tomp.html.wrap_http_refresh(response_headers['refresh'], url, key));
+		response_headers.set('refresh', server.tomp.html.wrap_http_refresh(response_headers.get('refresh'), url, key));
 	}
-
-	// MapHeaderNames(ObjectFromRawHeaders(response.rawHeaders), response_headers);
 	
 	return new Response(send, {
 		headers: response_headers,

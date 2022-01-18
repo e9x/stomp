@@ -4,22 +4,28 @@ import { SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendManifest } from '.
 import messages from '../Messages.mjs'
 import cookie from 'cookie';
 
+export const key_cookie = 'tomp$key';
+
 export class Server {
 	constructor(config){
 		this.tomp = new TOMP(config);
 		this.request = this.request.bind(this);
 	}
 	async work(){
-		var key = await cookieStore.get('tomp$key', {
-			url: '/tomp/',
-		});
+		var key = await cookieStore.get(key_cookie, {
+			url: '/tomp/'
+		})?.value;
 
 		if(!key)key = this.tomp.codec.generate_key();
 
-		await cookieStore.set('tomp$key', key, {
+		await cookieStore.set({
+			name: key_cookie,
+			value: key,
 			path: this.tomp.prefix,
 			expires: Date.now() * 2,
 		});
+
+		await new Promise(resolve => setTimeout(resolve));
 		
 		this.key = key;
 	}
