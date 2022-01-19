@@ -12,9 +12,9 @@ export class Bootstrapper {
 		if(!('serviceWorker' in navigator))throw new TOMPError(400, { message: 'Your browser does not support service workers.' });
 		if(!('cookieStore' in window))throw new TOMPError(400, { message: 'Your browser does not support the cookieStore API.' });
 
-		for(let worker of await navigator.serviceWorker.getRegistrations()){
+		/*for(let worker of await navigator.serviceWorker.getRegistrations()){
 			await worker.unregister();
-		}
+		}*/
 
 		this.worker = await navigator.serviceWorker.register(new URL('./worker.js', src), {
 			scope: this.tomp.prefix,
