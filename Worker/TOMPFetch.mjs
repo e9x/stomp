@@ -13,8 +13,11 @@ export async function TOMPFetch(server, url, raw_request_headers, key){
 
 	request_headers.set('x-tomp-key', key);
 	
+	// https://developer.mozilla.org/en-US/docs/Web/API/Request
+	// todo: try fetching with Request object
 	const response = await fetch(server.tomp.url.wrap_parsed(url, key, 'server:bare'), {
 		headers: request_headers,
+		credentials: 'omit',
 	});
 
 	if(!response.ok){

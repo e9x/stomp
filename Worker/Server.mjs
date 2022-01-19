@@ -2,8 +2,8 @@ import { TOMP } from '../TOMP.mjs';
 import { Process } from './Process.mjs';
 import { SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendManifest } from './Send.mjs';
 import messages from '../Messages.mjs'
-import cookie from 'cookie';
 import { openDB, deleteDB, wrap, unwrap } from 'idb';
+import {create_db as create_cookie_db} from './Cookies.mjs';
 
 export const key_cookie = 'tomp$key';
 
@@ -15,11 +15,13 @@ export class Server {
 	async create_db(){
 		this.db = await openDB('tomp', 1, {
 			upgrade: (db, oldv, newv, transaction) => {
-				const store = db.createObjectStore('consts', {
+				const consts = db.createObjectStore('consts', {
 					keyPath: 'name',
 				});
 				
-				store.createIndex('name', 'name');
+				consts.createIndex('name', 'name');
+				
+				create_cookie_db(db);
 			},
 		});
 	}
