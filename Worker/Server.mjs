@@ -14,7 +14,7 @@ export class Server {
 	async work(){
 		var key = await cookieStore.get({
 			name: key_cookie,
-			url: this.tomp.prefix,
+			// url: this.tomp.prefix,
 		})?.value;
 
 		if(!key)key = this.tomp.codec.generate_key();
