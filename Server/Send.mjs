@@ -39,13 +39,16 @@ export async function Fetch(server_request, request_headers, url){
 export async function SendBare(server, server_request, server_response, query, field){
 	const request_headers = Object.setPrototypeOf({}, null);
 	
-	for(let header in server_request.headers){
+	for(let [header,value] of Object.entries(server_request.headers)){
 		if(header.startsWith(header_real_prefix)){
 			const name = header.slice(header_real_prefix.length);
-			request_headers[name] = server_request.headers[header];
+			request_headers[name] = value;
+		}else if(header.startsWith('accept')){
+			request_headers[header] = value;
 		}
 	}
 	
+
 	const key = server_request.headers['x-tomp-key'];
 
 	if(!key){
@@ -72,7 +75,7 @@ export async function SendBare(server, server_request, server_response, query, f
 			}
 		}
 	}
-
+	
 	response_headers['x-tomp-raw'] = JSON.stringify(RawHeaderNames(response.rawHeaders));
 	response_headers['x-tomp-status'] = response.statusCode.toString(16);
 

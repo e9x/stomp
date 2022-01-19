@@ -1,6 +1,5 @@
 import { TOMP } from '../TOMP.mjs';
 import { PublicDir } from './Compiler.mjs';
-import { Process } from './Process.js';
 import { SendBare } from './Send.mjs';
 import messages from '../Messages.mjs';
 import serveStatic from 'serve-static';
@@ -50,8 +49,6 @@ export class Server {
 		});
 
 		try{
-			if(request.url == this.tomp.prefix)return void await Process(this, request, response);
-
 			try{
 				var {service,query,field} = this.tomp.url.get_attributes(request.url);
 			}catch(err){

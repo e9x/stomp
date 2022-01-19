@@ -137,7 +137,7 @@ function handle_common_request(server, server_request, request_headers, url, key
 	}
 }
 
-function handle_common_response(server, server_request, url, key, response){
+function handle_common_response(rewriter, server, server_request, url, key, response){
 	const response_headers = new Headers(response.headers);
 	
 	// server.tomp.log.debug(url, response_headers);
@@ -172,7 +172,7 @@ function handle_common_response(server, server_request, url, key, response){
 
 		try{
 			evaluated = new URL(location, url);
-			response_headers.set('location', server.tomp.html.serve(evaluated.href, url, key));
+			response_headers.set('location', rewriter.serve(evaluated.href, url, key));
 		}catch(err){
 			console.error('failure', err);
 			response_headers.delete('location');
@@ -222,7 +222,7 @@ export async function SendBinary(server, server_request, query, field){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.message);
 		else throw err;
 	}
-	const response_headers = handle_common_response(server, server_request, url, key, response);
+	const response_headers = handle_common_response(server.tomp.binary, server, server_request, url, key, response);
 	
 	var exact_response_headers = Object.setPrototypeOf(Object.fromEntries([...response_headers.entries()]), null);
 	MapHeaderNamesFromArray(response.raw_array, exact_response_headers);
@@ -262,10 +262,10 @@ async function SendRewrittenScript(rewriter, server, server_request, query, fiel
 	try{
 		var response = await TOMPFetch(server, url, request_headers, key);
 	}catch(err){
-		if(err instanceof TOMPError)return server.send_json(err.status, err.message);
+		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
 		else throw err;
 	}
-	const response_headers = handle_common_response(server, server_request, url, key, response);
+	const response_headers = handle_common_response(rewriter, server, server_request, url, key, response);
 	
 	var send = new Uint8Array();
 	if(!status_empty.includes(response.statusCode)){
@@ -301,7 +301,7 @@ export async function SendHTML(server, server_request, query, field){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
 		else throw err;
 	}
-	const response_headers = handle_common_response(server, server_request, url, key, response);
+	const response_headers = handle_common_response(server.tomp.html, server, server_request, url, key, response);
 
 	var send = new Uint8Array();
 	if(!status_empty.includes(response.statusCode)){

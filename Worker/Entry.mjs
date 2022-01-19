@@ -31,7 +31,7 @@ self.addEventListener('fetch', event => {
 });
 
 self.addEventListener('activate', event => {
-	console.log('now ready to handle fetches');
+	console.log('Now ready to handle fetches');
 });
 
 self.addEventListener('push', event => {

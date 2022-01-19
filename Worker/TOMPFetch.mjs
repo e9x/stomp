@@ -32,6 +32,8 @@ export async function TOMPFetch(server, url, raw_request_headers, key){
 			status = parseInt(value, 16);
 		}else if(header == 'x-tomp-raw'){
 			raw_array.push(...JSON.parse(value));
+		}else if(header == 'content-length'){
+			headers.set(header, value);
 		}else if(header.startsWith(header_real_prefix)){
 			const name = header.slice(header_real_prefix.length);
 			headers.set(name, value);
