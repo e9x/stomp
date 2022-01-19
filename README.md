@@ -1,5 +1,9 @@
 # TooManyProxies (Tomp)
 
+[Demo](https://tomp.sys32.dev/)
+
+[Frontend](https://github.com/waterswat/toomanyproxies-frontend)
+
 ## Design
 
 [History](./History.md)
