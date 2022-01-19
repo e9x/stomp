@@ -72,6 +72,8 @@ function rewrite_setcookie(setcookie, server, host, key){
 		set.name = set.name + '/' + encodeURIComponent(setp);
 		set.path = server.tomp.prefix + server.tomp.url.wrap_host(domain, key);
 		if(domain_fixed)set.path += ']/';
+		
+		if('sameSite' in set)set.sameSite = set.sameSite.toLowerCase();
 
 		// cookie.serialize(set.name, set.value, { decode: x => x, encode: x => x, ...set })
 		set_cookies.push(set);
