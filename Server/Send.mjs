@@ -61,7 +61,13 @@ export async function SendBare(server, server_request, server_response, query, f
 	// wont recover all capitalization
 	// MapHeaderNamesFromObject(ObjectFromRawHeaders(server_request.rawHeaders), request_headers);
 
-	const response = await Fetch(server_request, request_headers, url);
+	try{
+		var response = await Fetch(server_request, request_headers, url);
+	}catch(err){
+		console.error(err, url);
+		throw err;
+	}
+
 	const response_headers = Object.setPrototypeOf({}, null);
 
 	for(let header in response.headers){
