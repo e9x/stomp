@@ -12,7 +12,8 @@ export class Server {
 		this.request = this.request.bind(this);
 	}
 	async work(){
-		var key = await cookieStore.get(key_cookie, {
+		var key = await cookieStore.get({
+			name: key_cookie,
 			url: '/tomp/'
 		})?.value;
 
