@@ -49,7 +49,7 @@ worker.watch({}, (...args) => {
 	else console.error('Failure building worker.');
 });
 
-const worker_register = webpack({
+const bootstrapper = webpack({
 	...CompileCommon,
 	entry: path.join(__dirname, '..', 'Bootstrap.mjs'),
 	context: __dirname,
@@ -59,7 +59,7 @@ const worker_register = webpack({
 	},
 });
 
-worker_register.watch({}, (...args) => {
-	if (!CompilationErrors(...args)) console.log('Successful build of worker_register.');
-	else console.error('Failure building worker_register.');
+bootstrapper.watch({}, (...args) => {
+	if (!CompilationErrors(...args)) console.log('Successful build of bootstrapper.');
+	else console.error('Failure building bootstrapper.');
 });
