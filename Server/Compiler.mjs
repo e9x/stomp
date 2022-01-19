@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import webpack from "webpack";
 import { fileURLToPath } from 'node:url';
-import { CompilationErrors, CompileCommon } from '../WebpackUtil.mjs';
+import { CompilationErrors } from '../WebpackUtil.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,7 +10,8 @@ const __dirname = path.dirname(__filename);
 export const PublicDir = path.resolve(__dirname, 'public');
 
 const client = webpack({
-	...CompileCommon,
+	mode: 'production',
+	devtool: 'source-map',
 	entry: path.join(__dirname, '..', 'Client', 'Entry.mjs'),
 	context: __dirname,
 	output: {
@@ -30,7 +31,8 @@ client.watch({}, (...args) => {
 });
 
 const worker = webpack({
-	...CompileCommon,
+	mode: 'production',
+	devtool: 'source-map',
 	entry: path.join(__dirname, '..', 'Worker', 'Entry.mjs'),
 	context: __dirname,
 	output: {
@@ -50,7 +52,8 @@ worker.watch({}, (...args) => {
 });
 
 const bootstrapper = webpack({
-	...CompileCommon,
+	mode: 'production',
+	devtool: 'source-map',
 	entry: path.join(__dirname, '..', 'Bootstrap.mjs'),
 	context: __dirname,
 	output: {
