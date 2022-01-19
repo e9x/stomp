@@ -9,9 +9,13 @@ async function install(){
 	const request = await fetch(prefix + 'about:/]/server:config/');
 	const config = await request.json();
 	server = new Server(config);
-	await server.work();
-	
-	server.tomp.log.debug('Worker OK');
+	server.tomp.log.debug('Working');
+	try{
+		await server.work();
+		server.tomp.log.debug('Worker OK');
+	}catch(err){
+		server.tomp.log.error('Error working:', err);
+	}
 }
 
 const installed = new Promise((resolve, reject) => {
