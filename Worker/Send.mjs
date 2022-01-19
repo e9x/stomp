@@ -152,6 +152,7 @@ function handle_common_response(rewriter, server, server_request, url, key, resp
 	const setcookies = [];
 	for(let set of [].concat(response.json_headers['set-cookie'] || [])){
 		for(let cookie of rewrite_setcookie(set, server, url.host, key)){
+			debugger;
 			cookieStore.set(cookie);
 		}
 	}
