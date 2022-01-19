@@ -3,6 +3,7 @@ import { Process } from './Process.mjs';
 import { SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendManifest } from './Send.mjs';
 import messages from '../Messages.mjs'
 import cookie from 'cookie';
+import { openDB, deleteDB, wrap, unwrap } from 'idb';
 
 export const key_cookie = 'tomp$key';
 
@@ -11,23 +12,29 @@ export class Server {
 		this.tomp = new TOMP(config);
 		this.request = this.request.bind(this);
 	}
+	async create_db(){
+		this.db = await openDB('tomp', 1, {
+			upgrade: (db, oldv, newv, transaction) => {
+				const store = db.createObjectStore('consts', {
+					keyPath: 'name',
+				});
+				
+				store.createIndex('name', 'name');
+			},
+		});
+	}
 	async work(){
-		var key = await cookieStore.get({
-			name: key_cookie,
-			// url: this.tomp.prefix,
-		})?.value;
-
+		await this.create_db();
+		
+		var key = (await this.db.get('consts', 'codec-key'))?.value;
+		
 		if(!key)key = this.tomp.codec.generate_key();
 
-		await cookieStore.set({
-			name: key_cookie,
+		await this.db.put('consts', {
+			name: 'codec-key',
 			value: key,
-			path: this.tomp.prefix,
-			expires: Date.now() * 2,
 		});
 
-		await new Promise(resolve => setTimeout(resolve));
-		
 		this.key = key;
 	}
 	send_json(status, json){

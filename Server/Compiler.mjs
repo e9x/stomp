@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 export const PublicDir = path.resolve(__dirname, 'public');
 
 const client = webpack({
-	mode: 'production',
+	mode: 'development',
 	devtool: 'source-map',
 	entry: path.join(__dirname, '..', 'Client', 'Entry.mjs'),
 	context: __dirname,
@@ -31,7 +31,7 @@ client.watch({}, (...args) => {
 });
 
 const worker = webpack({
-	mode: 'production',
+	mode: 'development',
 	devtool: 'source-map',
 	entry: path.join(__dirname, '..', 'Worker', 'Entry.mjs'),
 	context: __dirname,
@@ -52,7 +52,7 @@ worker.watch({}, (...args) => {
 });
 
 const bootstrapper = webpack({
-	mode: 'production',
+	mode: 'development',
 	devtool: 'source-map',
 	entry: path.join(__dirname, '..', 'Bootstrap.mjs'),
 	context: __dirname,
