@@ -44,12 +44,25 @@ export async function TOMPFetch(server, url, raw_request_headers, key){
 		}
 	}
 
-	const new_response = new Response(response.body, {
+	const spoof = {
 		status,
 		headers,
-	});
+		raw_array,
+		json_headers,
+		arrayBuffer: response.arrayBuffer.bind(response),
+		blob: response.blob.bind(response),
+		body: response.body,
+		bodyUsed: response.bodyUsed,
+		clone: response.clone.bind(response),
+		formData: response.formData.bind(response),
+		json: response.json.bind(response),
+		ok: response.ok,
+		redirected: response.redirected,
+		statusText: response.statusText,
+		text: response.text.bind(response),
+		type: response.type,
+		url: response.url,
+	};
 
-	new_response.raw_array = raw_array;
-	new_response.json_headers = json_headers;
-	return new_response;
+	return spoof;
 }

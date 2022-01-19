@@ -309,7 +309,7 @@ export async function SendHTML(server, server_request, query, field){
 			send = server.tomp.html.wrap(await response.text(), url.toString(), key);
 			for(let remove of remove_encoding_headers)response_headers.delete(remove);
 		}else{
-			send = response;
+			send = response.body;
 		}
 	}
 	for(let remove of remove_html_headers)response_headers.delete(remove);
