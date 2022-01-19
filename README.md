@@ -22,4 +22,4 @@ The server will be swappable in the future and be independent of configurations.
 
 ### The worker (ServiceWorker)'s job:
 
-Serve responses to the client. Create `bare` requests to the server to recieve raw binary data. Depending on the service (`js, `html`, `css`, `binary`), the data will be ran through the appropiate rewriting process and served to the client.
+Serve responses to the client. Create `bare` requests to the server to recieve raw binary data. Depending on the service (`js`, `html`, `css`, `binary`), the data will be ran through the appropiate rewriting process and served to the client.
