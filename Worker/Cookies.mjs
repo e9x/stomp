@@ -36,8 +36,14 @@ import setcookie_parser from 'set-cookie-parser';
 import cookie from 'cookie';
 
 export async function get_cookies(server, host){
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+
 	// const parsed_cookies = cookie.parse(request_headers.get('cookie'), { decode: x => x, encode: x => x });
 	const parsed_cookies = {};
+
+	// https://developer.mozilla.org/en-US/docs/Web/API/IDBKeyRange
+	const entries = await server.db.getAllFromIndex('cookies', 'domain', IDBKeyRange.upperBound('.' + host, true));
+	console.log(entries);
 
 	const new_cookies = [];
 	
@@ -55,6 +61,8 @@ export async function get_cookies(server, host){
 	return new_cookies.join('; ');
 }
 
+const samesites = ['lax','strict','none'];
+
 export async function load_setcookies(server, host, setcookie){
 	for(let set of [].concat(setcookie)){
 		const parsed = setcookie_parser(setcookie, {
@@ -62,9 +70,16 @@ export async function load_setcookies(server, host, setcookie){
 			silent: true,
 		});
 
-		console.log(parsed);
-		// cookieStore.set(cookie);
-		// cookie.serialize(set.name, set.value, { decode: x => x, encode: x => x, ...set })
+		for(let cookie of parsed){
+			// if(!cookie.domain.endsWith(host)){...}
+			if(!cookie.domain)cookie.domain = host;
+			if(!cookie.path)cookie.path = '/';
+			if(!cookie.httpOnly)cookie.httpOnly = false;
+			if(!samesites.includes(cookie.sameSite?.toLowerCase()))cookie.sameSite = 'none';
+			if(!cookie.secure)cookie.secure = false;
+			console.log(cookie, 'put');
+			server.db.put('cookies', cookie);
+		}
 	}
 	
 }
