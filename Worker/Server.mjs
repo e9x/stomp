@@ -29,6 +29,7 @@ export class Server {
 		this.tomp.log.trace(json);
 		
 		return new Response(JSON.stringify(json), {
+			status,
 			headers: {
 				'content-type': 'application/json',
 			},
@@ -66,12 +67,15 @@ export class Server {
 	}
 	request(event){
 		const request = event.request;
-		const url = request.url.slice(request.url.indexOf(this.tomp.prefix));
+		const url = request.url.slice(request.url.indexOf(this.tomp.directory));
 		
 		const {service,field} = this.tomp.url.get_attributes(url);
 		
 		if(service.startsWith('worker:')){
 			event.respondWith(this.send(request, service, field));
+			return true;
 		}
+
+		return false;
 	}
 };

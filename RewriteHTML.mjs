@@ -234,7 +234,7 @@ export class RewriteHTML {
 				attrs: [
 					{
 						name: 'src',
-						value: `${this.tomp.prefix}client.js`,
+						value: `${this.tomp.directory}client.js`,
 					},
 				],
 			});

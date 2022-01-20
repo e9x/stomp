@@ -1,19 +1,22 @@
-import { TOMP } from '../TOMP.mjs';
-import { PublicDir } from '../Compiler/index.mjs';
+import { Logger, LOG_WARN } from '../Logger.mjs';
 import { SendBare } from './Send.mjs';
 import messages from '../Messages.mjs';
-import serveStatic from 'serve-static';
 
 export class Server {
+	prefix = '';
+	loglevel = LOG_WARN;
 	constructor(config = {}){
-		this.tomp = new TOMP(config);
-		this.static = serveStatic(PublicDir);
-		
-		this.request = this.request.bind(this);
-		this.upgrade = this.upgrade.bind(this);
-	}
-	get bootstrapper(){
-		return `${this.tomp.prefix}bootstrapper.js`;
+		if(typeof config.prefix != 'string'){
+			throw new Error('Prefix must be specified.')
+		}
+
+		this.prefix = config.prefix;
+
+		if(typeof config.loglevel == 'number'){
+			this.loglevel = config.loglevel;
+		}
+
+		this.log = new Logger(this.loglevel);
 	}
 	upgrade(req, socket, head){
 		socket.end();
@@ -29,56 +32,31 @@ export class Server {
 
 		response.end(send);
 	}
-	async request(request, response){
-		if(!request.url.startsWith(this.tomp.prefix)){
-			this.send_json(response, 500, { message: messages['generic.exception.request'] });
-			throw new Error('Your server is misconfigured! TOMPServer should only run on its specified prefix.');
+	route_request(request, response){
+		console.log(this.prefix);
+		if(request.url.startsWith(this.prefix)){
+			this.request(request, response);
+			return true;
+		}else{
+			return false;
 		}
-		
+	}
+	async request(request, response){
 		let finished = false;
 
 		response.on('finish', () => finished = true);
 		
 		response.on('error', error => {
-			this.tomp.log.error(error);
+			this.log.error(error);
 		});
 
-		const {service,field} = this.tomp.url.get_attributes(request.url);
-		
 		try{
-			if(service.startsWith('worker:')){
-				// service worker not registered on client?
-			}
-
-			switch(service){
-				case'server:bare':
-					return void await SendBare(this, request, response, field);
-					break;
-				case'server:config':
-					const send = Buffer.from(JSON.stringify(this.tomp));
-					response.writeHead(200, {
-						'content-type': 'application/javascript',
-						'content-length': send.length,
-					});
-					response.end(send);
-					break;
-				default:
-					request.url = request.url.slice(this.tomp.prefix.length);
-					return void await this.static(request, response, err => {
-						if(err)this.tomp.log.error(err);
-						this.send_json(response, 404, { message: messages['generic.error.notfound'] })
-					});			
-					// return void await this.send_json(response, 404, { message: messages['error.unknownservice']});
-					break;
-			}
+			return void await SendBare(this, request, response);
 		}catch(err){
 			setTimeout(async () => {
-				this.tomp.log.error(err);
+				this.log.error(err);
 				if(!finished)return void await this.send_json(response, 500, { message: messages['generic.exception.request'] });
 			});
 		}
 	}
 };
-
-export * from '../Codec.mjs';
-export * from '../Logger.mjs';

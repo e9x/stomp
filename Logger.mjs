@@ -13,22 +13,22 @@ const error = console.error.bind(console);
 
 export class Logger {
 	levels = ['trace','debug','info','warn','error','silent'];
-	constructor(tomp){
-		this.tomp = tomp;
+	constructor(loglevel){
+		this.loglevel = loglevel;
 	}
 	trace(...args){
-		if(this.tomp.loglevel <= LOG_TRACE)if(!this.tomp.silent)trace('[TOMP]', ...args);
+		if(this.loglevel <= LOG_TRACE)trace('[TOMP]', ...args);
 	}
 	debug(...args){
-		if(this.tomp.loglevel <= LOG_DEBUG)debug('[TOMP]', ...args);
+		if(this.loglevel <= LOG_DEBUG)debug('[TOMP]', ...args);
 	}
 	info(...args){
-		if(this.tomp.loglevel <= LOG_INFO)info('[TOMP]', ...args);
+		if(this.loglevel <= LOG_INFO)info('[TOMP]', ...args);
 	}
 	warn(...args){
-		if(this.tomp.loglevel <= LOG_WARN)warn('[TOMP]', ...args);
+		if(this.loglevel <= LOG_WARN)warn('[TOMP]', ...args);
 	}
 	error(...args){
-		if(this.tomp.loglevel <= LOG_ERROR)error('[TOMP]', ...args);
+		if(this.loglevel <= LOG_ERROR)error('[TOMP]', ...args);
 	}
 };

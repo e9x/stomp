@@ -1,18 +1,16 @@
 import { Server } from './Server.mjs';
 
-const prefix = self.registration.scope;
-
-var server;
+const params = new URLSearchParams(location.search);
+const config = JSON.parse(params.get('config'));
+config.directory = new URL('.', location).pathname;
+const server = new Server(config);
 
 async function install(){
-	console.log('Fetching config');
-	const request = await fetch(prefix + 'server:config');
-	const config = await request.json();
-	server = new Server(config);
 	server.tomp.log.debug('Working');
+
 	try{
 		await server.work();
-		server.tomp.log.debug('Worker OK');
+		server.tomp.log.debug('Success');
 	}catch(err){
 		server.tomp.log.error('Error working:', err);
 	}
@@ -22,16 +20,12 @@ const installed = new Promise((resolve, reject) => {
 	self.addEventListener('install', event => {
 		event.waitUntil(install().then(resolve).catch(reject));
 	});
-})
+});
 
 self.addEventListener('fetch', event => {
-	if(!server)return;
 	const {request} = event;
-	// only handle process on about:
-	if(request.url == prefix || !request.url.startsWith(prefix) || request.url.startsWith(`${prefix}about:/]/`) && !request.url.startsWith(`${prefix}about:/]/process`)){
-		return false;
-	}
-	server.request(event);
+	
+	if(server.request(event))return; // handled 
 });
 
 self.addEventListener('activate', event => {

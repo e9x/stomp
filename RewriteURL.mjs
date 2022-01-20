@@ -25,7 +25,7 @@ export class RewriteURL {
 		if(isNaN(port))throw new URIError(`Unknown default port for protocol: '${og.protocol}'`);
 
 		const field = ((port << 4) + protoi).toString(16) + '/' + encodeURIComponent(og.href.slice(og.origin.length)) + og.hash;
-		return this.tomp.prefix + service + '/' + og.host + '/' + field;
+		return this.tomp.directory + service + '/' + og.host + '/' + field;
 	}
 	// only called in send.js get_data
 	unwrap(field){
@@ -49,7 +49,7 @@ export class RewriteURL {
 		}, ParsedRewrittenURL.prototype);
 	}
 	get_attributes(url){
-		const path = url.slice(this.tomp.prefix.length);
+		const path = url.slice(this.tomp.directory.length);
 		
 		const si = path.indexOf('/', 1);
 		

@@ -23,13 +23,30 @@ export async function TOMPFetch(server, url, server_request, raw_request_headers
 		// https://developer.mozilla.org/en-US/docs/Web/API/Request/body#browser_compatibility
 		options.body = await server_request.blob();
 	}
+	
+	/*
+	bare can contain a query, the url query is appended
+		bare: http://example.org/bare?apikey=123
+		url: http://example.org/bare?apikey=123&url=%7B%22example%22%3Atrue%7D
+	
+	bare can be an absolute path containing no origin, it becomes relative to the script
+	*/
 
-	const request = new Request(server.tomp.prefix + 'server:bare/?url=' + encodeURIComponent(JSON.stringify(url)), options);
+	const bare = new URL(server.tomp.bare, location);
+	bare.searchParams.set('url', JSON.stringify(url));
+	
+	const request = new Request(bare, options);
 	
 	const response = await fetch(request);
 
 	if(!response.ok){
-		throw new TOMPError(response.status, await response.json());
+		throw new TOMPError(400, {
+			message: 'An error occured when retrieving data from the bare server. Verify your bare server is running and the configuration points to it.', 
+			received: {
+				status: response.status,
+				body: await response.text(),
+			},
+		});
 	}
 
 	let status = 200;
