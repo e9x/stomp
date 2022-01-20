@@ -33,7 +33,6 @@ export class Server {
 		response.end(send);
 	}
 	route_request(request, response){
-		console.log(this.prefix);
 		if(request.url.startsWith(this.prefix)){
 			this.request(request, response);
 			return true;
