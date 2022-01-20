@@ -26,7 +26,6 @@
 	"dependencies": {
 		"acorn": "^8.7.0",
 		"buffer": "^6.0.3",
-		"cookie": "^0.4.1",
 		"css-tree": "^2.0.4",
 		"escodegen": "^2.0.0",
 		"idb": "^7.0.0",

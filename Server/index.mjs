@@ -3,7 +3,6 @@ import { PublicDir } from './Compiler.mjs';
 import { SendBare } from './Send.mjs';
 import messages from '../Messages.mjs';
 import serveStatic from 'serve-static';
-import cookie from 'cookie';
 
 export class Server {
 	constructor(config = {}){

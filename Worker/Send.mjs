@@ -71,7 +71,7 @@ async function handle_common_request(server, server_request, request_headers, ur
 	request_headers.set('host', url.host);
 	
 	if(send_cookies){
-		let cookies = await get_cookies(server, url.path, url.host);
+		let cookies = await get_cookies(server, url);
 		if(cookies)request_headers.set('cookie', cookies);
 		else request_headers.delete('cookie');
 	}else{
@@ -90,7 +90,7 @@ async function handle_common_response(rewriter, server, server_request, url, res
 	for(let remove of remove_general_headers)response_headers.delete(remove);
 	
 	if('set-cookie' in response.json_headers){
-		load_setcookies(server, url.host, response.json_headers['set-cookie']);
+		load_setcookies(server, url, response.json_headers['set-cookie']);
 	}
 
 	response_headers.set('referrer-policy', 'same-origin') ;

@@ -28,26 +28,47 @@ export function create_db(db){
 		autoIncrement: true,
 	});
 	
-	cookies.createIndex('domain', 'domain');
+	cookies.createIndex('path', 'path');
 }
 
 import setcookie_parser from 'set-cookie-parser';
-import cookie from 'cookie';
 
-export async function get_cookies(server, path, host){
-	const host_rev = [...host].reverse().join('') + './';
+function get_directory(path){
+	let pathname = path;
+	
+	const searchi = pathname.indexOf('?');
+	
+	if(searchi != -1){
+		pathname = pathname.slice(0, searchi);
+	}
 
+	const hashi = pathname.indexOf('#');
+
+	if(hashi != -1){
+		pathname = pathname.slice(0, hashi);
+	}
+
+	return pathname.slice(0, pathname.lastIndexOf('/')) + '/';
+}
+
+function increase_lastchr(str){
+	return str.substring(0, str.length-1) + String.fromCharCode(str.charCodeAt(str.length-1)+1);
+}
+
+function idb_range_startswith(str){
+	return IDBKeyRange.bound(str, increase_lastchr(str), false, true);
+}
+
+export async function get_cookies(server, url){
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 	// https://developer.mozilla.org/en-US/docs/Web/API/IDBKeyRange
 	
-	const entries = await server.db.getAllFromIndex('cookies', 'domain', IDBKeyRange.bound(host_rev, host_rev + '|', true, true));
+	const entries = await server.db.getAllFromIndex('cookies', 'path', idb_range_startswith(get_directory(url.path)));
 	
-	console.log(entries, host);
-
 	const new_cookies = [];
 	
 	for(let cookie of entries){
-		if(path.startsWith(cookie.path)){
+		if(('.' + url.host).endsWith(cookie.domain)){
 			new_cookies.push(`${cookie.name}=${cookie.value}`);
 		}
 	}
@@ -59,39 +80,29 @@ const samesites = ['lax','strict','none'];
 
 function normalize_cookie(cookie, host){
 	if(!cookie.domain)cookie.domain = host;
-	if(!cookie.path)cookie.path = '/';
+	if(!cookie.path)cookie.path = '/'
 	// todo: truncate cookie path at last /
 	if(!cookie.httpOnly)cookie.httpOnly = false;
 	if(!samesites.includes(cookie.sameSite?.toLowerCase()))cookie.sameSite = 'none';
 	if(!cookie.secure)cookie.secure = false;
 }
 
-export async function load_setcookies(server, host, setcookie){
-	const host_rev = [...host].reverse().join('') + './';
-
+export async function load_setcookies(server, url, setcookie){
 	for(let set of [].concat(setcookie)){
 		const parsed = setcookie_parser(setcookie, {
 			decodeValues: false,
 			silent: true,
 		});
 
-		const index = server.db.transaction('cookies', 'readwrite').store.index('domain');
+		const index = server.db.transaction('cookies', 'readwrite').store.index('path');
 		
 		for(let cookie of parsed){
-			normalize_cookie(cookie, host);
-			if(cookie.domain.startsWith('.')){
-				cookie.domain = [...cookie.domain].reverse().reverse.join('');
-			}else{
-				cookie.domain = [...cookie.domain].reverse().reverse.join('') + './';
-			}
+			normalize_cookie(cookie, url.host);
 		}
 
-		for await (const cursor of index.iterate(IDBKeyRange.bound(host_rev, host_rev + '|', true, true))) {
+		for await (const cursor of index.iterate(idb_range_startswith(get_directory(url.path)))) {
 			for(let cookie of parsed){
-				// if(!cookie.domain.endsWith(host)){...}
-				
-				console.log([...cookie.domain].reverse().reverse.join(''), cursor.value.domain, '.' + host);
-				if(cursor.value.name == cookie.name && cursor.value.path == cookie.path){
+				if(cursor.value.name == cookie.name && cursor.value.domain == cookie.domain){
 					let found_id = cursor.value.id;
 
 					if(!cookie.value){
