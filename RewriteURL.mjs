@@ -24,7 +24,7 @@ export class RewriteURL {
 		if(protoi == -1)return url; // throw new RangeError(`Unsupported protocol '${og.protocol}'`);
 		if(isNaN(port))throw new URIError(`Unknown default port for protocol: '${og.protocol}'`);
 
-		const field = protoi.toString(16) + port.toString(16) + '/' + encodeURIComponent(og.href.slice(og.origin.length)) + og.hash;
+		const field = ((port << 4) + protoi).toString(16) + '/' + encodeURIComponent(og.href.slice(og.origin.length)) + og.hash;
 		return this.tomp.prefix + service + '/' + og.host + '/' + field;
 	}
 	// only called in send.js get_data
@@ -33,10 +33,11 @@ export class RewriteURL {
 		const host = field.slice(1, hosti);
 		
 		const metai = field.indexOf('/', hosti + 1);
-		const meta = field.slice(hosti + 1, metai);
 		
-		const protocol = protocols[parseInt(meta[0], 16)];
-		const port = parseInt(meta.slice(1), 16);
+		const meta = parseInt(field.slice(hosti + 1, metai), 16);
+
+		const port = meta >> 4;
+		const protocol = protocols[meta & 0xF];
 
 		const path = decodeURIComponent(field.slice(metai + 1));
 		
