@@ -16,14 +16,14 @@ Hook JavaScript functions that will create a request.
 
 Such as `fetch(url, opts)`, `XMLHTTPRequest.prototype.open(method, url, ...etc)`.
 
-Each request from the client will have a service: `server:config`, `server:static`, `js`, `html`, `css`, `binary`
+Each request from the client will have a service: `worker:js`, `worker:html`, `worker:css`, `worker:binary`
 
 ### The server's job:
 
-Provide an endpoint (`bare`) that will accept headers and a destination URL. This endpoint will return the raw binary data with no modification. The server will use minimal resources.
+Provide an endpoint (`server:bare`) that will accept headers and a destination URL. This endpoint will return the raw binary data with no modification. The server will use minimal resources.
 
-The server will be swappable in the future and be independent of configurations.
+Currently, the server needs to serve `/prefix/worker.js`, `/prefix/client.js`, and `/prefix/bootstrapper.js`. This is due to implementation. In the future, the server will be swappable in the future and be independent of configurations.
 
 ### The worker (ServiceWorker)'s job:
 
-Serve responses to the client. Create `bare` requests to the server to recieve raw binary data. Depending on the service (`js`, `html`, `css`, `binary`), the data will be ran through the appropiate rewriting process and served to the client.
+Serve responses to the client. Create `server:bare` requests to the server to receive raw binary data. Depending on the service (`worker:js`, `worker:html`, `worker:css`, `worker:binary`), the data will be ran through the appropriate rewriting process then served to the client.
