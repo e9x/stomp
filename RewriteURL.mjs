@@ -14,11 +14,6 @@ export class RewriteURL {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	wrap_parsed(url, service){
-		const protoi = protocols.indexOf(url.protocol);
-		const field = url.port.toString(16) + '/' + protoi.toString(16) + encodeURIComponent(url.path);
-		return this.tomp.prefix + service + '/' + url.host + '/' + field;
-	}
 	wrap(url, service){
 		const og = new URL(url);
 		const protoi = protocols.indexOf(og.protocol);

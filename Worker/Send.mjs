@@ -42,9 +42,9 @@ const remove_csp_headers = [
 async function handle_common_request(server, server_request, request_headers, url){
 	if(server_request.headers.has('referer')){
 		const ref = new URL(server_request.headers.get('referer'));
-		const {service,query,field} = server.get_attributes(ref.pathname);
+		const {service,field} = server.get_attributes(ref.pathname);
 		if(service == 'html'){
-			request_headers.set('referer', server.tomp.url.unwrap(query, field).toString());
+			request_headers.set('referer', server.tomp.url.unwrap(field).toString());
 		}else{
 			request_headers.delete('referer');
 		}
@@ -116,10 +116,10 @@ async function handle_common_response(rewriter, server, server_request, url, res
 	return response_headers;
 }
 
-async function get_data(server, server_request, query, field){
+async function get_data(server, server_request, field){
 	const request_headers = new Headers(server_request.headers);
 	
-	const url = server.tomp.url.unwrap(query, field);
+	const url = server.tomp.url.unwrap(field);
 	
 	await handle_common_request(server, server_request, request_headers, url);
 	
@@ -130,8 +130,8 @@ async function get_data(server, server_request, query, field){
 	};
 }
 
-export async function SendBinary(server, server_request, query, field){
-	const {gd_error,url,request_headers} = await get_data(server, server_request, query, field);
+export async function SendBinary(server, server_request, field){
+	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
 	try{
@@ -151,7 +151,7 @@ export async function SendBinary(server, server_request, query, field){
 	});
 }
 
-export async function SendForm(server, server_request, query, field){
+export async function SendForm(server, server_request, field){
 	const headers = new Headers();
 
 	const search_ind = field.indexOf('?');
@@ -159,13 +159,13 @@ export async function SendForm(server, server_request, query, field){
 	const search = field.slice(search_ind);
 	field = field.slice(0, search_ind);
 	
-	const {gd_error,url} = await get_data(server, server_request, query, field);
+	const {gd_error,url} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
 	const orig_search_ind = url.path.indexOf('?');
 	
 	url.path = url.path.slice(0, orig_search_ind == -1 ? url.length : orig_search_ind) + search;
-	headers.set('location', server.tomp.url.wrap_parsed(url, 'html'));
+	headers.set('location', server.tomp.html.serve(url.toString()));
 	// server.tomp.html.serve(updated, updated);
 
 	return new Response(new Uint8Array(), { headers, status: 302 });
@@ -173,8 +173,8 @@ export async function SendForm(server, server_request, query, field){
 
 const status_empty = [204,304];
 
-async function SendRewrittenScript(rewriter, server, server_request, query, field){
-	const {gd_error,url,request_headers} = await get_data(server, server_request, query, field);
+async function SendRewrittenScript(rewriter, server, server_request, field){
+	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
 	try{
@@ -197,20 +197,20 @@ async function SendRewrittenScript(rewriter, server, server_request, query, fiel
 	});
 }
 
-export async function SendJS(server, server_request, query, field){
-	return await SendRewrittenScript(server.tomp.js, server, server_request, query, field);
+export async function SendJS(server, server_request, field){
+	return await SendRewrittenScript(server.tomp.js, server, server_request, field);
 }
 
-export async function SendCSS(server, server_request, query, field){
-	return await SendRewrittenScript(server.tomp.css, server, server_request, query, field);
+export async function SendCSS(server, server_request, field){
+	return await SendRewrittenScript(server.tomp.css, server, server_request, field);
 }
 
-export async function SendManifest(server, server_request, query, field){
-	return await SendRewrittenScript(server.tomp.manifest, server, server_request, query, field);
+export async function SendManifest(server, server_request, field){
+	return await SendRewrittenScript(server.tomp.manifest, server, server_request, field);
 }
 
-export async function SendHTML(server, server_request, query, field){
-	const {gd_error,url,request_headers} = await get_data(server, server_request, query, field);
+export async function SendHTML(server, server_request, field){
+	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
 	try{

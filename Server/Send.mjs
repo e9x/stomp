@@ -23,7 +23,7 @@ export async function Fetch(server_request, request_headers, url){
 		try{
 			if(url.protocol == 'https:')request_stream = https.request(options, resolve);
 			else if(url.protocol == 'http:')request_stream = http.request(options, resolve);
-			else return reject(new RangeError(`Unsupported protocol: '${protocol}'`));
+			else return reject(new RangeError(`Unsupported protocol: '${url.protocol}'`));
 			
 			request_stream.on('error', reject);
 		}catch(err){
