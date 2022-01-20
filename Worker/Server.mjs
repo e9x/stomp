@@ -68,10 +68,10 @@ export class Server {
 		const request = event.request;
 		const url = request.url.slice(request.url.indexOf(this.tomp.prefix));
 		
-		const {service,field} = this.tomp.url.get_attributes(request.url);
+		const {service,field} = this.tomp.url.get_attributes(url);
 		
 		if(service.startsWith('worker:')){
-			event.respondWith(this.send(request, service, query, field));
+			event.respondWith(this.send(request, service, field));
 		}
 	}
 };

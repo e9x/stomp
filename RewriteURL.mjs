@@ -14,7 +14,6 @@ export class RewriteURL {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	// end of host is ]/
 	wrap_parsed(url, service){
 		const protoi = protocols.indexOf(url.protocol);
 		const field = url.port.toString(16) + '/' + protoi.toString(16) + encodeURIComponent(url.path);
@@ -30,29 +29,29 @@ export class RewriteURL {
 		if(protoi == -1)return url; // throw new RangeError(`Unsupported protocol '${og.protocol}'`);
 		if(isNaN(port))throw new URIError(`Unknown default port for protocol: '${og.protocol}'`);
 
-		const field = port.toString(16) + '/' + protoi.toString(16) + encodeURIComponent(og.href.slice(origin.length)) + og.hash;
+		const field = protoi.toString(16) + port.toString(16) + '/' + encodeURIComponent(og.href.slice(og.origin.length)) + og.hash;
 		return this.tomp.prefix + service + '/' + og.host + '/' + field;
 	}
 	// only called in send.js get_data
-	unwrap(query, field){
-		const host = [];
-
-		for(let part of query.slice(0,-1).split('/').reverse()){
-			host.push(decodeURIComponent(part));
-		}
+	unwrap(field){
+		const hosti = field.indexOf('/', 1);
+		const host = field.slice(1, hosti);
 		
-		const porti = field.indexOf('/', 1);
-		const port = parseInt(field.slice(1, porti), 16);
-		if(porti == -1)throw new URIError('Bad URL');
-		const protocol = protocols[parseInt(field[porti + 1], 16)];
-		if(!protocol)throw new URIError('Bad URL');
-		const path = decodeURIComponent(field.slice(porti + 2));
+		const metai = field.indexOf('/', hosti + 1);
+		const meta = field.slice(hosti + 1, metai);
+		
+		const protocol = protocols[parseInt(meta[0], 16)];
+		const port = parseInt(meta.slice(1), 16);
+
+		const path = decodeURIComponent(field.slice(metai + 1));
+		
+		console.log(path, protocol, port);
 		
 		return Object.setPrototypeOf({
 			protocol,
 			path,
 			port,
-			host: host.join('.'),
+			host,
 		}, ParsedRewrittenURL.prototype);
 	}
 	get_attributes(url){
