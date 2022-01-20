@@ -35,10 +35,12 @@ import setcookie_parser from 'set-cookie-parser';
 import cookie from 'cookie';
 
 export async function get_cookies(server, path, host){
+	const host_rev = [...host].reverse().join('') + './';
+
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 	// https://developer.mozilla.org/en-US/docs/Web/API/IDBKeyRange
 	
-	const entries = await server.db.getAllFromIndex('cookies', 'domain', IDBKeyRange.upperBound('.' + host, true));
+	const entries = await server.db.getAllFromIndex('cookies', 'domain', IDBKeyRange.bound(host_rev, host_rev + '|', true, true));
 	
 	console.log(entries, host);
 
@@ -55,7 +57,7 @@ export async function get_cookies(server, path, host){
 
 const samesites = ['lax','strict','none'];
 
-function normalize_cookie(cookie){
+function normalize_cookie(cookie, host){
 	if(!cookie.domain)cookie.domain = host;
 	if(!cookie.path)cookie.path = '/';
 	// todo: truncate cookie path at last /
@@ -65,20 +67,31 @@ function normalize_cookie(cookie){
 }
 
 export async function load_setcookies(server, host, setcookie){
+	const host_rev = [...host].reverse().join('') + './';
+
 	for(let set of [].concat(setcookie)){
 		const parsed = setcookie_parser(setcookie, {
 			decodeValues: false,
 			silent: true,
 		});
 
-		const tx = server.db.transaction('cookies', 'readwrite');
+		const index = server.db.transaction('cookies', 'readwrite').store.index('domain');
+		
+		for(let cookie of parsed){
+			normalize_cookie(cookie, host);
+			if(cookie.domain.startsWith('.')){
+				cookie.domain = [...cookie.domain].reverse().reverse.join('');
+			}else{
+				cookie.domain = [...cookie.domain].reverse().reverse.join('') + './';
+			}
+		}
 
-		for await (const cursor of tx.store) {
+		for await (const cursor of index.iterate(IDBKeyRange.bound(host_rev, host_rev + '|', true, true))) {
 			for(let cookie of parsed){
-				normalize_cookie(cookie);
 				// if(!cookie.domain.endsWith(host)){...}
 				
-				if(cursor.value.name == cookie.name && cursor.value.path == cookie.path && cursor.value.domain == cookie.domain){
+				console.log([...cookie.domain].reverse().reverse.join(''), cursor.value.domain, '.' + host);
+				if(cursor.value.name == cookie.name && cursor.value.path == cookie.path){
 					let found_id = cursor.value.id;
 
 					if(!cookie.value){

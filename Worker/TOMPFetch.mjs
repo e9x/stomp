@@ -13,9 +13,6 @@ export async function TOMPFetch(server, url, server_request, raw_request_headers
 		request_headers.set(header_real_prefix + header, value);
 	}
 	
-	// https://developer.mozilla.org/en-US/docs/Web/API/Request
-	// todo: try fetching with Request object
-	
 	const options = {
 		credentials: 'omit',
 		headers: request_headers,
@@ -35,8 +32,8 @@ export async function TOMPFetch(server, url, server_request, raw_request_headers
 		throw new TOMPError(response.status, await response.json());
 	}
 
+	let status = 200;
 	const headers = new Headers();
-	var status = 200;
 	const raw_array = [];
 	const json_headers = {};
 	
