@@ -20,13 +20,13 @@ export function ParseDataURI(href){
 		else if(part == 'base64')base64 = true;
 	}
 	
-	const data = decodeURIComponent(href.slice(datapos + 1));
-
-	console.log(data);
-
+	let data = decodeURIComponent(href.slice(datapos + 1));
+	
+	if(base64)data = atob(data);
+	
 	return {
 		mime,
-		buffer: base64 ? Buffer.from(data, 'base64') : Buffer.from(data),
+		data,
 	};
 }
 

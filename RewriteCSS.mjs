@@ -19,11 +19,13 @@ export class RewriteCSS {
 
 		walk(ast, function(node, item, list){
 			if (node.type === 'Url') {
+				let resolved;
+				
 				try{
-					var resolved = new URL(node.value, url).href;
+					resolved = new URL(node.value, url).href;
 				}catch(err){
-					var resolved = '';
-					console.error(err);
+					// console.error(err);
+					return;
 				}
 				
 				if(this.atrule?.name == 'import')node.value = that.tomp.css.serve(resolved, url);
@@ -38,8 +40,8 @@ export class RewriteCSS {
 	}
 	serve(serve, url){
 		if(serve.startsWith('data:')){
-			const [mime,buffer] = ParseDataURI(value);
-			return 'data:text/css,' + /*encodeURIComponent but we need to support unicode*/escape(this.wrap(buffer.toString(), url));
+			const {mime,data} = ParseDataURI(serve);
+			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
 		}
 		return this.tomp.url.wrap(serve, 'worker:css');
 	}

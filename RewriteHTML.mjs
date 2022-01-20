@@ -382,8 +382,8 @@ export class RewriteHTML {
 	}
 	serve(serve, url){
 		if(serve.startsWith('data:')){
-			const [mime,buffer] = ParseDataURI(value);
-			return this.wrap(buffer.toString(), url);
+			const {mime,data} = ParseDataURI(serve);
+			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
 		}
 		return this.tomp.url.wrap(serve, 'worker:html');
 	}

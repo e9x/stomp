@@ -1,13 +1,27 @@
 import fs from 'fs';
 import path from 'path';
-import webpack from "webpack";
+import webpack from 'webpack';
 import { fileURLToPath } from 'node:url';
-import { CompilationErrors } from '../WebpackUtil.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const PublicDir = path.resolve(__dirname, 'public');
+
+function compilation_errors(error, stats = { compilation: { errors: [] } }){
+	var had_error = false;
+	
+	if(error){
+		had_error = true;
+		console.error(error);
+	}
+	
+	for(let error of stats.compilation.errors){
+		console.error(error);
+	}
+	
+	return had_error;
+}
 
 const client = webpack({
 	mode: 'development',
@@ -18,15 +32,10 @@ const client = webpack({
 		path: PublicDir,
 		filename: 'client.js',
 	},
-	plugins: [
-		new webpack.ProvidePlugin({
-            Buffer: ['buffer', 'Buffer'],
-        }),
-	],
 });
 
 client.watch({}, (...args) => {
-	if (!CompilationErrors(...args)) console.log('Successful build of client.');
+	if (!compilation_errors(...args)) console.log('Successful build of client.');
 	else console.error('Failure building client.');
 });
 
@@ -39,15 +48,10 @@ const worker = webpack({
 		path: PublicDir,
 		filename: 'worker.js',
 	},
-	plugins: [
-		new webpack.ProvidePlugin({
-            Buffer: ['buffer', 'Buffer'],
-        }),
-	],
 });
 
 worker.watch({}, (...args) => {
-	if (!CompilationErrors(...args)) console.log('Successful build of worker.');
+	if (!compilation_errors(...args)) console.log('Successful build of worker.');
 	else console.error('Failure building worker.');
 });
 
@@ -63,6 +67,6 @@ const bootstrapper = webpack({
 });
 
 bootstrapper.watch({}, (...args) => {
-	if (!CompilationErrors(...args)) console.log('Successful build of bootstrapper.');
+	if (!compilation_errors(...args)) console.log('Successful build of bootstrapper.');
 	else console.error('Failure building bootstrapper.');
 });

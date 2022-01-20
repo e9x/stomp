@@ -58,7 +58,10 @@ export class RewriteManifest {
 		return code;
 	}
 	serve(serve, url){
-		if(serve.startsWith('data:'))return serve;
+		if(serve.startsWith('data:')){
+			const {mime,data} = ParseDataURI(serve);
+			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
+		}
 		return this.tomp.url.wrap(serve, 'worker:manifest');
 	}
 };

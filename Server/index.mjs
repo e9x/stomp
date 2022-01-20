@@ -1,5 +1,5 @@
 import { TOMP } from '../TOMP.mjs';
-import { PublicDir } from './Compiler.mjs';
+import { PublicDir } from '../Compiler/index.mjs';
 import { SendBare } from './Send.mjs';
 import messages from '../Messages.mjs';
 import serveStatic from 'serve-static';

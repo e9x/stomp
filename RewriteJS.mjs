@@ -98,13 +98,12 @@ export class RewriteJS {
 		return code;
 	}
 	unwrap(code, url){
-		code = Buffer.from(code);
 		return code.slice(12 + global_client.length, -1);
 	}
 	serve(serve, url){
 		if(serve.startsWith('data:')){
-			const [mime,buffer] = ParseDataURI(value);
-			return this.wrap(buffer.toString(), url);
+			const {mime,data} = ParseDataURI(serve);
+			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
 		}
 		return this.tomp.url.wrap(serve, 'worker:js');
 	}
