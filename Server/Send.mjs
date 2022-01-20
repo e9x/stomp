@@ -48,7 +48,6 @@ export async function SendBare(server, server_request, server_response, query, f
 		}
 	}
 	
-
 	const key = server_request.headers['x-tomp-key'];
 
 	if(!key){
@@ -60,6 +59,8 @@ export async function SendBare(server, server_request, server_response, query, f
 	// todo: do same procedure chrome does for capitalizing headers for http/1-http/1.1 servers
 	// wont recover all capitalization
 	// MapHeaderNamesFromObject(ObjectFromRawHeaders(server_request.rawHeaders), request_headers);
+
+	console.log(request_headers.cookie);
 
 	try{
 		var response = await Fetch(server_request, request_headers, url);
