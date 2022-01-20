@@ -38,7 +38,7 @@ export class Server {
 		try{
 			switch(service){
 				case 'worker:process':
-					return await Process(this, request);
+					return await Process(this, request, field);
 					break;
 				case 'worker:binary':
 					return await SendBinary(this, request, field)

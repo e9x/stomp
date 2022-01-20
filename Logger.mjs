@@ -17,18 +17,18 @@ export class Logger {
 		this.tomp = tomp;
 	}
 	trace(...args){
-		if(this.tomp.loglevel <= 0)if(!this.tomp.silent)trace('[TOMP]', ...args);
+		if(this.tomp.loglevel <= LOG_TRACE)if(!this.tomp.silent)trace('[TOMP]', ...args);
 	}
 	debug(...args){
-		if(this.tomp.loglevel <= 1)debug('[TOMP]', ...args);
+		if(this.tomp.loglevel <= LOG_DEBUG)debug('[TOMP]', ...args);
 	}
 	info(...args){
-		if(this.tomp.loglevel <= 2)info('[TOMP]', ...args);
+		if(this.tomp.loglevel <= LOG_INFO)info('[TOMP]', ...args);
 	}
 	warn(...args){
-		if(this.tomp.loglevel <= 3)warn('[TOMP]', ...args);
+		if(this.tomp.loglevel <= LOG_WARN)warn('[TOMP]', ...args);
 	}
 	error(...args){
-		if(this.tomp.loglevel <= 4)error('[TOMP]', ...args);
+		if(this.tomp.loglevel <= LOG_ERROR)error('[TOMP]', ...args);
 	}
 };

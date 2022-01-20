@@ -55,7 +55,9 @@ export class RewriteHTML {
 		return this.tomp.binary.serve(resolved, url);
 	};
 	html_src = (value, url, attrs) => {
-		const resolved = new URL(value, url).href;
+		const nurl = new URL(value, url);
+		if(nurl.protocol == 'javascript:')return 'javascript:' + this.tomp.js.wrap(nurl.pathname, url);
+		const resolved = nurl.href;
 		return this.tomp.html.serve(resolved, url);
 	};
 	binary_srcset = (value, url, attrs) => {

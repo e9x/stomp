@@ -1,31 +1,30 @@
 const { src } = document.currentScript;
-import { TOMPError } from './TOMPError.mjs';
 
-import { TOMP } from './TOMP.mjs'
+import { LOG_DEBUG } from './Logger.mjs';
 
 export class Bootstrapper {
 	pending_messages = {};
 	constructor(config){
-		this.tomp = new TOMP(config);
+		this.config = config;
 	}
 	async register(){
-		if(!('serviceWorker' in navigator))throw new TOMPError(400, { message: 'Your browser does not support service workers.' });
+		if(!('serviceWorker' in navigator))throw new Error('Your browser does not support service workers.' );
 		
 		/*for(let worker of await navigator.serviceWorker.getRegistrations()){
 			await worker.unregister();
 		}*/
 
-		this.worker = await navigator.serviceWorker.register(this.tomp.prefix + 'worker.js', {
-			scope: this.tomp.prefix,
+		this.worker = await navigator.serviceWorker.register(this.config.prefix + 'worker.js', {
+			scope: this.config.prefix,
 			updateViaCache: 'none',
 		});
 		
 		await this.worker.update();
 
-		this.tomp.log.debug('Registered the service worker.');
+		if(this.config.loglevel <= LOG_DEBUG)console.debug('Registered the service worker.');
 	}
 	process(dest){
-		return this.tomp.html.serve(dest, dest);
+		return this.config.prefix + 'worker:process/' + encodeURIComponent(dest);
 	}
 	static async create(){
 		const request = await fetch(new URL('./server:config', src));
