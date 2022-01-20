@@ -135,7 +135,7 @@ export async function SendBinary(server, server_request, query, field){
 	if(gd_error)return gd_error;
 	
 	try{
-		var response = await TOMPFetch(server, url, request_headers);
+		var response = await TOMPFetch(server, url, server_request, request_headers);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.message);
 		else throw err;
@@ -178,7 +178,7 @@ async function SendRewrittenScript(rewriter, server, server_request, query, fiel
 	if(gd_error)return gd_error;
 	
 	try{
-		var response = await TOMPFetch(server, url, request_headers);
+		var response = await TOMPFetch(server, url, server_request, request_headers);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
 		else throw err;
@@ -214,7 +214,7 @@ export async function SendHTML(server, server_request, query, field){
 	if(gd_error)return gd_error;
 	
 	try{
-		var response = await TOMPFetch(server, url, request_headers);
+		var response = await TOMPFetch(server, url, server_request, request_headers);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
 		else throw err;

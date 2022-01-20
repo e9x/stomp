@@ -45,8 +45,6 @@ export class RewriteURL {
 
 		const path = decodeURIComponent(field.slice(metai + 1));
 		
-		console.log(path, protocol, port);
-		
 		return Object.setPrototypeOf({
 			protocol,
 			path,
@@ -68,8 +66,6 @@ export class RewriteURL {
 			field: si == -1 ? '/' : path.slice(si),
 		};
 
-		console.log(result);
-		
 		return result
 	}
 };

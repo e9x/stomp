@@ -3,7 +3,9 @@
 import {header_json_prefix, header_real_prefix} from '../SendConsts.mjs'
 import { TOMPError } from '../TOMPError.mjs';
 
-export async function TOMPFetch(server, url, raw_request_headers){
+const forbids_body = ['GET','HEAD'];
+
+export async function TOMPFetch(server, url, server_request, raw_request_headers){
 	const request_headers = new Headers();
 
 	// Encode
@@ -13,10 +15,21 @@ export async function TOMPFetch(server, url, raw_request_headers){
 	
 	// https://developer.mozilla.org/en-US/docs/Web/API/Request
 	// todo: try fetching with Request object
-	const response = await fetch(server.tomp.url.wrap_parsed(url, 'server:bare'), {
-		headers: request_headers,
+	
+	const options = {
 		credentials: 'omit',
-	});
+		headers: request_headers,
+		method: server_request.method,
+	};
+
+	if(!forbids_body.includes(options.method?.toUpperCase())){
+		// https://developer.mozilla.org/en-US/docs/Web/API/Request/body#browser_compatibility
+		options.body = await server_request.blob();
+	}
+
+	const request = new Request(server.tomp.prefix + 'server:bare/?url=' + encodeURIComponent(JSON.stringify(url)), options);
+	
+	const response = await fetch(request);
 
 	if(!response.ok){
 		throw new TOMPError(response.status, await response.json());

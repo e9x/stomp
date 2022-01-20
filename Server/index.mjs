@@ -26,7 +26,7 @@ export class Server {
 			'content-length': send.byteLength,
 		});
 		
-		this.tomp.log.trace(json);
+		// this.tomp.log.trace(json);
 
 		response.end(send);
 	}
@@ -43,11 +43,14 @@ export class Server {
 		response.on('error', error => {
 			this.tomp.log.error(error);
 		});
-		
+
 		const {service,field} = this.tomp.url.get_attributes(request.url);
 		
 		try{
-			
+			if(service.startsWith('worker:')){
+				// service worker not registered on client?
+			}
+
 			switch(service){
 				case'server:bare':
 					return void await SendBare(this, request, response, field);

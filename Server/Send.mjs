@@ -30,8 +30,10 @@ export async function Fetch(server_request, request_headers, url){
 			reject(err);
 		}
 	});
-	
-	if(request_stream)server_request.pipe(request_stream);
+
+	if(request_stream){
+		server_request.pipe(request_stream);
+	}
 	
 	return await response_promise;
 }
@@ -48,15 +50,12 @@ export async function SendBare(server, server_request, server_response, field){
 		}
 	}
 	
-	const searchi = request.url.indexOf('?');
-	const search = new URLSearchParams(request.url.slice(searchi));
+	const search = new URLSearchParams(server_request.url.slice(server_request.url.indexOf('?')));
 	const url = JSON.parse(search.get('url'));
 	
 	// todo: do same procedure chrome does for capitalizing headers for http/1-http/1.1 servers
 	// wont recover all capitalization
 	// MapHeaderNamesFromObject(ObjectFromRawHeaders(server_request.rawHeaders), request_headers);
-
-	console.log(request_headers.cookie);
 
 	try{
 		var response = await Fetch(server_request, request_headers, url);
