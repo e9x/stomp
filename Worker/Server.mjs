@@ -12,32 +12,18 @@ export class Server {
 		this.tomp = new TOMP(config);
 		this.request = this.request.bind(this);
 	}
-	async create_db(){
+	async work(){
 		this.db = await openDB('tomp', 1, {
 			upgrade: (db, oldv, newv, transaction) => {
-				const consts = db.createObjectStore('consts', {
+				/*const consts = db.createObjectStore('consts', {
 					keyPath: 'name',
 				});
 				
-				consts.createIndex('name', 'name');
+				consts.createIndex('name', 'name');*/
 				
 				create_cookie_db(db);
 			},
 		});
-	}
-	async work(){
-		await this.create_db();
-		
-		var key = (await this.db.get('consts', 'codec-key'))?.value;
-		
-		if(!key)key = this.tomp.codec.generate_key();
-
-		await this.db.put('consts', {
-			name: 'codec-key',
-			value: key,
-		});
-
-		this.key = key;
 	}
 	send_json(status, json){
 		this.tomp.log.trace(json);
@@ -48,32 +34,29 @@ export class Server {
 			},
 		});
 	}
-	async send(request, service, query, field){
+	async send(request, service, field){
 		try{
 			switch(service){
-				case 'process':
+				case 'worker:process':
 					return await Process(this, request);
 					break;
-				case 'binary':
-					return await SendBinary(this, request, query, field)
+				case 'worker:binary':
+					return await SendBinary(this, request, field)
 					break;
-				case 'form':
-					return await SendForm(this, request, query, field)
+				case 'worker:form':
+					return await SendForm(this, request, field)
 					break;
-				case 'html':
-					return await SendHTML(this, request, query, field);
+				case 'worker:html':
+					return await SendHTML(this, request, field);
 					break;
-				case 'js':
-					return await SendJS(this, request, query, field);
+				case 'worker:js':
+					return await SendJS(this, request, field);
 					break;
-				case 'css':
-					return await SendCSS(this, request, query, field);
+				case 'worker:css':
+					return await SendCSS(this, request, field);
 					break;
-				case 'manifest':
-					return await SendManifest(this, request, query, field);
-					break;
-				default:
-					return this.send_json(404, { message: messages['error.unknownservice']});
+				case 'worker:manifest':
+					return await SendManifest(this, request, field);
 					break;
 			}
 		}catch(err){
@@ -85,15 +68,9 @@ export class Server {
 		const request = event.request;
 		const url = request.url.slice(request.url.indexOf(this.tomp.prefix));
 		
-		try{
-			var {service,query,field} = this.tomp.url.get_attributes(url);
-		}catch(err){
-			return event.respondWith(Promise.resolve(this.send_json(response, 400, err)));
-		}
+		const {service,field} = this.tomp.url.get_attributes(request.url);
 		
-		// this.log.debug({ service, query, field });
-		
-		if(!service.startsWith('server:')){
+		if(service.startsWith('worker:')){
 			event.respondWith(this.send(request, service, query, field));
 		}
 	}

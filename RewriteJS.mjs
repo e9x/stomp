@@ -11,7 +11,7 @@ export class RewriteJS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	wrap(code, url, key){
+	wrap(code, url){
 		if(this.tomp.noscript)return '';
 
 		try{
@@ -97,16 +97,16 @@ export class RewriteJS {
 		code = generate(ast);
 		return code;
 	}
-	unwrap(code, url, key){
+	unwrap(code, url){
 		code = Buffer.from(code);
 		return code.slice(12 + global_client.length, -1);
 	}
-	serve(serve, url, key){
+	serve(serve, url){
 		if(serve.startsWith('data:')){
 			const [mime,buffer] = ParseDataURI(value);
-			return this.wrap(buffer.toString(), url, key);
+			return this.wrap(buffer.toString(), url);
 		}
-		return this.tomp.url.wrap(serve, key, 'js');
+		return this.tomp.url.wrap(serve, 'worker:js');
 	}
 };
 

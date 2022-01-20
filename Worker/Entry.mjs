@@ -6,7 +6,7 @@ var server;
 
 async function install(){
 	console.log('Fetching config');
-	const request = await fetch(prefix + 'about:/]/server:config/');
+	const request = await fetch(prefix + 'server:config');
 	const config = await request.json();
 	server = new Server(config);
 	server.tomp.log.debug('Working');

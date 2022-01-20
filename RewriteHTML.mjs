@@ -37,12 +37,12 @@ function P5_object_attrs(object){
 
 export class RewriteHTML {
 	content_router = {
-		script: (value, url, key, attrs) => {
-			if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.wrap(value, url, key);
+		script: (value, url, attrs) => {
+			if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.wrap(value, url);
 			else return value;
 		},
-		style: (value, url, key, attrs) => {
-			if(css_types.includes(get_mime(attrs.type || '')))return this.tomp.css.wrap(value, url, key);
+		style: (value, url, attrs) => {
+			if(css_types.includes(get_mime(attrs.type || '')))return this.tomp.css.wrap(value, url);
 			else return value;
 		},
 	};
@@ -50,20 +50,20 @@ export class RewriteHTML {
 	delete_node = Symbol();
 	all_nodes = Symbol();
 	set_attributes = Symbol();
-	binary_src = (value, url, key, attrs) => {
+	binary_src = (value, url, attrs) => {
 		const resolved = new URL(value, url).href;
-		return this.tomp.binary.serve(resolved, url, key);
+		return this.tomp.binary.serve(resolved, url);
 	};
-	html_src = (value, url, key, attrs) => {
+	html_src = (value, url, attrs) => {
 		const resolved = new URL(value, url).href;
-		return this.tomp.html.serve(resolved, url, key);
+		return this.tomp.html.serve(resolved, url);
 	};
-	binary_srcset = (value, url, key, attrs) => {
+	binary_srcset = (value, url, attrs) => {
 		const parsed = parseSrcset(value);
 
 		for(let src of parsed){
 			const resolved = new URL(src.url, url).href;
-			src.url = this.tomp.binary.serve(resolved, url, key);
+			src.url = this.tomp.binary.serve(resolved, url);
 		}
 
 		return stringifySrcset(parsed);
@@ -71,8 +71,8 @@ export class RewriteHTML {
 	attribute_router = {
 		[this.all_nodes]: {
 			// on*
-			style: (value, url, key, attrs) => {
-				return this.tomp.css.wrap(value, url, key, true);
+			style: (value, url, attrs) => {
+				return this.tomp.css.wrap(value, url, true);
 			},
 		},
 		use: {
@@ -81,10 +81,10 @@ export class RewriteHTML {
 		},
 		script: {
 			// attrs const
-			src: (value, url, key, attrs) => {
+			src: (value, url, attrs) => {
 				const resolved = new URL(value, url).href;
-				if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.serve(resolved, url, key);
-				else return this.tomp.binary.serve(resolved, url, key);
+				if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.serve(resolved, url);
+				else return this.tomp.binary.serve(resolved, url);
 			},
 			nonce: () => this.delete_attribute,	
 			integrity: () => this.delete_attribute,	
@@ -111,48 +111,48 @@ export class RewriteHTML {
 			href: this.html_src,
 		},
 		link: {
-			href: (value, url, key, attrs) => {
+			href: (value, url, attrs) => {
 				const resolved = new URL(value, url).href;
 				
 				switch(attrs.rel){
 					case'preload':
 						switch(attrs.as){
 							case'style':
-								return this.tomp.css.serve(resolved, url, key);
+								return this.tomp.css.serve(resolved, url);
 								break;
 							case'worker':
 							case'script':
-								return this.tomp.js.serve(resolved, url, key);
+								return this.tomp.js.serve(resolved, url);
 								break;
 							case'object':
 							case'document':
-								return this.tomp.html.serve(resolved, url, key);
+								return this.tomp.html.serve(resolved, url);
 								break;
 							default:
-								return this.tomp.binary.serve(resolved, url, key);
+								return this.tomp.binary.serve(resolved, url);
 								break;
 						}
 						break;
 					case'manifest':
-						return this.tomp.manifest.serve(resolved, url, key);
+						return this.tomp.manifest.serve(resolved, url);
 						break;
 					case'alternate':
 					case'amphtml':
 					// case'profile':
-						return this.tomp.html.serve(resolved, url, key);
+						return this.tomp.html.serve(resolved, url);
 						break;
 					case'stylesheet':
-						return this.tomp.css.serve(resolved, url, key);
+						return this.tomp.css.serve(resolved, url);
 						break;
 					default:
-						return this.tomp.binary.serve(resolved, url, key);
+						return this.tomp.binary.serve(resolved, url);
 						break;
 				}
 			},
 			integrity: () => this.delete_attribute,
 		},
 		meta: {
-			content: (value, url, key, attrs) => {
+			content: (value, url, attrs) => {
 				const resolved = new URL(value, url).href;
 				
 				switch(attrs['http-equiv']){
@@ -160,13 +160,13 @@ export class RewriteHTML {
 						return this.delete_node;
 						break;
 					case'refresh':
-						return this.wrap_http_refresh(value, url, key);
+						return this.wrap_http_refresh(value, url);
 						break;
 				}
 				
 				switch(attrs.itemprop){
 					case'image':
-						return this.tomp.binary.serve(resolved, url, key);
+						return this.tomp.binary.serve(resolved, url);
 						break;
 				}
 
@@ -174,10 +174,10 @@ export class RewriteHTML {
 					case'og:url':
 					case'og:video:url':
 					case'og:video:secure_url':
-						return this.tomp.html.serve(resolved, url, key);
+						return this.tomp.html.serve(resolved, url);
 						break;
 					case'og:image':
-						return this.tomp.binary.serve(resolved, url, key);
+						return this.tomp.binary.serve(resolved, url);
 						break;
 				}
 
@@ -189,15 +189,15 @@ export class RewriteHTML {
 					case'twitter:url':
 					case'parsely-link':
 					case'parsely-image-url':
-						return this.tomp.html.serve(resolved, url, key);
+						return this.tomp.html.serve(resolved, url);
 						break;
 					case'twitter:image':
 					case'sailthru.image.thumb':
 					case'msapplication-TileImage':
-						return this.tomp.binary.serve(resolved, url, key);
+						return this.tomp.binary.serve(resolved, url);
 						break;
 					case'style-tools':
-						return this.tomp.css.serve(resolved, url, key);
+						return this.tomp.css.serve(resolved, url);
 						break;
 					default:
 						return value;
@@ -209,7 +209,7 @@ export class RewriteHTML {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	get_head(url, key){
+	get_head(url){
 		const nodes = [];
 
 		if(!this.tomp.noscript){
@@ -219,7 +219,7 @@ export class RewriteHTML {
 				childNodes: [
 					{
 						nodeName: '#text',
-						value: `window.${global_client}=new ${global_client}(${JSON.stringify(this.tomp)},${JSON.stringify(key)})`,
+						value: `window.${global_client}=new ${global_client}(${JSON.stringify(this.tomp)})`,
 					}
 				],
 				attrs: [],
@@ -232,7 +232,7 @@ export class RewriteHTML {
 				attrs: [
 					{
 						name: 'src',
-						value: `${this.tomp.prefix}about:/]/server:static/client.js`,
+						value: `${this.tomp.prefix}client.js`,
 					},
 				],
 			});
@@ -240,10 +240,10 @@ export class RewriteHTML {
 
 		return nodes;
 	}
-	route_set_attributes(route, ctx, attrs, url, key){
+	route_set_attributes(route, ctx, attrs, url){
 		for(let name in route){
 			try{
-				const result = route[name](attrs[name], url, key, attrs);
+				const result = route[name](attrs[name], url, attrs);
 				if(result == this.delete_attribute)delete attrs[name];
 				else if(result == this.delete_node){
 					ctx.detach();
@@ -259,10 +259,10 @@ export class RewriteHTML {
 		return true;
 	}
 	// returns false if the ctx was detached
-	route_attributes(route, ctx, attrs, url, key){
+	route_attributes(route, ctx, attrs, url){
 		for(let name in route)if(name in attrs){
 			try{
-				const result = route[name](attrs[name], url, key, attrs);
+				const result = route[name](attrs[name], url, attrs);
 				if(result == this.delete_attribute)delete attrs[name];
 				else if(result == this.delete_node){
 					ctx.detach();
@@ -277,7 +277,7 @@ export class RewriteHTML {
 
 		return true;
 	}
-	wrap(html, url, key){
+	wrap(html, url){
 		const ast = parse(html, {
 			// https://github.com/inikulin/parse5/blob/master/packages/parse5/docs/options/parser-options.md#optional-scriptingenabled
 			// <noscript>
@@ -319,18 +319,18 @@ export class RewriteHTML {
 				const text = ctx.node?.childNodes[0];
 				
 				if(text?.value.match(/\S/) && text){
-					const result = this.content_router[ctx.type](text.value, url, key, attrs);
+					const result = this.content_router[ctx.type](text.value, url, attrs);
 					text.value = result;
 				}
 			}
 			
-			if(!this.route_attributes(this.attribute_router[this.all_nodes], ctx, attrs, url, key)){
+			if(!this.route_attributes(this.attribute_router[this.all_nodes], ctx, attrs, url)){
 				continue;
 			}
 			
 			if(ctx.type in this.attribute_router){
-				if(!this.route_attributes(this.attribute_router[ctx.type], ctx, attrs, url, key))continue;
-				if(!this.route_set_attributes(this.attribute_router[ctx.type][this.set_attributes], ctx, attrs, url, key))continue;
+				if(!this.route_attributes(this.attribute_router[ctx.type], ctx, attrs, url))continue;
+				if(!this.route_set_attributes(this.attribute_router[ctx.type][this.set_attributes], ctx, attrs, url))continue;
 			}
 
 			if(!ctx.attached)continue;
@@ -339,14 +339,14 @@ export class RewriteHTML {
 				const action_resolved = new URL(attrs.action || '', url).href;
 				
 				if(attrs.method?.toUpperCase() == 'POST'){
-					attrs.action = this.tomp.html.serve(action_resolved, url, key);
+					attrs.action = this.tomp.html.serve(action_resolved, url);
 				}else{
-					attrs.action = this.tomp.form.serve(action_resolved, url, key);
+					attrs.action = this.tomp.form.serve(action_resolved, url);
 				}
 			}
 
 			for(let name in attrs)if(name.startsWith('on')){
-				attrs[name] = this.tomp.js.wrap(attrs[name], url, key);
+				attrs[name] = this.tomp.js.wrap(attrs[name], url);
 			}
 			
 			ctx.node.attrs = P5_object_attrs(attrs);
@@ -354,7 +354,7 @@ export class RewriteHTML {
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)
 			// on the first non-essential node (not html,head,or body), insert the client script before it
 			if(!inserted_script && !essential_nodes.includes(ctx.type)){
-				inserted_script = ctx.insert_before(...this.get_head(url, key));
+				inserted_script = ctx.insert_before(...this.get_head(url));
 			}
 		}
 
@@ -362,7 +362,7 @@ export class RewriteHTML {
 	}
 	// excellent resource
 	// https://web.archive.org/web/20210514140514/https://www.otsukare.info/2015/03/26/refresh-http-header
-	wrap_http_refresh(value, url, key){
+	wrap_http_refresh(value, url){
 		const urlstart = value.indexOf('url=');
 		if(urlstart == -1)return value;
 
@@ -371,20 +371,20 @@ export class RewriteHTML {
 		if(urlend == -1)urlend = value.length;
 		
 		const resolved = new URL(value.slice(urlstart + 4, urlend), url).href;
-		return value.slice(0, urlstart) + this.serve(resolved, url, key) + value.slice(urlend);
+		return value.slice(0, urlstart) + this.serve(resolved, url) + value.slice(urlend);
 	}
-	wrap_fragment(html, key){
+	wrap_fragment(html){
 
 	}
-	unwrap(html, url, key){
+	unwrap(html, url){
 		
 		return html;
 	}
-	serve(serve, url, key){
+	serve(serve, url){
 		if(serve.startsWith('data:')){
 			const [mime,buffer] = ParseDataURI(value);
-			return this.wrap(buffer.toString(), url, key);
+			return this.wrap(buffer.toString(), url);
 		}
-		return this.tomp.url.wrap(serve, key, 'html');
+		return this.tomp.url.wrap(serve, 'worker:html');
 	}
 };

@@ -39,12 +39,12 @@ const remove_csp_headers = [
 	'x-xss-protection',
 ];
 
-async function handle_common_request(server, server_request, request_headers, url, key){
+async function handle_common_request(server, server_request, request_headers, url){
 	if(server_request.headers.has('referer')){
 		const ref = new URL(server_request.headers.get('referer'));
 		const {service,query,field} = server.get_attributes(ref.pathname);
 		if(service == 'html'){
-			request_headers.set('referer', server.tomp.url.unwrap(query, field, key).toString());
+			request_headers.set('referer', server.tomp.url.unwrap(query, field).toString());
 		}else{
 			request_headers.delete('referer');
 		}
@@ -79,7 +79,7 @@ async function handle_common_request(server, server_request, request_headers, ur
 	}
 }
 
-async function handle_common_response(rewriter, server, server_request, url, key, response){
+async function handle_common_response(rewriter, server, server_request, url, response){
 	const response_headers = new Headers(response.headers);
 	
 	// server.tomp.log.debug(url, response_headers);
@@ -95,9 +95,6 @@ async function handle_common_response(rewriter, server, server_request, url, key
 
 	response_headers.set('referrer-policy', 'same-origin') ;
 	
-	// todo: ~~wipe cache when the key changes?~~ not needed, key changes and url does too
-	// cache builds up
-	
 	const will_redirect = response.status >= 300 && response.status < 400 || response.status == 201;
 
 	// CONTENT-LOCATION WHAT
@@ -109,7 +106,7 @@ async function handle_common_response(rewriter, server, server_request, url, key
 
 		try{
 			evaluated = new URL(location, url);
-			response_headers.set('location', rewriter.serve(evaluated.href, url, key));
+			response_headers.set('location', rewriter.serve(evaluated.href, url));
 		}catch(err){
 			console.error('failure', err);
 			response_headers.delete('location');
@@ -120,33 +117,30 @@ async function handle_common_response(rewriter, server, server_request, url, key
 }
 
 async function get_data(server, server_request, query, field){
-	const key = server.key;
-	
 	const request_headers = new Headers(server_request.headers);
 	
-	const url = server.tomp.url.unwrap(query, field, key);
+	const url = server.tomp.url.unwrap(query, field);
 	
-	await handle_common_request(server, server_request, request_headers, url, key);
+	await handle_common_request(server, server_request, request_headers, url);
 	
 	return {
 		gd_error: false,
 		url,
-		key,
 		request_headers,
 	};
 }
 
 export async function SendBinary(server, server_request, query, field){
-	const {gd_error,url,key,request_headers} = await get_data(server, server_request, query, field);
+	const {gd_error,url,request_headers} = await get_data(server, server_request, query, field);
 	if(gd_error)return gd_error;
 	
 	try{
-		var response = await TOMPFetch(server, url, request_headers, key);
+		var response = await TOMPFetch(server, url, request_headers);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.message);
 		else throw err;
 	}
-	const response_headers = await handle_common_response(server.tomp.binary, server, server_request, url, key, response);
+	const response_headers = await handle_common_response(server.tomp.binary, server, server_request, url, response);
 	
 	var exact_response_headers = Object.setPrototypeOf(Object.fromEntries([...response_headers.entries()]), null);
 	MapHeaderNamesFromArray(response.raw_array, exact_response_headers);
@@ -165,14 +159,14 @@ export async function SendForm(server, server_request, query, field){
 	const search = field.slice(search_ind);
 	field = field.slice(0, search_ind);
 	
-	const {gd_error,url,key} = await get_data(server, server_request, query, field);
+	const {gd_error,url} = await get_data(server, server_request, query, field);
 	if(gd_error)return gd_error;
 	
 	const orig_search_ind = url.path.indexOf('?');
 	
 	url.path = url.path.slice(0, orig_search_ind == -1 ? url.length : orig_search_ind) + search;
-	headers.set('location', server.tomp.url.wrap_parsed(url, key, 'html'));
-	// server.tomp.html.serve(updated, updated, key);
+	headers.set('location', server.tomp.url.wrap_parsed(url, 'html'));
+	// server.tomp.html.serve(updated, updated);
 
 	return new Response(new Uint8Array(), { headers, status: 302 });
 }
@@ -180,20 +174,20 @@ export async function SendForm(server, server_request, query, field){
 const status_empty = [204,304];
 
 async function SendRewrittenScript(rewriter, server, server_request, query, field){
-	const {gd_error,url,key,request_headers} = await get_data(server, server_request, query, field);
+	const {gd_error,url,request_headers} = await get_data(server, server_request, query, field);
 	if(gd_error)return gd_error;
 	
 	try{
-		var response = await TOMPFetch(server, url, request_headers, key);
+		var response = await TOMPFetch(server, url, request_headers);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
 		else throw err;
 	}
-	const response_headers = await handle_common_response(rewriter, server, server_request, url, key, response);
+	const response_headers = await handle_common_response(rewriter, server, server_request, url, response);
 	
 	var send = new Uint8Array();
 	if(!status_empty.includes(response.statusCode)){
-		send = rewriter.wrap(await response.text(), url.toString(), key);
+		send = rewriter.wrap(await response.text(), url.toString());
 		for(let remove of remove_encoding_headers)response_headers.delete(remove);
 	}
 
@@ -216,21 +210,21 @@ export async function SendManifest(server, server_request, query, field){
 }
 
 export async function SendHTML(server, server_request, query, field){
-	const {gd_error,url,key,request_headers} = await get_data(server, server_request, query, field);
+	const {gd_error,url,request_headers} = await get_data(server, server_request, query, field);
 	if(gd_error)return gd_error;
 	
 	try{
-		var response = await TOMPFetch(server, url, request_headers, key);
+		var response = await TOMPFetch(server, url, request_headers);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
 		else throw err;
 	}
-	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, key, response);
+	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, response);
 
 	var send = new Uint8Array();
 	if(!status_empty.includes(response.statusCode)){
 		if(html_types.includes(get_mime(response_headers.get('content-type') || ''))){
-			send = server.tomp.html.wrap(await response.text(), url.toString(), key);
+			send = server.tomp.html.wrap(await response.text(), url.toString());
 			for(let remove of remove_encoding_headers)response_headers.delete(remove);
 		}else{
 			send = response.body;
@@ -239,7 +233,7 @@ export async function SendHTML(server, server_request, query, field){
 	for(let remove of remove_html_headers)response_headers.delete(remove);
 
 	if(response_headers.has('refresh')){
-		response_headers.set('refresh', server.tomp.html.wrap_http_refresh(response_headers.get('refresh'), url, key));
+		response_headers.set('refresh', server.tomp.html.wrap_http_refresh(response_headers.get('refresh'), url));
 	}
 	
 	return new Response(send, {

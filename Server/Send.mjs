@@ -36,7 +36,7 @@ export async function Fetch(server_request, request_headers, url){
 	return await response_promise;
 }
 
-export async function SendBare(server, server_request, server_response, query, field){
+export async function SendBare(server, server_request, server_response, field){
 	const request_headers = Object.setPrototypeOf({}, null);
 	
 	for(let [header,value] of Object.entries(server_request.headers)){
@@ -48,13 +48,9 @@ export async function SendBare(server, server_request, server_response, query, f
 		}
 	}
 	
-	const key = server_request.headers['x-tomp-key'];
-
-	if(!key){
-		return void server.send_json(server_response, 400, { message: messages['error.nokey'] });
-	}
-
-	const url = server.tomp.url.unwrap(query, field, key);
+	const searchi = request.url.indexOf('?');
+	const search = new URLSearchParams(request.url.slice(searchi));
+	const url = JSON.parse(search.get('url'));
 	
 	// todo: do same procedure chrome does for capitalizing headers for http/1-http/1.1 servers
 	// wont recover all capitalization

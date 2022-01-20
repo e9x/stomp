@@ -8,17 +8,13 @@ import cookie from 'cookie';
 export class Server {
 	constructor(config = {}){
 		this.tomp = new TOMP(config);
-		this.static = serveStatic(PublicDir, {
-			setHeaders: (res, path, stat) => {
-				res.setHeader('service-worker-allowed', this.tomp.prefix);
-			}
-		});
+		this.static = serveStatic(PublicDir);
 		
 		this.request = this.request.bind(this);
 		this.upgrade = this.upgrade.bind(this);
 	}
-	get bootstrap(){
-		return `${this.tomp.prefix}about:/]/server:static/bootstrap.js`;
+	get bootstrapper(){
+		return `${this.tomp.prefix}bootstrapper.js`;
 	}
 	upgrade(req, socket, head){
 		socket.end();
@@ -30,7 +26,7 @@ export class Server {
 			'content-length': send.byteLength,
 		});
 		
-		// this.tomp.log.trace(json);
+		this.tomp.log.trace(json);
 
 		response.end(send);
 	}
@@ -40,25 +36,22 @@ export class Server {
 			throw new Error('Your server is misconfigured! TOMPServer should only run on its specified prefix.');
 		}
 		
-		var finished = false;
+		let finished = false;
 
 		response.on('finish', () => finished = true);
 		
 		response.on('error', error => {
 			this.tomp.log.error(error);
 		});
-
+		
+		const {service,field} = this.tomp.url.get_attributes(request.url);
+		
 		try{
-			try{
-				var {service,query,field} = this.tomp.url.get_attributes(request.url);
-			}catch(err){
-				return this.send_json(response, 400, err);
-			}
-			
-			// this.log.debug({ service, query, field });
-			
 			
 			switch(service){
+				case'server:bare':
+					return void await SendBare(this, request, response, field);
+					break;
 				case'server:config':
 					const send = Buffer.from(JSON.stringify(this.tomp));
 					response.writeHead(200, {
@@ -67,18 +60,13 @@ export class Server {
 					});
 					response.end(send);
 					break;
-				case'server:bare':
-					return void await SendBare(this, request, response, query, field);
-					break;
-				case'server:static':
-					request.url = field;
+				default:
+					request.url = request.url.slice(this.tomp.prefix.length);
 					return void await this.static(request, response, err => {
 						if(err)this.tomp.log.error(err);
 						this.send_json(response, 404, { message: messages['generic.error.notfound'] })
-					});
-					break;
-				default:
-					return void await this.send_json(response, 404, { message: messages['error.unknownservice']});
+					});			
+					// return void await this.send_json(response, 404, { message: messages['error.unknownservice']});
 					break;
 			}
 		}catch(err){

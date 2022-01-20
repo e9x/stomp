@@ -3,19 +3,17 @@
 import {header_json_prefix, header_real_prefix} from '../SendConsts.mjs'
 import { TOMPError } from '../TOMPError.mjs';
 
-export async function TOMPFetch(server, url, raw_request_headers, key){
+export async function TOMPFetch(server, url, raw_request_headers){
 	const request_headers = new Headers();
 
 	// Encode
 	for(let [header,value] of raw_request_headers.entries()){
 		request_headers.set(header_real_prefix + header, value);
 	}
-
-	request_headers.set('x-tomp-key', key);
 	
 	// https://developer.mozilla.org/en-US/docs/Web/API/Request
 	// todo: try fetching with Request object
-	const response = await fetch(server.tomp.url.wrap_parsed(url, key, 'server:bare'), {
+	const response = await fetch(server.tomp.url.wrap_parsed(url, 'server:bare'), {
 		headers: request_headers,
 		credentials: 'omit',
 	});

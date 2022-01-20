@@ -82,9 +82,10 @@ export async function load_setcookies(server, host, setcookie){
 					let found_id = cursor.value.id;
 
 					if(!cookie.value){
-						await server.db.delete(found_id)
+						cursor.delete();
+						// server.db.delete(found_id)
 					}else{
-						await server.db.put('cookies', {
+						server.db.put('cookies', {
 							id: found_id,
 							...cookie,
 						});

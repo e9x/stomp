@@ -15,45 +15,30 @@ export class RewriteURL {
 		this.tomp = tomp;
 	}
 	// end of host is ]/
-	wrap_host(host, key){
-		// host has to be in directories and reversed for cookie pathing to work
-		var result = '';
-		
-		for(let part of host.split('.').reverse()){
-			result += encodeURIComponent(this.tomp.codec.wrap(part, key)) + '/';
-		}
-		
-		return result;
-	}
-	wrap_parsed(url, key, service){
-		if(key == undefined)throw new TypeError('Bad key');
+	wrap_parsed(url, service){
 		const protoi = protocols.indexOf(url.protocol);
-		const field = url.port.toString(16) + '/' + protoi.toString(16) + encodeURIComponent(this.tomp.codec.wrap(url.path, key));
-		return this.tomp.prefix + this.wrap_host(url.host, key) + ']/' + service + '/' + field;
+		const field = url.port.toString(16) + '/' + protoi.toString(16) + encodeURIComponent(url.path);
+		return this.tomp.prefix + service + '/' + url.host + '/' + field;
 	}
-	wrap(url, key, service){
-		if(key == undefined)throw new TypeError('Bad key');
-
+	wrap(url, service){
 		const og = new URL(url);
 		const protoi = protocols.indexOf(og.protocol);
-		var port = parseInt(url.port);
+		var port = parseInt(og.port);
 		if(isNaN(port))port = default_ports[protoi];
 		
 		// android-app, ios-app, mailto, many other non-browser protocols
 		if(protoi == -1)return url; // throw new RangeError(`Unsupported protocol '${og.protocol}'`);
 		if(isNaN(port))throw new URIError(`Unknown default port for protocol: '${og.protocol}'`);
 
-		const field = port.toString(16) + '/' + protoi.toString(16) + encodeURIComponent(this.tomp.codec.wrap(og.pathname + og.search, key)) + og.hash;
-		return this.tomp.prefix + this.wrap_host(og.host, key) + ']/' + service + '/' + field;
+		const field = port.toString(16) + '/' + protoi.toString(16) + encodeURIComponent(og.href.slice(origin.length)) + og.hash;
+		return this.tomp.prefix + service + '/' + og.host + '/' + field;
 	}
 	// only called in send.js get_data
-	unwrap(query, field, key/*service -keep for validation?*/){
-		if(key == undefined)throw new TypeError('Bad key');
-
+	unwrap(query, field){
 		const host = [];
 
 		for(let part of query.slice(0,-1).split('/').reverse()){
-			host.push(this.tomp.codec.unwrap(decodeURIComponent(part), key));
+			host.push(decodeURIComponent(part));
 		}
 		
 		const porti = field.indexOf('/', 1);
@@ -61,7 +46,7 @@ export class RewriteURL {
 		if(porti == -1)throw new URIError('Bad URL');
 		const protocol = protocols[parseInt(field[porti + 1], 16)];
 		if(!protocol)throw new URIError('Bad URL');
-		const path = this.tomp.codec.unwrap(decodeURIComponent(field.slice(porti + 2)), key);
+		const path = decodeURIComponent(field.slice(porti + 2));
 		
 		return Object.setPrototypeOf({
 			protocol,
@@ -73,17 +58,19 @@ export class RewriteURL {
 	get_attributes(url){
 		const path = url.slice(this.tomp.prefix.length);
 		
-		const queryind = path.indexOf(']/', 1);
-		const serviceind = path.indexOf('/', queryind + 2);
-
-		if(queryind == -1 || serviceind == -1){
+		const si = path.indexOf('/', 1);
+		
+		/*if(si == -1 || qi == -1){
 			throw { message: messages['error.badurl'] };
-		}
+		}*/
 
-		return {
-			service: path.slice(queryind + 2, serviceind),
-			query: path.slice(0, queryind),
-			field: path.slice(serviceind),
+		const result = {
+			service: si == -1 ? path : path.slice(0, si),
+			field: si == -1 ? '/' : path.slice(si),
 		};
+
+		console.log(result);
+		
+		return result
 	}
 };

@@ -15,7 +15,7 @@ export class Bootstrapper {
 			await worker.unregister();
 		}*/
 
-		this.worker = await navigator.serviceWorker.register(new URL('./worker.js', src), {
+		this.worker = await navigator.serviceWorker.register(this.tomp.prefix + 'worker.js', {
 			scope: this.tomp.prefix,
 			updateViaCache: 'none',
 		});
@@ -25,10 +25,10 @@ export class Bootstrapper {
 		this.tomp.log.debug('Registered the service worker.');
 	}
 	process(dest){
-		return new URL('../process/?dest=' + encodeURIComponent(dest), src);
+		return this.tomp.html.serve(dest, dest);
 	}
 	static async create(){
-		const request = await fetch(new URL('../server:config/', src));
+		const request = await fetch(new URL('./server:config', src));
 		const config = await request.json();
 		const bootstrapper = new Bootstrapper(config);
 		await bootstrapper.register();

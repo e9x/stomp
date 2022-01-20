@@ -54,11 +54,11 @@ worker.watch({}, (...args) => {
 const bootstrapper = webpack({
 	mode: 'development',
 	devtool: 'source-map',
-	entry: path.join(__dirname, '..', 'Bootstrap.mjs'),
+	entry: path.join(__dirname, '..', 'Bootstrapper.mjs'),
 	context: __dirname,
 	output: {
 		path: PublicDir,
-		filename: 'bootstrap.js',
+		filename: 'bootstrapper.js',
 	},
 });
 

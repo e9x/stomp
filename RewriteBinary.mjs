@@ -4,14 +4,14 @@ export class RewriteBinary {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	wrap(code, url, key){
+	wrap(code, url){
 		return code;
 	}
-	unwrap(code, url, key){
+	unwrap(code, url){
 		return code;
 	}
-	serve(serve, url, key){
+	serve(serve, url){
 		if(serve.startsWith('data:'))return serve;
-		return this.tomp.url.wrap(serve, key, 'binary');
+		return this.tomp.url.wrap(serve, 'worker:binary');
 	}
 };
