@@ -88,6 +88,8 @@ export async function SendBare(server, server_request, server_response){
 	response_headers['x-tomp-status'] = response.statusCode.toString(16);
 	
 	response_headers['x-robots-tag'] = 'noindex';
+	response_headers['access-control-allow-headers'] = '*';
+	response_headers['access-control-allow-origin'] = '*';
 
 	server_response.writeHead(200, response_headers);
 	response.pipe(server_response);
