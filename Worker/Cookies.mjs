@@ -40,6 +40,8 @@ export async function get_cookies(server, path, host){
 	
 	const entries = await server.db.getAllFromIndex('cookies', 'domain', IDBKeyRange.upperBound('.' + host, true));
 	
+	console.log(entries, host);
+
 	const new_cookies = [];
 	
 	for(let cookie of entries){
@@ -53,6 +55,15 @@ export async function get_cookies(server, path, host){
 
 const samesites = ['lax','strict','none'];
 
+function normalize_cookie(cookie){
+	if(!cookie.domain)cookie.domain = host;
+	if(!cookie.path)cookie.path = '/';
+	// todo: truncate cookie path at last /
+	if(!cookie.httpOnly)cookie.httpOnly = false;
+	if(!samesites.includes(cookie.sameSite?.toLowerCase()))cookie.sameSite = 'none';
+	if(!cookie.secure)cookie.secure = false;
+}
+
 export async function load_setcookies(server, host, setcookie){
 	for(let set of [].concat(setcookie)){
 		const parsed = setcookie_parser(setcookie, {
@@ -62,34 +73,34 @@ export async function load_setcookies(server, host, setcookie){
 
 		const tx = server.db.transaction('cookies', 'readwrite');
 
-		for(let cookie of parsed){
-			// if(!cookie.domain.endsWith(host)){...}
-			if(!cookie.domain)cookie.domain = host;
-			if(!cookie.path)cookie.path = '/';
-			// todo: truncate cookie path at last /
-			if(!cookie.httpOnly)cookie.httpOnly = false;
-			if(!samesites.includes(cookie.sameSite?.toLowerCase()))cookie.sameSite = 'none';
-			if(!cookie.secure)cookie.secure = false;
-			
-			let found_id = undefined;
-
-			for await (const cursor of tx.store) {
-				if(cursor.value.name == cookie.name && cursor.value.path == cookie.path && cursor.value.domain == cookie.domain){
-					found_id = cursor.value.id;
-				}
-			}
-			
-			
-			if(found_id && !cookie.value){
-				await server.db.delete(found_id)
-			}else{
-				if(found_id){
-					cookie.id = found_id;
-				}
+		for await (const cursor of tx.store) {
+			for(let cookie of parsed){
+				normalize_cookie(cookie);
+				// if(!cookie.domain.endsWith(host)){...}
 				
-				await server.db.put('cookies', cookie);
+				if(cursor.value.name == cookie.name && cursor.value.path == cookie.path && cursor.value.domain == cookie.domain){
+					let found_id = cursor.value.id;
+
+					if(!cookie.value){
+						await server.db.delete(found_id)
+					}else{
+						await server.db.put('cookies', {
+							id: found_id,
+							...cookie,
+						});
+					}
+
+					cookie.processed = true;
+				}
 			}
 		}
+		
+		for(let cookie of parsed){
+			if(!cookie.processed && cookie.value){
+				await server.db.add('cookies', cookie);
+			}
+		}
+		
 	}
 	
 }
