@@ -1,4 +1,4 @@
-import { MapHeaderNamesFromArray, ObjectFromRawHeaders } from '../HeaderUtil.mjs'
+import { MapHeaderNamesFromArray } from '../HeaderUtil.mjs'
 import { html_types, get_mime } from '../RewriteHTML.mjs';
 import { TOMPError } from '../TOMPError.mjs';
 import { TOMPFetch } from './TOMPFetch.mjs';
@@ -89,8 +89,8 @@ async function handle_common_response(rewriter, server, server_request, url, res
 	for(let remove of remove_csp_headers)response_headers.delete(remove);
 	for(let remove of remove_general_headers)response_headers.delete(remove);
 	
-	if('set-cookie' in response.raw_headers){
-		load_setcookies(server, url, response.raw_headers['set-cookie']);
+	if('set-cookie' in response.json_headers){
+		load_setcookies(server, url, response.json_headers['set-cookie']);
 	}
 	
 	response_headers.set('referrer-policy', 'same-origin') ;
@@ -143,7 +143,7 @@ export async function SendBinary(server, server_request, field){
 	const response_headers = await handle_common_response(server.tomp.binary, server, server_request, url, response);
 	
 	var exact_response_headers = Object.setPrototypeOf(Object.fromEntries([...response_headers.entries()]), null);
-	MapHeaderNamesFromArray(response.raw_array, exact_response_headers);
+	MapHeaderNamesFromArray(response.raw_header_names, exact_response_headers);
 	
 	return new Response(response.body, {
 		headers: exact_response_headers,

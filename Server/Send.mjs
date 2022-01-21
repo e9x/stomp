@@ -1,6 +1,6 @@
 import http from 'http';
 import https from 'https';
-import { MapHeaderNamesFromObject, ObjectFromRawHeaders, RawHeaderNames } from '../HeaderUtil.mjs';
+import { MapHeaderNamesFromArray, RawHeaderNames } from '../HeaderUtil.mjs';
 import messages from '../Messages.mjs';
 
 // max of 4 concurrent sockets, rest is queued while busy? set max to 75
@@ -87,10 +87,8 @@ export async function SendBare(server, server_request, server_response){
 		else if(header == 'content-length')response_headers['content-length'] = response.headers[header];
 	}
 
-	response_headers['x-tomp-headers'] = JSON.stringify(response.headers);
+	response_headers['x-tomp-headers'] = JSON.stringify(MapHeaderNamesFromArray(RawHeaderNames(response.rawHeaders), {...response.headers}));
 	response_headers['x-tomp-status'] = response.statusCode.toString(16);
-	response_headers['x-tomp-raw'] = JSON.stringify(RawHeaderNames(response.rawHeaders));
-	
 	server_response.writeHead(200, response_headers);
 	response.pipe(server_response);
 }
