@@ -40,7 +40,18 @@ export async function Fetch(server_request, request_headers, url){
 
 export async function SendBare(server, server_request, server_response){
 	const request_headers = Object.setPrototypeOf({}, null);
-	
+	const response_headers = Object.setPrototypeOf({}, null);
+
+	response_headers['x-robots-tag'] = 'noindex';
+	response_headers['access-control-allow-headers'] = '*';
+	response_headers['access-control-allow-origin'] = '*';
+	response_headers['access-control-expose-headers'] = '*';
+
+	if(server_request.method == 'OPTIONS'){
+		server_response.writeHead(200, response_headers);
+		return void server_response.end();
+	}
+
 	for(let [header,value] of Object.entries(server_request.headers)){
 		if(header.startsWith(header_real_prefix)){
 			const name = header.slice(header_real_prefix.length);
@@ -70,8 +81,6 @@ export async function SendBare(server, server_request, server_response){
 		throw err;
 	}
 
-	const response_headers = Object.setPrototypeOf({}, null);
-
 	for(let header in response.headers){
 		if(header == 'content-encoding' || header == 'x-content-encoding')response_headers['content-encoding'] = response.headers[header];
 		else if(header == 'content-length')response_headers['content-length'] = response.headers[header];
@@ -87,10 +96,6 @@ export async function SendBare(server, server_request, server_response){
 	response_headers['x-tomp-raw'] = JSON.stringify(RawHeaderNames(response.rawHeaders));
 	response_headers['x-tomp-status'] = response.statusCode.toString(16);
 	
-	response_headers['x-robots-tag'] = 'noindex';
-	response_headers['access-control-allow-headers'] = '*';
-	response_headers['access-control-allow-origin'] = '*';
-
 	server_response.writeHead(200, response_headers);
 	response.pipe(server_response);
 }
