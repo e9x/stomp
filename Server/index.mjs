@@ -54,7 +54,7 @@ export class Server {
 		}catch(err){
 			setTimeout(async () => {
 				this.log.error(err);
-				if(!finished)return void await this.send_json(response, 500, { message: messages['generic.exception.request'] });
+				if(!finished)return void await this.send_json(response, 400, { message: messages['generic.exception.request'] });
 			});
 		}
 	}
