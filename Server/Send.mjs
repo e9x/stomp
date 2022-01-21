@@ -2,6 +2,7 @@ import http from 'http';
 import https from 'https';
 import { MapHeaderNamesFromObject, ObjectFromRawHeaders, RawHeaderNames } from '../HeaderUtil.mjs';
 import messages from '../Messages.mjs';
+import {header_json_prefix, header_real_prefix} from '../SendConsts.mjs'
 
 // max of 4 concurrent sockets, rest is queued while busy? set max to 75
 // const http_agent = http.Agent();
@@ -39,16 +40,12 @@ export async function Fetch(server_request, request_headers, url){
 
 export async function SendBare(server, server_request, server_response){
 	const request_headers = Object.setPrototypeOf({}, null);
-	const response_headers = Object.setPrototypeOf({}, null);
 	
-	if(server_request.method == 'OPTIONS'){
-		response_headers['access-control-allow-headers'] = 'x-tomp-status, x-tomp-raw, x-tomp-headers, x-robots-tag';
-		server_response.writeHead(200, response_headers);
-		return void server_response.end();
-	}
-
 	for(let [header,value] of Object.entries(server_request.headers)){
-		if(header.startsWith('accept')){
+		if(header.startsWith(header_real_prefix)){
+			const name = header.slice(header_real_prefix.length);
+			request_headers[name] = value;
+		}else if(header.startsWith('accept')){
 			request_headers[header] = value;
 		}
 	}
@@ -73,17 +70,25 @@ export async function SendBare(server, server_request, server_response){
 		throw err;
 	}
 
+	const response_headers = Object.setPrototypeOf({}, null);
+
 	for(let header in response.headers){
 		if(header == 'content-encoding' || header == 'x-content-encoding')response_headers['content-encoding'] = response.headers[header];
 		else if(header == 'content-length')response_headers['content-length'] = response.headers[header];
+		else{
+			if(header == 'set-cookie'){
+				response_headers[header_json_prefix + header] = JSON.stringify(response.headers[header]);
+			}else{
+				response_headers[header_real_prefix + header] = response.headers[header];
+			}
+		}
 	}
-
-	response_headers['x-tomp-headers'] = JSON.stringify(response.headers);
+	
 	response_headers['x-tomp-raw'] = JSON.stringify(RawHeaderNames(response.rawHeaders));
 	response_headers['x-tomp-status'] = response.statusCode.toString(16);
+	
 	response_headers['x-robots-tag'] = 'noindex';
-
-	const set = new Set([...Object.keys(response_headers), ...Object.keys(server_request.headers)]);
+	response_headers['access-control-allow-headers'] = '*';
 	response_headers['access-control-allow-origin'] = '*';
 
 	server_response.writeHead(200, response_headers);

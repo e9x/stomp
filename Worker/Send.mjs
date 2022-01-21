@@ -89,8 +89,8 @@ async function handle_common_response(rewriter, server, server_request, url, res
 	for(let remove of remove_csp_headers)response_headers.delete(remove);
 	for(let remove of remove_general_headers)response_headers.delete(remove);
 	
-	if('set-cookie' in response.raw_headers){
-		load_setcookies(server, url, response.raw_headers['set-cookie']);
+	if('set-cookie' in response.json_headers){
+		load_setcookies(server, url, response.json_headers['set-cookie']);
 	}
 
 	response_headers.set('referrer-policy', 'same-origin') ;
