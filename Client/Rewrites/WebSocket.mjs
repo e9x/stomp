@@ -46,7 +46,15 @@ export class WebSocketRewrite extends Rewrite {
 				
 				// if(isNaN(port))throw...
 				
+				const headers = Object.setPrototypeOf({}, null);
+				headers['host'] = parsed.hostname;
+				headers['origin'] = that.client.location.origin;
+				headers['pragma'] = 'no-cache';
+				headers['cache-control'] = 'no-cache';
+				headers['upgrade'] = 'websocket';
+
 				const protos = [
+					encode_protocol(JSON.stringify(headers)),
 					encode_protocol(parsed.protocol),
 					encode_protocol(parsed.hostname),
 					encode_protocol(port),
