@@ -11,6 +11,7 @@ export class TOMP {
 	toJSON(){
 		return {
 			directory: this.directory,
+			bare: this.bare,
 			noscript: this.noscript,
 			loglevel: this.loglevel,
 		};

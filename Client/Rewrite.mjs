@@ -5,7 +5,7 @@ export class Rewrite {
 		this.client = client;
 		this.tomp = this.client.tomp;
 	}
-	add(){
-		throw new Error('.add() not implemented');
+	work(){
+		throw new Error('.work() not implemented');
 	}
 };

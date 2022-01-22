@@ -218,18 +218,6 @@ export class RewriteHTML {
 			nodes.push({
 				nodeName: 'script',
 				tagName: 'script',
-				childNodes: [
-					{
-						nodeName: '#text',
-						value: `window.${global_client}=new ${global_client}(${JSON.stringify(this.tomp)})`,
-					}
-				],
-				attrs: [],
-			});
-			
-			nodes.push({
-				nodeName: 'script',
-				tagName: 'script',
 				childNodes: [],
 				attrs: [
 					{
@@ -237,6 +225,18 @@ export class RewriteHTML {
 						value: `${this.tomp.directory}client.js`,
 					},
 				],
+			});
+			
+			nodes.push({
+				nodeName: 'script',
+				tagName: 'script',
+				childNodes: [
+					{
+						nodeName: '#text',
+						value: `window.${global_client}=new ${global_client}(${JSON.stringify(this.tomp)})`,
+					}
+				],
+				attrs: [],
 			});
 		}
 

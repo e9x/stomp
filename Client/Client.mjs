@@ -10,12 +10,38 @@ export class Client {
 		this.window = {};
 		this.define = new Define(this);
 		this.ready = this.work();
-		this.window = new WindowRewrite(this).add();
-		this.location = new LocationRewrite(this).add();
-		this.with = {
-			window: this.window,
-			location: this.location,
-		};
+		this.window = new WindowRewrite(this).work();
+		this.location = new LocationRewrite(this).work();
+		this.with = this.create_with();
+	}
+	create_with(){
+		const w = {};
+		const that = this;
+
+		Object.defineProperty(w, 'window', {
+			get(){
+				// check for illegal invocation
+				return that.window;
+			},
+			set: undefined,
+			configurable: false,
+			enumerable: true,
+		});
+		
+		Object.defineProperty(w, 'location', {
+			get(){
+				// check for illegal invocation
+				return that.location;
+			},
+			set(value){
+				// check for illegal invocation
+				return that.location.href = value;
+			},
+			configurable: false,
+			enumerable: true,
+		});
+		
+		return w;
 	}
 	async work(){
 		this.db = await openDB('tomp', 1, {
