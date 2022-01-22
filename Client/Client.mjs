@@ -3,6 +3,7 @@ import { Define } from './Define.mjs'
 import { openDB } from 'idb/with-async-ittr';
 import { WindowRewrite } from './Rewrites/Window.mjs';
 import { LocationRewrite } from './Rewrites/Location.mjs';
+import { WebSocketRewrite } from './Rewrites/WebSocket.mjs';
 
 export class Client {
 	constructor(config){
@@ -13,6 +14,9 @@ export class Client {
 		this.window = new WindowRewrite(this).work();
 		this.location = new LocationRewrite(this).work();
 		this.with = this.create_with();
+		
+		new WebSocketRewrite(this).work();
+		
 	}
 	create_with(){
 		const w = {};
