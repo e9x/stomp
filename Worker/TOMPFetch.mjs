@@ -8,6 +8,10 @@ export async function TOMPFetch(server, url, server_request, request_headers){
 	const options = {
 		credentials: 'omit',
 		headers: {
+			'x-tomp-protocol': url.protocol,
+			'x-tomp-host': url.host,
+			'x-tomp-path': url.path,
+			'x-tomp-port': url.port,
 			'x-tomp-headers': JSON.stringify(Object.fromEntries([...request_headers.entries()])),
 		},
 		method: server_request.method,
@@ -18,18 +22,9 @@ export async function TOMPFetch(server, url, server_request, request_headers){
 		options.body = await server_request.blob();
 	}
 	
-	/*
-	bare can contain a query, the url query is appended
-		bare: http://example.org/bare?apikey=123
-		url: http://example.org/bare?apikey=123&url=%7B%22example%22%3Atrue%7D
 	
-	bare can be an absolute path containing no origin, it becomes relative to the script
-	*/
-
-	const bare = new URL(server.tomp.bare, location);
-	bare.searchParams.set('url', JSON.stringify(url));
-	
-	const request = new Request(bare, options);
+	// bare can be an absolute path containing no origin, it becomes relative to the script	
+	const request = new Request(new URL(server.tomp.bare, location), options);
 	
 	const response = await fetch(request);
 
