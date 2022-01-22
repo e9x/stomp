@@ -63,6 +63,8 @@ export async function get_cookies(server, url){
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 	// https://developer.mozilla.org/en-US/docs/Web/API/IDBKeyRange
 	
+	await server.ready;
+	
 	const entries = await server.db.getAllFromIndex('cookies', 'path', idb_range_startswith(get_directory(url.path)));
 	
 	const new_cookies = [];
@@ -93,7 +95,9 @@ export async function load_setcookies(server, url, setcookie){
 			decodeValues: false,
 			silent: true,
 		});
-
+		
+		await server.ready;
+		
 		const index = server.db.transaction('cookies', 'readwrite').store.index('path');
 		
 		for(let cookie of parsed){

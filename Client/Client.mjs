@@ -1,23 +1,22 @@
 import { TOMP } from '../TOMP.mjs'
 import { Define } from './Define.mjs'
+import { openDB } from 'idb/with-async-ittr';
 
 export class Client {
 	constructor(config){
 		this.tomp = new TOMP(config);
 		this.window = {};
 		this.define = new Define(this);
-		this.with = this.create_with();
+		this.ready = this.work();
+		this.context = {
+			
+		};
 	}
-	// make new Proxy
-	create_with(){
-		const that = this;
-
-		return {
-			// with(x.ctx)
-			// window = null; console.log(window);
-			get window(){
-				return that.window;
-			}
-		};	
+	async work(){
+		this.db = await openDB('tomp', 1, {
+			upgrade: (db, oldv, newv, transaction) => {
+				throw new Error(`Service worker didn't register the tomp database in time.`);
+			},
+		});
 	}
 };

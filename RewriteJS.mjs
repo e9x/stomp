@@ -4,8 +4,32 @@ import { generate } from 'escodegen';
 import { AcornIterator } from './IterateAcorn.mjs';
 
 export const global_client = 'tompc$';
+export const context_consts = ['window','location'];
 
 const top_level_variables = ['const','let'];
+
+
+const const_decls = [];
+
+for(let co of context_consts)const_decls.push({
+	type: 'VariableDeclarator',
+	id: {
+		type: 'Identifier',
+		name: co,
+	},	
+	init: {
+		type: 'MemberExpression',
+		object: {
+			type: 'Identifier',
+			name: global_client,
+		},
+		property: {
+			type: 'Identifier',
+			name: co,	
+		},
+		computed: false,
+	},
+});
 
 export class RewriteJS {
 	constructor(tomp){
@@ -75,23 +99,15 @@ export class RewriteJS {
 		}
 		
 		ast = {
-			type: 'WithStatement',
-			object: {
-				type: 'MemberExpression',
-				object: {
-					type: 'Identifier',
-					name: global_client,
+			type: 'BlockStatement',
+			body: [
+				{
+					type: 'VariableDeclaration',
+					declarations: const_decls,
+					kind: 'const',
 				},
-				property: {
-					type: 'Identifier',
-					name: 'with',	
-				},
-				computed: false,
-			},
-			body: {
-				type: 'BlockStatement',
-				body: ast.body,
-			},
+				...ast.body,
+			],
 		};
 		
 		code = generate(ast);

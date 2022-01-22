@@ -2,7 +2,7 @@ import { TOMP } from '../TOMP.mjs';
 import { Process } from './Process.mjs';
 import { SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendManifest } from './Send.mjs';
 import messages from '../Messages.mjs'
-import { openDB, deleteDB, wrap, unwrap } from 'idb/with-async-ittr';
+import { openDB } from 'idb/with-async-ittr';
 import {create_db as create_cookie_db} from './Cookies.mjs';
 
 export const key_cookie = 'tomp$key';
@@ -11,6 +11,7 @@ export class Server {
 	constructor(config){
 		this.tomp = new TOMP(config);
 		this.request = this.request.bind(this);
+		this.ready = this.work();
 	}
 	async work(){
 		this.db = await openDB('tomp', 1, {
