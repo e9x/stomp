@@ -1,4 +1,4 @@
-import { MapHeaderNamesFromArray } from '../HeaderUtil.mjs'
+import { MapHeaderNamesFromArray } from './HeaderUtil.mjs'
 import { html_types, get_mime } from '../RewriteHTML.mjs';
 import { TOMPError } from '../TOMPError.mjs';
 import { TOMPFetch } from './TOMPFetch.mjs';
