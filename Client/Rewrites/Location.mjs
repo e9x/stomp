@@ -20,6 +20,31 @@ export class LocationRewrite extends Rewrite {
 			},
 		});
 		
+		Object.defineProperty(location_clone, 'protocol', {
+			configurable: false,
+			enumerable: true,
+			get(){
+				return that.page_urlo.protocol;
+			},
+			set(value){
+				const urlo = that.page_urlo;
+				urlo.protocol = value;
+				global.location.href = that.client.tomp.url.wrap(urlo.href, 'worker:html');
+				return value;
+			},
+		});
+		
+		Object.defineProperty(location_clone, 'origin', {
+			configurable: false,
+			enumerable: true,
+			get(){
+				return that.page_urlo.origin;
+			},
+			set(value){
+				return value;
+			},
+		});
+		
 		return Object.setPrototypeOf(location_clone, Location.prototype);
 	}
 	get page_url(){

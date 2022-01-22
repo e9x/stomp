@@ -52,7 +52,8 @@ export class WebSocketRewrite extends Rewrite {
 				headers['pragma'] = 'no-cache';
 				headers['cache-control'] = 'no-cache';
 				headers['upgrade'] = 'websocket';
-
+				headers['user-agent'] = navigator.userAgent;
+				
 				const protos = [
 					encode_protocol(JSON.stringify(headers)),
 					encode_protocol(parsed.protocol),
