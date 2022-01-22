@@ -88,7 +88,8 @@ export async function SendBare(server, server_request, server_response){
 	}
 
 	response_headers['x-tomp-headers'] = JSON.stringify(MapHeaderNamesFromArray(RawHeaderNames(response.rawHeaders), {...response.headers}));
-	response_headers['x-tomp-status'] = response.statusCode.toString(16);
+	response_headers['x-tomp-status'] = response.statusCode
+	response_headers['x-tomp-status-text'] = response.statusMessage;
 	server_response.writeHead(200, response_headers);
 	response.pipe(server_response);
 }

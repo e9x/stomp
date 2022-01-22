@@ -43,7 +43,8 @@ export async function TOMPFetch(server, url, server_request, request_headers){
 		});
 	}
 
-	const status = parseInt(response.headers.get('x-tomp-status'), 16);
+	const status = response.headers.get('x-tomp-status');
+	const statusText = response.headers.get('x-tomp-status-text');
 	// may be bloat if x-tomp-headers can just contain the raw capitalization
 	const raw_headers = JSON.parse(response.headers.get('x-tomp-headers'));
 	const headers = new Headers();
@@ -61,6 +62,7 @@ export async function TOMPFetch(server, url, server_request, request_headers){
 	
 	const spoof = {
 		status,
+		statusText,
 		headers,
 		json_headers,
 		raw_header_names,
@@ -73,7 +75,6 @@ export async function TOMPFetch(server, url, server_request, request_headers){
 		json: response.json.bind(response),
 		ok: response.ok,
 		redirected: response.redirected,
-		statusText: response.statusText,
 		text: response.text.bind(response),
 		type: response.type,
 		url: response.url,
