@@ -1,6 +1,8 @@
 import { TOMP } from '../TOMP.mjs'
 import { Define } from './Define.mjs'
 import { openDB } from 'idb/with-async-ittr';
+import { WindowRewrite } from './Rewrites/Window.mjs';
+import { LocationRewrite } from './Rewrites/Location.mjs';
 
 export class Client {
 	constructor(config){
@@ -8,8 +10,11 @@ export class Client {
 		this.window = {};
 		this.define = new Define(this);
 		this.ready = this.work();
-		this.context = {
-			
+		this.window = new WindowRewrite(this).add();
+		this.location = new LocationRewrite(this).add();
+		this.with = {
+			window: this.window,
+			location: this.location,
 		};
 	}
 	async work(){

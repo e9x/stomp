@@ -1,6 +1,7 @@
 import { Rewrite } from '../Rewrite.mjs';
+import { global } from '../../Global.mjs';
 
-class StorageRewrite extends Rewrite {
+export class StorageRewrite extends Rewrite {
 	work(){
 		const that = this;
 
