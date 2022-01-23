@@ -7,7 +7,7 @@ export class LocationRewrite extends Rewrite {
 
 		this.proxy = Object.setPrototypeOf({}, Location.prototype);
 		
-		for(let prop of ['protocol','port','pathname','origin','hash','search']){
+		for(let prop of ['host','hostname','protocol','port','pathname','origin','hash','search']){
 			Object.defineProperty(this.proxy, prop, {
 				configurable: false,
 				enumerable: true,
