@@ -23,8 +23,60 @@ export class WebSocketRewrite extends Rewrite {
 		const didnt_specify = Symbol();
 
 		class WebSocket extends EventTarget {
-			#socket
-			#ready
+			static CONNECTING = 0;
+			CONNECTING = 0;
+			static OPEN = 1;
+			OPEN = 1;
+			static CLOSING = 2;
+			CLOSING = 2;
+			static CLOSED = 3;
+			CLOSED = 3;
+			#onmessage = null;
+			#onclose = null;
+			#onopen = null;
+			#onerror = null;
+			#socket;
+			#ready;
+			#binary_type;
+			get onmessage(){
+				return this.#onmessage;
+			}
+			set onmessage(value){
+				if(typeof value == 'function')this.#onmessage = value;
+				return value;
+			}
+			get onclose(){
+				return this.#onclose;
+			}
+			set onclose(value){
+				if(typeof value == 'function')this.#onclose = value;
+				return value;
+			}
+			get onopen(){
+				return this.#onopen;
+			}
+			set onopen(value){
+				if(typeof value == 'function')this.#onopen = value;
+				return value;
+			}
+			get onerror(){
+				return this.#onerror;
+			}
+			set onerror(value){
+				if(typeof value == 'function')this.#onerror = value;
+				return value;
+			}
+			#dispatch(event, onlistener){
+				var stopped = false;
+				
+				event.stopImmediatePropagation = () => {
+					stopped = true;
+					MessageEvent.prototype.stopImmediatePropagation.call(event);
+				};
+		
+				this.dispatchEvent(event);
+				if(!stopped && typeof onlistener == 'function')onlistener.call(this, event);
+			}
 			async #open(parsed, protocol){
 				const request_headers = Object.setPrototypeOf({}, null);
 				request_headers['host'] = parsed.hostname;
@@ -53,19 +105,23 @@ export class WebSocketRewrite extends Rewrite {
 						protos.push(proto);
 					}
 				}
-				
+
 				this.#socket = new _WebSocket(bare_ws, protos);
 
 				this.#socket.addEventListener('message', event => {
-					this.dispatchEvent(new MessageEvent('message', { data: event.data }));
+					this.#dispatch(new MessageEvent('message', event), this.#onmessage);
 				});
 
 				this.#socket.addEventListener('open', event => {
-					this.dispatchEvent(new Event('open'));
+					this.#dispatch(new Event('open', event), this.#onopen);
+				});
+
+				this.#socket.addEventListener('error', event => {
+					this.#dispatch(new ErrorEvent('error', event), this.#onerror);
 				});
 
 				this.#socket.addEventListener('close', event => {
-					this.dispatchEvent(new Event('close'));
+					this.#dispatch(new Event('close', event), this.#onclose);
 				});
 			}
 			constructor(url = didnt_specify, protocol = []){
@@ -97,6 +153,19 @@ export class WebSocketRewrite extends Rewrite {
 					port,
 					protocol: parsed.protocol,
 				}, protocol);
+			}
+			get readyState(){
+				return this.socket ? this.socket.readyState : _WebSocket.CONNECTING;
+			}
+			get binaryType(){
+				return this.#binary_type;
+			}
+			set binaryType(value){
+				this.#binary_type = value;
+
+				this.#ready.then(() => this.#socket.binaryType = value);
+
+				return value;
 			}
 			send(data){
 				if(!this.#socket){

@@ -7,6 +7,8 @@ import { WebSocketRewrite } from './Rewrites/WebSocket.mjs';
 import { DocumentRewrite } from './Rewrites/Document.mjs';
 import { HistoryRewrite } from './Rewrites/History.mjs';
 import { StorageRewrite } from './Rewrites/Storage.mjs';
+import { RequestRewrite } from './Rewrites/Request.mjs';
+import { function_strings, wrap_function } from './RewriteUtil.mjs'
 
 export class Client {
 	constructor(config){
@@ -14,14 +16,21 @@ export class Client {
 		this.window = {};
 		this.define = new Define(this);
 		this.ready = this.work();
-		this.window = new WindowRewrite(this).work();
+		const { window_defined, window_proxy } = new WindowRewrite(this).work();
+		this.window = window_proxy;
+		this.with = window_defined;
 		this.location = new LocationRewrite(this).work();
 		this.document = new DocumentRewrite(this).work();
 		
 		new HistoryRewrite(this).work();
 		new WebSocketRewrite(this).work();
 		new StorageRewrite(this).work();
+		new RequestRewrite(this).work();
 		
+		Function.prototype.toString = wrap_function(Function.prototype, 'toString', (target, that, args) => {
+			if(function_strings.has(that))return function_strings.get(that);
+			else Reflect.apply(target, that, args);
+		});
 	}
 	async work(){
 		this.db = await openDB('tomp', 1, {

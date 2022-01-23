@@ -134,8 +134,15 @@ export async function SendBinary(server, server_request, field){
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
+	const exact_request_headers = Object.setPrototypeOf(Object.fromEntries(request_headers.entries()), null);
+
+	if(server_request.headers.has('x-tomp-impl-names')){
+		MapHeaderNamesFromArray(JSON.parse(server_request.headers.get('x-tomp-impl-names')), exact_request_headers);
+		delete exact_request_headers['x-tomp-impl-names'];
+	}
+	
 	try{
-		var response = await TOMPFetch(server, url, server_request, request_headers);
+		var response = await TOMPFetch(server, url, server_request, exact_request_headers);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.message);
 		else throw err;
@@ -148,6 +155,7 @@ export async function SendBinary(server, server_request, field){
 	return new Response(response.body, {
 		headers: exact_response_headers,
 		status: response.status,
+		statusText: response.statusText,
 	});
 }
 
@@ -168,7 +176,10 @@ export async function SendForm(server, server_request, field){
 	headers.set('location', server.tomp.html.serve(url.toString()));
 	// server.tomp.html.serve(updated, updated);
 
-	return new Response(new Uint8Array(), { headers, status: 302 });
+	return new Response(new Uint8Array(), {
+		headers,
+		status: 302,
+	});
 }
 
 const status_empty = [204,304];
@@ -194,6 +205,7 @@ async function SendRewrittenScript(rewriter, server, server_request, field){
 	return new Response(send, {
 		headers: response_headers,
 		status: response.status,
+		statusText: response.statusText,
 	});
 }
 
@@ -239,5 +251,6 @@ export async function SendHTML(server, server_request, field){
 	return new Response(send, {
 		headers: response_headers,
 		status: response.status,
+		statusText: response.statusText,
 	});
 }

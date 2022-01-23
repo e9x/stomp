@@ -56,8 +56,8 @@ export class LocationRewrite extends Rewrite {
 			configurable: false,
 			enumerable: true,
 			writable: false,
-			value(){
-				return that.page_url;
+			value: () => {
+				return that.page_url.toString();
 			},
 		});
 
