@@ -7,8 +7,7 @@ export function mirror_attributes(from, to){
 	return to;
 };
 
-export function wrap_function(obj, prop, wrap, construct) {
-	const fn = obj[prop];
+export function wrap_function(fn, wrap, construct){
 	const wrapped = 'prototype' in fn ? function attach(...args) {
 		return wrap(fn, this, args);
 	} : {
@@ -26,3 +25,8 @@ export function wrap_function(obj, prop, wrap, construct) {
 
 	return wrapped
 };
+		
+Function.prototype.toString = wrap_function(Function.prototype.toString, (target, that, args) => {
+	if(function_strings.has(that))return function_strings.get(that);
+	else return Reflect.apply(target, that, args);
+});
