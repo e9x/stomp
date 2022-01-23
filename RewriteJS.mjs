@@ -83,7 +83,7 @@ export class RewriteJS {
 				},
 				property: {
 					type: 'Identifier',
-					name: 'with',	
+					name: 'window',	
 				},
 				computed: false,
 			},

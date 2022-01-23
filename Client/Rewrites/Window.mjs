@@ -7,6 +7,17 @@ export class WindowRewrite extends Rewrite {
 		
 		const desciptors = ['location'];
 
+		const window_binded = {};
+
+		const descriptors = Object.getOwnPropertyDescriptors(window);
+		for(let key in descriptors){
+			const desc = descriptors[key];
+
+			if(typeof desc.value == 'function'){
+				
+			}
+		}
+
 		const window_proxy = new Proxy(window, {
 			get(target, prop, receiver){
 				if(desciptors.includes(prop)){
@@ -26,7 +37,6 @@ export class WindowRewrite extends Rewrite {
 					let location_desc = Object.getOwnPropertyDescriptor(that.client.with, 'location');
 					desc.get = location_desc.get;
 					desc.set = location_desc.set;
-					
 				}
 
 				return desc;
