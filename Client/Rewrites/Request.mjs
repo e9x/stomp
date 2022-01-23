@@ -1,22 +1,36 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { mirror_attributes } from '../RewriteUtil.mjs';
+import { wrap_function, native_proxies } from '../RewriteUtil.mjs';
+import { wrap } from 'idb';
 
 export class RequestRewrite extends Rewrite {
 	work(){
 		const that = this;
-
-		const original_fetch = global.fetch;
 		const { original_request, Request } = this.get_request();
 		
 		const desc_url = Object.getOwnPropertyDescriptor(Response.prototype, 'url');
 
-		async function fetch(input, init){
+		Navigator.prototype.sendBeacon = wrap_function(Navigator.prototype.sendBeacon, (target, that, [url, data]) => {
+			if(that != navigator)throw new TypeError('Illegal invocation');	
+
+			url = this.client.tomp.binary.serve(new URL(url, this.client.location).href, this.client.location.href);
+			return Reflect.apply(target, that, [url, data]);
+		});
+
+		Object.defineProperty(Response.prototype, 'url', {
+			get(){
+				return that.response_url.has(this) ? that.response_url.get(this) : desc_url.get.call(this);
+			}
+		});
+
+		global.fetch = wrap_function(global.fetch, async (target, that, [input, init]) => {
+			if(that != global)throw new TypeError('Illegal invocation');
+			
 			if(input instanceof Request){
-				const raw = that.raw_requests.get(input);
+				const raw = this.raw_requests.get(input);
 				input = raw;
 			}else{
-				input = that.client.tomp.binary.serve(new URL(input, that.client.location).href, that.client.location.href);
+				input = this.client.tomp.binary.serve(new URL(input, this.client.location).href, this.client.location.href);
 				
 				if(typeof init == 'object' && init != undefined){
 					init = {...init};
@@ -30,23 +44,14 @@ export class RequestRewrite extends Rewrite {
 				}
 			}
 			
-			const response = await original_fetch(input, init);
+			const response = await Reflect.apply(target, that, [ input, init ]);
 			const got_url = desc_url.get.call(response);
-			const sliced = got_url.slice(got_url.indexOf(that.client.tomp.directory));
-			const { field } = that.client.tomp.url.get_attributes(sliced);
-			that.response_url.set(response, that.client.tomp.url.unwrap(field, that.client.location.href).toString());
+			const sliced = got_url.slice(got_url.indexOf(this.client.tomp.directory));
+			const { field } = this.client.tomp.url.get_attributes(sliced);
+			this.response_url.set(response, this.client.tomp.url.unwrap(field, this.client.location.href).toString());
 			return response;
-		};
-
-		Object.defineProperty(Response.prototype, 'url', {
-			get(){
-				return that.response_url.has(this) ? that.response_url.get(this) : desc_url.get.call(this);
-			}
 		});
 
-		mirror_attributes(global.fetch, fetch);
-		
-		global.fetch = fetch;
 		global.Request = Request;
 	}
 	response_url = new WeakMap();

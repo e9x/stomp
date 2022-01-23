@@ -1,12 +1,10 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { mirror_attributes, bind_natives, native_proxies, proxy_multitarget } from '../RewriteUtil.mjs';
+import { mirror_attributes, bind_natives, native_proxies, proxy_multitarget, wrap_function } from '../RewriteUtil.mjs';
 
 export class WindowRewrite extends Rewrite {
 	work(){
 		const that = this;
-		
-		bind_natives(global);
 		
 		const window_defined = this.get_defined();
 
@@ -16,17 +14,20 @@ export class WindowRewrite extends Rewrite {
 		
 		this.define_properties(window_proxy);
 
+		bind_natives(global);
+		
 		return { window_defined, window_proxy };
 	}
 	define_properties(window_proxy){
-		const that = this;
 		const { origin, self, frames } = Object.getOwnPropertyDescriptors(global);
 
 		Object.defineProperty(global, 'origin', {
-			get: mirror_attributes(origin.get, function(){
-				return that.client.location.origin;
+			get: wrap_function(origin.get, (target, that, args) => {
+				if(that != global)throw new TypeError('Illegal invocation');
+				return this.client.location.origin;
 			}),
-			set: mirror_attributes(origin.set, function(){
+			set: wrap_function(origin.set, (target, that, [ value ]) => {
+				if(that != global)throw new TypeError('Illegal invocation');
 				delete global.origin;
 				return global.origin = value;
 			}),
@@ -41,10 +42,12 @@ export class WindowRewrite extends Rewrite {
 		});
 		
 		Object.defineProperty(global, 'self', {
-			get: mirror_attributes(self.get, function(){
-				return that.client.window;
+			get: wrap_function(self.get, (target, that, args) => {
+				if(that != global)throw new TypeError('Illegal invocation');
+				return this.client.window;
 			}),
-			set: mirror_attributes(frames.set, function(){
+			set: wrap_function(self.set, (target, that, [ value ]) => {
+				if(that != global)throw new TypeError('Illegal invocation');
 				delete global.self;
 				return global.self = value;
 			}),
@@ -53,10 +56,12 @@ export class WindowRewrite extends Rewrite {
 		});
 
 		Object.defineProperty(global, 'frames', {
-			get: mirror_attributes(frames.get, function(){
-				return that.client.window;
+			get: wrap_function(frames.get, (target, that, args) => {
+				if(that != global)throw new TypeError('Illegal invocation');
+				return this.client.window;
 			}),
-			set: mirror_attributes(frames.set, function(value){
+			set: wrap_function(frames.set, (target, that, [ value ]) => {
+				if(that != global)throw new TypeError('Illegal invocation');
 				delete global.frames;
 				return global.frames = value;
 			}),

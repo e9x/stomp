@@ -8,7 +8,7 @@ export function mirror_attributes(from, to){
 };
 
 export function wrap_function(fn, wrap, construct){
-	const wrapped = 'prototype' in fn ? function attach(...args) {
+	const wrapped = 'prototype' in fn ? function attach(...args){
 		return wrap(fn, this, args);
 	} : {
 		attach(...args) {
