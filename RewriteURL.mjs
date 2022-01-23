@@ -15,6 +15,8 @@ export class RewriteURL {
 		this.tomp = tomp;
 	}
 	wrap(url, service){
+		url = url.toString();
+
 		const og = new URL(url);
 		const protoi = protocols.indexOf(og.protocol);
 		var port = parseInt(og.port);
@@ -29,6 +31,8 @@ export class RewriteURL {
 	}
 	// only called in send.js get_data
 	unwrap(field){
+		field = field.toString();
+		
 		const hosti = field.indexOf('/', 1);
 		const host = field.slice(1, hosti);
 		
@@ -49,6 +53,8 @@ export class RewriteURL {
 		}, ParsedRewrittenURL.prototype);
 	}
 	get_attributes(url){
+		url = url.toString();
+
 		const path = url.slice(this.tomp.directory.length);
 		
 		const si = path.indexOf('/', 1);

@@ -1,7 +1,7 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 
-const location_props = ['href','protocol','port','pathname','origin','hash','search'];
+const location_props = ['protocol','port','pathname','origin','hash','search'];
 
 export class LocationRewrite extends Rewrite {
 	work(){
@@ -19,11 +19,24 @@ export class LocationRewrite extends Rewrite {
 				set(value){
 					const urlo = that.page_urlo;
 					urlo[prop] = value;
-					global.location.href = that.client.tomp.url.wrap(urlo.href, 'worker:html');
+					global.location.href = that.client.tomp.url.wrap(urlo, 'worker:html');
 					return value;
 				},
 			});
 		}
+
+		Object.defineProperty(location_clone, 'href', {
+			configurable: false,
+			enumerable: true,
+			get(){
+				return that.page_url.toString();
+			},
+			set(value){
+				const urlo = new URL(value, that.page_urlo);
+				global.location.href = that.client.tomp.url.wrap(urlo, 'worker:html');
+				return value;
+			},
+		});
 
 		Object.defineProperty(location_clone, 'assign', {
 			configurable: false,
