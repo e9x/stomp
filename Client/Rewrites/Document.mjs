@@ -1,46 +1,53 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { mirror_attributes, bind_natives, native_proxies, proxy_multitarget } from '../RewriteUtil.mjs';
+import { wrap_function, bind_natives, native_proxies, proxy_multitarget } from '../RewriteUtil.mjs';
 
 export class DocumentRewrite extends Rewrite {
 	work(){
-		bind_natives(global.document);
-		bind_natives(Document.prototype);
-		bind_natives(Node.prototype);
-		
-		const document_defined = this.get_defined();
+		const pointer = {};
+		const document_defined = this.get_defined(pointer);
 
-		const document_proxy = new Proxy(Object.setPrototypeOf({}, null), proxy_multitarget(document_defined, global.document));
+		const handler = proxy_multitarget(document_defined, global.document);
+		handler[Symbol.toStringTag] = 'Document Proxy Handler';
+		
+		const document_proxy = new Proxy(Object.setPrototypeOf({}, null), handler);
+
+		pointer.document_proxy = document_proxy;
 
 		native_proxies.set(document_proxy, global.document)
 		
 		this.define_prototype();
 		
+		bind_natives(global.document);
+		bind_natives(Document.prototype);
+		bind_natives(Node.prototype);
+		
 		return document_proxy;
 	}
 	define_prototype(){
-		const that = this;
 		const { defaultView, URL } = Object.getOwnPropertyDescriptors(Document.prototype);
 
 		Object.defineProperty(Document.prototype, 'defaultView', {
 			configurable: true,
 			enumerable: true,
-			get: mirror_attributes(defaultView.get, function(){
-				return that.client.window;
+			get: wrap_function(defaultView.get, (target, that, args) => {
+				if(that != document)throw new TypeError('Illegal invocation');
+				return this.client.window;
 			}),
 			set: undefined,
 		});
 		
 		Object.defineProperty(Document.prototype, 'URL', {
-			get: mirror_attributes(URL.get, function(){
-				return that.client.location.href;
+			get: wrap_function(URL.get, (target, that, args) => {
+				if(that != document)throw new TypeError('Illegal invocation');
+				return this.client.location.href;
 			}),
 			configurable: true,
 			enumerable: true,
 		});
 		
 	}
-	get_defined(){
+	get_defined(pointer){
 		const that = this;
 		const { location } = Object.getOwnPropertyDescriptors(document);
 
@@ -48,11 +55,13 @@ export class DocumentRewrite extends Rewrite {
 			location: {
 				configurable: false,
 				enumerable: true,
-				get: mirror_attributes(location.get, function(){
-					return that.client.location;
+				get: wrap_function(location.get, (target, that, args) => {
+					if(that != pointer.document_proxy)throw new TypeError('Illegal invocation');
+					return this.client.location;
 				}),
-				set: mirror_attributes(location.set, function(url){
-					return that.client.location.href = url;
+				set: wrap_function(location.set, (target, that, [ url ]) => {
+					if(that != pointer.document_proxy)throw new TypeError('Illegal invocation');
+					return this.client.location.href = url;
 				}),
 			},
 		});

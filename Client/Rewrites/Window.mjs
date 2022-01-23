@@ -1,14 +1,15 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { mirror_attributes, bind_natives, native_proxies, proxy_multitarget, wrap_function } from '../RewriteUtil.mjs';
+import { bind_natives, native_proxies, proxy_multitarget, wrap_function } from '../RewriteUtil.mjs';
 
 export class WindowRewrite extends Rewrite {
 	work(){
-		const that = this;
-		
 		const window_defined = this.get_defined();
 
-		const window_proxy = new Proxy(Object.setPrototypeOf({}, null), proxy_multitarget(window_defined, global));
+		const handler = proxy_multitarget(window_defined, global);
+		handler[Symbol.toStringTag] = 'Window Proxy Handler';
+		
+		const window_proxy = new Proxy(Object.setPrototypeOf({}, null), handler);
 
 		native_proxies.set(window_proxy, global)
 		
@@ -70,41 +71,45 @@ export class WindowRewrite extends Rewrite {
 		});
 	}
 	get_defined(){
-		const that = this;
 		const { location, window, document, top } = Object.getOwnPropertyDescriptors(global);
 
 		const defined = Object.defineProperties(Object.setPrototypeOf({}, null), {
 			location: {
 				configurable: false,
 				enumerable: true,
-				get: mirror_attributes(location.get, function(){
-					return that.client.location;
+				get: wrap_function(location.get, (target, that, args) => {
+					if(that != defined)throw new TypeError('Illegal invocation');
+					return this.client.location;
 				}),
-				set: mirror_attributes(location.set, function(url){
-					return that.client.location.href = url;
+				set: wrap_function(location.set, (target, that, [ url ]) => {
+					if(that != defined)throw new TypeError('Illegal invocation');
+					return this.client.location.href = url;
 				}),
 			},
 			window: {
 				configurable: false,
 				enumerable: true,
-				get: mirror_attributes(window.get, function(){
-					return that.client.window;
+				get: wrap_function(window.get, (target, that, args) => {
+					if(that != defined)throw new TypeError('Illegal invocation');
+					return this.client.window;
 				}),
 				set: undefined,
 			},
 			document: {
 				configurable: false,
 				enumerable: true,
-				get: mirror_attributes(document.get, function(){
-					return that.client.document;
+				get: wrap_function(document.get, (target, that, args) => {
+					if(that != defined)throw new TypeError('Illegal invocation');
+					return this.client.document;
 				}),
 				set: undefined,
 			},
 			top: {
 				configurable: false,
 				enumerable: true,
-				get: mirror_attributes(top.get, function(){
-					return that.client.top;
+				get: wrap_function(top.get, (target, that, args) => {
+					if(that != defined)throw new TypeError('Illegal invocation');
+					return this.client.top;
 				}),
 				set: undefined,
 			},
