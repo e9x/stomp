@@ -30,3 +30,47 @@ Function.prototype.toString = wrap_function(Function.prototype.toString, (target
 	if(function_strings.has(that))return function_strings.get(that);
 	else return Reflect.apply(target, that, args);
 });
+
+export const native_proxies = new WeakMap();
+
+export function resolve_native(proxy/*?*/){
+	if(native_proxies.has(proxy))return native_proxies.get(proxy);
+	else return proxy;
+}
+
+export function bind_natives(target){
+	for(let prop in target){
+		const desc = Object.getOwnPropertyDescriptor(target, prop);
+
+		if(!desc || !desc.configurable)continue;
+
+		let changed = false;
+
+		if(typeof desc.value == 'function'){
+			desc.value = wrap_function(desc.value, (target, that, args) => {
+				return Reflect.apply(target, resolve_native(that), args);
+			});
+
+			changed = true;
+		}
+
+		if(typeof desc.get == 'function'){
+			desc.get = wrap_function(desc.get, (target, that, args) => {
+				return Reflect.apply(target, resolve_native(that), args);
+			});
+
+			changed = true;
+		}
+		if(typeof desc.set == 'function'){
+			desc.set = wrap_function(desc.set, (target, that, args) => {
+				return Reflect.apply(target, resolve_native(that), args);
+			});
+
+			changed = true;
+		}
+
+		if(changed){
+			Object.defineProperty(target, prop, desc);
+		}
+	}
+}

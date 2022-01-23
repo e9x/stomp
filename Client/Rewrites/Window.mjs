@@ -1,45 +1,13 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { mirror_attributes, wrap_function } from '../RewriteUtil.mjs';
+import { mirror_attributes, wrap_function, bind_natives, native_proxies } from '../RewriteUtil.mjs';
 
 export class WindowRewrite extends Rewrite {
 	work(){
 		const that = this;
 		
-		for(let prop in global){
-			const desc = Object.getOwnPropertyDescriptor(global, prop);
-
-			if(!desc || !desc.configurable)continue;
-
-			let changed = false;
-
-			if(typeof desc.value == 'function'){
-				desc.value = wrap_function(desc.value, (target, that, args) => {
-					return Reflect.apply(target, that == window_proxy ? global : that, args);
-				});
-
-				changed = true;
-			}
-
-			if(typeof desc.get == 'function'){
-				desc.get = wrap_function(desc.get, (target, that, args) => {
-					return Reflect.apply(target, that == window_proxy ? global : that, args);
-				});
-
-				changed = true;
-			}
-			if(typeof desc.set == 'function'){
-				desc.set = wrap_function(desc.set, (target, that, args) => {
-					return Reflect.apply(target, that == window_proxy ? global : that, args);
-				});
-
-				changed = true;
-			}
-
-			if(changed){
-				Object.defineProperty(window, prop, desc);
-			}
-		}
+		bind_natives(global);
+		bind_natives(EventTarget.prototype);
 
 		const window_defined = this.get_window_defined();
 
@@ -83,6 +51,8 @@ export class WindowRewrite extends Rewrite {
 			},
 		});
 
+		native_proxies.set(window_proxy, global)
+		
 		Object.defineProperty(global, 'origin', {
 			get(){
 				return that.client.location.origin;
