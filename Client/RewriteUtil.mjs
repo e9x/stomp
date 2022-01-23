@@ -38,36 +38,36 @@ export function resolve_native(proxy/*?*/){
 	else return proxy;
 }
 
-function pick_target(first, second, prop){
-	if(prop in first){
-		return first;
+function pick_target(fallback, targets, prop){
+	for(let possible of targets)if(prop in possible){
+		return possible;
 	}
 
-	return second;
+	return fallback;
 }
 
-export function proxy_multitarget(first, second){
+export function proxy_multitarget(fallback, ...targets){
 	return {
 		get(_, prop, receiver){
-			return Reflect.get(pick_target(first, second, prop), prop, receiver);
+			return Reflect.get(pick_target(fallback, targets, prop), prop, receiver);
 		},
 		set(_, prop, value){
-			return Reflect.set(pick_target(first, second, prop), prop, value);	
+			return Reflect.set(pick_target(fallback, targets, prop), prop, value);	
 		},
 		has(_, prop){
-			return Reflect.has(pick_target(first, second, prop), prop);	
+			return Reflect.has(pick_target(fallback, targets, prop), prop);	
 		},
 		getOwnPropertyDescriptor(_, prop){
-			const desc = Reflect.getOwnPropertyDescriptor(pick_target(first, second, prop), prop);
+			const desc = Reflect.getOwnPropertyDescriptor(pick_target(fallback, targets, prop), prop);
 			Reflect.defineProperty(_, prop, desc);
 			return desc;
 		},
 		defineProperty(_, prop, desc){
 			Reflect.defineProperty(_, prop, desc);
-			return Reflect.defineProperty(pick_target(first, second, prop), prop, desc);
+			return Reflect.defineProperty(pick_target(fallback, targets, prop), prop, desc);
 		},
 		deleteProperty(_, prop, descriptor){
-			return Reflect.deleteProperty(pick_target(first, second, prop), prop, descriptor);
+			return Reflect.deleteProperty(pick_target(fallback, targets, prop), prop, descriptor);
 		},
 	};
 }

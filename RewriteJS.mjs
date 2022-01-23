@@ -11,7 +11,7 @@ export class RewriteJS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	wrap(code, url){
+	wrap(code, url, global_scope){
 		if(this.tomp.noscript)return '';
 
 		try{
@@ -38,36 +38,68 @@ export class RewriteJS {
 					));
 					
 					break;
+				case'Identifier':
+					
+					if(ctx.node.name != 'eval')break;
+					
+					/*
+					 * allow eval.toString
+					 * disallow window.eval.toString
+					 * disallow window.eval
+					*/
+					
+					if(ctx.parent.type == 'MemberExpression'){
+						if(ctx.parent_key != 'object')break;
+						// must be the top level memberexpression eg eval.toString
+						// not window.eval.toString 2nd level
+						if(ctx.parent.parent.type == 'MemberExpression')break;
+					}
+
+					ctx.replace_with(b.memberExpression(b.identifier('window'), b.identifier('eval')));
+					
+					break;
 				case'CallExpression':
 					
 					const {callee} = ctx.node;
-					if(callee.type == 'Identifier' && callee.name == 'eval'){
-						/* May be a JS eval function!
-						eval will only inherit the scope if the following is met:
-						the keyword (not property or function) eval is called
-						the keyword doesnt reference a variable named eval
-						*/
 
-						// transform eval(...) into global_client.eval(eval, tomp$evalcode => eval(tomp$evalcode))
+					if(callee.type != 'Identifier' || callee.name != 'eval')break;
 
-						
-					}
+					/* May be a JS eval function!
+					eval will only inherit the scope if the following is met:
+					the keyword (not property or function) eval is called
+					the keyword doesnt reference a variable named eval
+					*/
 
+					const code_arg = 'tomp$evalcode';
+					// transform eval(...) into global_client.eval(eval, tomp$evalcode => eval(tomp$evalcode))
+					ctx.replace_with(b.callExpression(
+						b.memberExpression(b.identifier(global_client), b.identifier('eval')),
+						[
+							b.identifier('eval'),
+							b.arrowFunctionExpression(
+								[ b.identifier(code_arg) ],
+								b.callExpression(b.identifier('eval'), [ b.spreadElement(b.identifier(code_arg)) ]),
+							),
+							...ctx.node.arguments,
+						],
+					));
+					
 					break;
 				// handle top level const/let in import
 				case'VariableDeclaration':
 					
-					if(ctx.parent.node == ast && top_level_variables.includes(ctx.node.kind)){
-						let expressions = [];
-						for(let declaration of ctx.node.declarations){
-							expressions.push(b.callExpression(
-								b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('define')), b.identifier(ctx.node.kind)),
-								[ b.literal(declaration.id.name), declaration.init ],
-							));
-						}
-						
-						ctx.replace_with(b.expressionStatement(b.sequenceExpression(expressions)));
+					if(!global_scope || ctx.parent.node != ast || !top_level_variables.includes(ctx.node.kind))break;
+
+					let expressions = [];
+					for(let declaration of ctx.node.declarations){
+						expressions.push(b.callExpression(
+							b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('define')), b.identifier(ctx.node.kind)),
+							[ b.literal(declaration.id.name), declaration.init ],
+						));
 					}
+					
+					ctx.replace_with(b.expressionStatement(b.sequenceExpression(expressions)));
+
 					break;
 			}
 		}

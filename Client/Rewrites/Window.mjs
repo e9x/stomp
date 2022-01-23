@@ -5,8 +5,9 @@ import { bind_natives, native_proxies, proxy_multitarget, wrap_function } from '
 export class WindowRewrite extends Rewrite {
 	work(){
 		const window_defined = this.get_defined();
-
-		const handler = proxy_multitarget(window_defined, global);
+		const window_defined_exclusive = this.get_defined_exclusive();
+		
+		const handler = proxy_multitarget(global, window_defined_exclusive, window_defined);
 		handler[Symbol.toStringTag] = 'Window Proxy Handler';
 		
 		const window_proxy = new Proxy(Object.setPrototypeOf({}, null), handler);
@@ -69,6 +70,18 @@ export class WindowRewrite extends Rewrite {
 			configurable: true,
 			enumerable: true,
 		});
+	}
+	get_defined_exclusive(){
+		const defined = Object.defineProperties(Object.setPrototypeOf({}, null), {
+			eval: {
+				configurable: true,
+				enumerable: false,
+				value: wrap_function(global.eval, (target, that, [ x ]) => this.client.global_eval(x)),
+				writable: true,
+			},
+		});
+
+		return defined;
 	}
 	get_defined(){
 		const { location, window, document, top } = Object.getOwnPropertyDescriptors(global);

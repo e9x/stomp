@@ -184,7 +184,7 @@ export async function SendForm(server, server_request, field){
 
 const status_empty = [204,304];
 
-async function SendRewrittenScript(rewriter, server, server_request, field){
+async function SendRewrittenScript(rewriter, server, server_request, field, ...args){
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
@@ -198,7 +198,7 @@ async function SendRewrittenScript(rewriter, server, server_request, field){
 	
 	var send = new Uint8Array();
 	if(!status_empty.includes(response.statusCode)){
-		send = rewriter.wrap(await response.text(), url.toString());
+		send = rewriter.wrap(await response.text(), url.toString(), ...args);
 		for(let remove of remove_encoding_headers)response_headers.delete(remove);
 	}
 
@@ -210,7 +210,7 @@ async function SendRewrittenScript(rewriter, server, server_request, field){
 }
 
 export async function SendJS(server, server_request, field){
-	return await SendRewrittenScript(server.tomp.js, server, server_request, field);
+	return await SendRewrittenScript(server.tomp.js, server, server_request, field, /*global_scope*/ true);
 }
 
 export async function SendCSS(server, server_request, field){

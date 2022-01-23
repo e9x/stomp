@@ -38,7 +38,7 @@ function P5_object_attrs(object){
 export class RewriteHTML {
 	content_router = {
 		script: (value, url, attrs) => {
-			if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.wrap(value, url);
+			if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.wrap(value, url, true);
 			else return value;
 		},
 		style: (value, url, attrs) => {

@@ -7,7 +7,7 @@ export class DocumentRewrite extends Rewrite {
 		const pointer = {};
 		const document_defined = this.get_defined(pointer);
 
-		const handler = proxy_multitarget(document_defined, global.document);
+		const handler = proxy_multitarget(global.document, document_defined);
 		handler[Symbol.toStringTag] = 'Document Proxy Handler';
 		
 		const document_proxy = new Proxy(Object.setPrototypeOf({}, null), handler);
