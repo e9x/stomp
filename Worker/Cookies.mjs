@@ -25,7 +25,6 @@ CREATE TABLE cookies(
 export function create_db(db){
 	const cookies = db.createObjectStore('cookies', {
 		keyPath: 'id',
-		autoIncrement: true,
 	});
 	
 	cookies.createIndex('path', 'path');
@@ -75,6 +74,8 @@ export async function get_cookies(server, url){
 		}
 	}
 	
+	// server.tomp.log.debug('Send cookies:', new_cookies);
+
 	return new_cookies.join('; ');
 }
 
@@ -103,33 +104,18 @@ export async function load_setcookies(server, url, setcookie){
 		for(let cookie of parsed){
 			normalize_cookie(cookie, url.host);
 		}
-
-		for await (const cursor of index.iterate(idb_range_startswith(get_directory(url.path)))) {
-			for(let cookie of parsed){
-				if(cursor.value.name == cookie.name && cursor.value.domain == cookie.domain){
-					let found_id = cursor.value.id;
-
-					if(!cookie.value){
-						cursor.delete();
-						// server.db.delete(found_id)
-					}else{
-						server.db.put('cookies', {
-							id: found_id,
-							...cookie,
-						});
-					}
-
-					cookie.processed = true;
-				}
-			}
-		}
 		
 		for(let cookie of parsed){
-			if(!cookie.processed && cookie.value){
-				await server.db.add('cookies', cookie);
+			const id = cookie.domain + '@' + cookie.path + '@' + cookie.name;
+			
+			if(!cookie.value){
+				server.db.delete(id)
+			}else{
+				server.db.put('cookies', {
+					...cookie,
+					id,
+				});
 			}
 		}
-		
 	}
-	
 }
