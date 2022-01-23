@@ -19,6 +19,7 @@ export class DocumentRewrite extends Rewrite {
 		return document_proxy;
 	}
 	define_prototype(){
+		const that = this;
 		const { defaultView, URL } = Object.getOwnPropertyDescriptors(Document.prototype);
 
 		Object.defineProperty(Document.prototype, 'defaultView', {
