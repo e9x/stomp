@@ -24,7 +24,7 @@ export class RewriteURL {
 		if(protoi == -1)return url; // throw new RangeError(`Unsupported protocol '${og.protocol}'`);
 		if(isNaN(port))throw new URIError(`Unknown default port for protocol: '${og.protocol}'`);
 
-		const field = ((port << 4) + protoi).toString(16) + '/' + encodeURIComponent(og.href.slice(og.origin.length)) + og.hash;
+		const field = ((port << 4) + protoi).toString(16) + '/' + encodeURIComponent(og.pathname + og.search) + og.hash;
 		return this.tomp.directory + service + '/' + og.host + '/' + field;
 	}
 	// only called in send.js get_data
