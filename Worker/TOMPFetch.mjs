@@ -13,6 +13,7 @@ export async function TOMPFetch(server, url, server_request, request_headers){
 			'x-tomp-path': url.path,
 			'x-tomp-port': url.port,
 			'x-tomp-headers': JSON.stringify(request_headers instanceof Headers ? Object.fromEntries([...request_headers.entries()]) : request_headers),
+			'x-tomp-forward-headers': JSON.stringify(['accept-encoding', 'accept-language']),
 		},
 		method: server_request.method,
 	};
