@@ -13,7 +13,7 @@ export class RequestRewrite extends Rewrite {
 		Navigator.prototype.sendBeacon = wrap_function(Navigator.prototype.sendBeacon, (target, that, [url, data]) => {
 			if(that != navigator)throw new TypeError('Illegal invocation');	
 
-			url = this.client.tomp.binary.serve(new URL(url, this.client.location).href, this.client.location.href);
+			url = this.client.tomp.binary.serve(new URL(url, this.client.location.proxy), this.client.location.proxy);
 			return Reflect.apply(target, that, [url, data]);
 		});
 
@@ -30,7 +30,7 @@ export class RequestRewrite extends Rewrite {
 				const raw = this.raw_requests.get(input);
 				input = raw;
 			}else{
-				input = this.client.tomp.binary.serve(new URL(input, this.client.location).href, this.client.location.href);
+				input = this.client.tomp.binary.serve(new URL(input, this.client.location.proxy), this.client.location.proxy);
 				
 				if(typeof init == 'object' && init != undefined){
 					init = {...init};
@@ -48,7 +48,7 @@ export class RequestRewrite extends Rewrite {
 			const got_url = desc_url.get.call(response);
 			const sliced = got_url.slice(got_url.indexOf(this.client.tomp.directory));
 			const { field } = this.client.tomp.url.get_attributes(sliced);
-			this.response_url.set(response, this.client.tomp.url.unwrap(field, this.client.location.href).toString());
+			this.response_url.set(response, this.client.tomp.url.unwrap(field, this.client.location.proxy).toString());
 			return response;
 		});
 
@@ -76,9 +76,9 @@ export class RequestRewrite extends Rewrite {
 					throw new DOMException(`Failed to construct 'Request': 1 argument required, but only 0 present.`);
 				}
 
-				url = new URL(url, that.client.location).href;
+				url = new URL(url, that.client.location.proxy);
 
-				this.#request = new original_request(that.client.tomp.binary.serve(url, that.client.location.href), init);
+				this.#request = new original_request(that.client.tomp.binary.serve(url, that.client.location.proxy), init);
 				that.raw_requests.set(this, this.#request);
 			}
 			arrayBuffer(){

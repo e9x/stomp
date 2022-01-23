@@ -9,16 +9,14 @@ import { DocumentRewrite } from './Rewrites/Document.mjs';
 import { HistoryRewrite } from './Rewrites/History.mjs';
 import { StorageRewrite } from './Rewrites/Storage.mjs';
 import { RequestRewrite } from './Rewrites/Request.mjs';
+import { EvalRewrite } from './Rewrites/Eval.mjs';
 
 /*import * as acorn from 'acorn';
 self.acorn = acorn;*/
 
-const js_eval = global.eval;
-
 export class Client {
 	constructor(config){
 		this.tomp = new TOMP(config);
-		this.window = {};
 		this.define = new Define(this);
 		this.ready = this.work();
 		
@@ -27,26 +25,18 @@ export class Client {
 		new StorageRewrite(this).work();
 		new RequestRewrite(this).work();
 		
-		const { window_defined, window_proxy } = new WindowRewrite(this).work();
-		this.window = window_proxy;
-		this.with = window_defined;
+		this.eval = new EvalRewrite(this);
+		this.window = new WindowRewrite(this);
+		this.location = new LocationRewrite(this);
+		this.document = new DocumentRewrite(this);
 		
-		this.location = new LocationRewrite(this).work();
-		this.document = new DocumentRewrite(this).work();
-	}
-	global_eval(x){
-		return js_eval(this.tomp.js.wrap(x, this.location));
-	}
-	eval(func, call, code, ...args){
-		if(func == js_eval){
-			return call(this.tomp.js.wrap(code, this.location));
-		}else{ // call as if it were eval(the, args, to, non js eval)
-			return call(code, ...args);
-		}
-	}
-	this(that){
-		if(that == global)return this.window;
-		else return that;
+		this.eval.work();
+		this.window.work();
+		this.location.work();
+		this.document.work();
+		
+		this.with = this.window.defined;
+		
 	}
 	async work(){
 		this.db = await openDB('tomp', 1, {

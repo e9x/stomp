@@ -6,6 +6,6 @@ export class Rewrite {
 		this.tomp = this.client.tomp;
 	}
 	work(){
-		throw new Error('.work() not implemented');
+		// throw new Error('.work() not implemented');
 	}
 };

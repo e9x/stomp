@@ -3,30 +3,32 @@ import { global } from '../../Global.mjs';
 import { bind_natives, native_proxies, proxy_multitarget, wrap_function } from '../RewriteUtil.mjs';
 
 export class WindowRewrite extends Rewrite {
+	get_this(that){
+		if(that == global)return this.proxy;
+		else return that;
+	}
 	work(){
-		const window_defined = this.get_defined();
-		const window_defined_exclusive = this.get_defined_exclusive();
+		this.defined = this.get_defined();
+		this.exclusive = this.get_exclusive();
 		
-		const handler = proxy_multitarget(global, window_defined_exclusive, window_defined);
+		const handler = proxy_multitarget(global, this.exclusive, this.defined);
 		handler[Symbol.toStringTag] = 'Window Proxy Handler';
 		
-		const window_proxy = new Proxy(Object.setPrototypeOf({}, null), handler);
+		this.proxy = new Proxy(Object.setPrototypeOf({}, null), handler);
 
-		native_proxies.set(window_proxy, global)
+		native_proxies.set(this.proxy, global)
 		
-		this.define_properties(window_proxy);
+		this.define_properties();
 
 		bind_natives(global);
-		
-		return { window_defined, window_proxy };
 	}
-	define_properties(window_proxy){
+	define_properties(){
 		const { origin, self, frames } = Object.getOwnPropertyDescriptors(global);
 
 		Object.defineProperty(global, 'origin', {
 			get: wrap_function(origin.get, (target, that, args) => {
 				if(that != global)throw new TypeError('Illegal invocation');
-				return this.client.location.origin;
+				return this.client.location.proxy.origin;
 			}),
 			set: wrap_function(origin.set, (target, that, [ value ]) => {
 				if(that != global)throw new TypeError('Illegal invocation');
@@ -38,7 +40,7 @@ export class WindowRewrite extends Rewrite {
 		});
 
 		Object.defineProperty(global, 'globalThis', {
-			value: window_proxy,
+			value: this.proxy,
 			configurable: true,
 			enumerable: true,
 		});
@@ -46,7 +48,7 @@ export class WindowRewrite extends Rewrite {
 		Object.defineProperty(global, 'self', {
 			get: wrap_function(self.get, (target, that, args) => {
 				if(that != global)throw new TypeError('Illegal invocation');
-				return this.client.window;
+				return this.proxy;
 			}),
 			set: wrap_function(self.set, (target, that, [ value ]) => {
 				if(that != global)throw new TypeError('Illegal invocation');
@@ -60,7 +62,7 @@ export class WindowRewrite extends Rewrite {
 		Object.defineProperty(global, 'frames', {
 			get: wrap_function(frames.get, (target, that, args) => {
 				if(that != global)throw new TypeError('Illegal invocation');
-				return this.client.window;
+				return this.proxy;
 			}),
 			set: wrap_function(frames.set, (target, that, [ value ]) => {
 				if(that != global)throw new TypeError('Illegal invocation');
@@ -71,40 +73,41 @@ export class WindowRewrite extends Rewrite {
 			enumerable: true,
 		});
 	}
-	get_defined_exclusive(){
-		const defined = Object.defineProperties(Object.setPrototypeOf({}, null), {
+	get_exclusive(){
+		const exclusive = Object.defineProperties(Object.setPrototypeOf({}, null), {
 			eval: {
 				configurable: true,
 				enumerable: false,
-				value: wrap_function(global.eval, (target, that, [ x ]) => this.client.global_eval(x)),
+				value: wrap_function(global.eval, (target, that, [ x ]) => this.client.eval.global(x)),
 				writable: true,
 			},
 		});
 
-		return defined;
+		return exclusive;
 	}
 	get_defined(){
-		const { location, window, document, top } = Object.getOwnPropertyDescriptors(global);
-
+		const {location,window,document,top} = Object.getOwnPropertyDescriptors(global);
+		const windows = [ global ];
+		
 		const defined = Object.defineProperties(Object.setPrototypeOf({}, null), {
 			location: {
 				configurable: false,
 				enumerable: true,
 				get: wrap_function(location.get, (target, that, args) => {
-					if(that != defined)throw new TypeError('Illegal invocation');
-					return this.client.location;
+					if(!windows.includes(defined))throw new TypeError('Illegal invocation');
+					return this.client.location.proxy;
 				}),
 				set: wrap_function(location.set, (target, that, [ url ]) => {
-					if(that != defined)throw new TypeError('Illegal invocation');
-					return this.client.location.href = url;
+					if(!windows.includes(defined))throw new TypeError('Illegal invocation');
+					return this.client.location.proxy.href = url;
 				}),
 			},
 			window: {
 				configurable: false,
 				enumerable: true,
 				get: wrap_function(window.get, (target, that, args) => {
-					if(that != defined)throw new TypeError('Illegal invocation');
-					return this.client.window;
+					if(!windows.includes(defined))throw new TypeError('Illegal invocation');
+					return this.proxy;
 				}),
 				set: undefined,
 			},
@@ -112,8 +115,8 @@ export class WindowRewrite extends Rewrite {
 				configurable: false,
 				enumerable: true,
 				get: wrap_function(document.get, (target, that, args) => {
-					if(that != defined)throw new TypeError('Illegal invocation');
-					return this.client.document;
+					if(!windows.includes(defined))throw new TypeError('Illegal invocation');
+					return this.client.document.proxy;
 				}),
 				set: undefined,
 			},
@@ -121,12 +124,14 @@ export class WindowRewrite extends Rewrite {
 				configurable: false,
 				enumerable: true,
 				get: wrap_function(top.get, (target, that, args) => {
-					if(that != defined)throw new TypeError('Illegal invocation');
+					if(!windows.includes(defined))throw new TypeError('Illegal invocation');
 					return this.client.top;
 				}),
 				set: undefined,
 			},
 		});
+
+		windows.push(defined);
 
 		return defined;
 	}

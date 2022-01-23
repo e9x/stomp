@@ -1,16 +1,14 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 
-const location_props = ['protocol','port','pathname','origin','hash','search'];
-
 export class LocationRewrite extends Rewrite {
 	work(){
 		const that = this;
 
-		const location_clone = {};
+		this.proxy = Object.setPrototypeOf({}, Location.prototype);
 		
-		for(let prop of location_props){
-			Object.defineProperty(location_clone, prop, {
+		for(let prop of ['protocol','port','pathname','origin','hash','search']){
+			Object.defineProperty(this.proxy, prop, {
 				configurable: false,
 				enumerable: true,
 				get(){
@@ -25,7 +23,7 @@ export class LocationRewrite extends Rewrite {
 			});
 		}
 
-		Object.defineProperty(location_clone, 'href', {
+		Object.defineProperty(this.proxy, 'href', {
 			configurable: false,
 			enumerable: true,
 			get(){
@@ -38,7 +36,7 @@ export class LocationRewrite extends Rewrite {
 			},
 		});
 
-		Object.defineProperty(location_clone, 'assign', {
+		Object.defineProperty(this.proxy, 'assign', {
 			configurable: false,
 			enumerable: true,
 			writable: false,
@@ -47,7 +45,7 @@ export class LocationRewrite extends Rewrite {
 			},
 		});
 
-		Object.defineProperty(location_clone, 'replace', {
+		Object.defineProperty(this.proxy, 'replace', {
 			configurable: false,
 			enumerable: true,
 			writable: false,
@@ -56,7 +54,7 @@ export class LocationRewrite extends Rewrite {
 			},
 		});
 
-		Object.defineProperty(location_clone, 'reload', {
+		Object.defineProperty(this.proxy, 'reload', {
 			configurable: false,
 			enumerable: true,
 			writable: false,
@@ -65,7 +63,7 @@ export class LocationRewrite extends Rewrite {
 			},
 		});
 
-		Object.defineProperty(location_clone, 'toString', {
+		Object.defineProperty(this.proxy, 'toString', {
 			configurable: false,
 			enumerable: true,
 			writable: false,
@@ -74,7 +72,7 @@ export class LocationRewrite extends Rewrite {
 			},
 		});
 
-		Object.defineProperty(location_clone, 'ancestorOrigins', {
+		Object.defineProperty(this.proxy, 'ancestorOrigins', {
 			configurable: false,
 			enumerable: true,
 			get(){
@@ -83,8 +81,6 @@ export class LocationRewrite extends Rewrite {
 			},
 			set: undefined,
 		});
-
-		return Object.setPrototypeOf(location_clone, Location.prototype);
 	}
 	get page_url(){
 		const url = global.location.href.slice(global.location.href.indexOf(this.client.tomp.directory));

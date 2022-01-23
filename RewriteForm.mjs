@@ -11,6 +11,7 @@ export class RewriteForm {
 		return code;
 	}
 	serve(serve, url){
+		serve = serve.toString();
 		if(serve.startsWith('data:'))return serve;
 		return this.tomp.url.wrap(serve, 'worker:form');
 	}

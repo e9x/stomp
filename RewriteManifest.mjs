@@ -58,6 +58,7 @@ export class RewriteManifest {
 		return code;
 	}
 	serve(serve, url){
+		serve = serve.toString();
 		if(serve.startsWith('data:')){
 			const {mime,data} = ParseDataURI(serve);
 			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;

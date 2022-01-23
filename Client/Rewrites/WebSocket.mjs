@@ -80,7 +80,7 @@ export class WebSocketRewrite extends Rewrite {
 			async #open(parsed, protocol){
 				const request_headers = Object.setPrototypeOf({}, null);
 				request_headers['host'] = parsed.hostname;
-				request_headers['origin'] = that.client.location.origin;
+				request_headers['origin'] = that.client.location.proxy.origin;
 				request_headers['pragma'] = 'no-cache';
 				request_headers['cache-control'] = 'no-cache';
 				request_headers['upgrade'] = 'websocket';

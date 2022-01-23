@@ -4,25 +4,20 @@ import { wrap_function, bind_natives, native_proxies, proxy_multitarget } from '
 
 export class DocumentRewrite extends Rewrite {
 	work(){
-		const pointer = {};
-		const document_defined = this.get_defined(pointer);
+		this.defined = this.get_defined();
 
-		const handler = proxy_multitarget(global.document, document_defined);
+		const handler = proxy_multitarget(global.document, this.defined);
 		handler[Symbol.toStringTag] = 'Document Proxy Handler';
 		
-		const document_proxy = new Proxy(Object.setPrototypeOf({}, null), handler);
+		this.proxy = new Proxy(Object.setPrototypeOf({}, null), handler);
 
-		pointer.document_proxy = document_defined;
-
-		native_proxies.set(document_proxy, global.document)
+		native_proxies.set(this.proxy, global.document)
 		
 		this.define_prototype();
 		
 		bind_natives(global.document);
 		bind_natives(Document.prototype);
 		bind_natives(Node.prototype);
-		
-		return document_proxy;
 	}
 	define_prototype(){
 		const { defaultView, URL } = Object.getOwnPropertyDescriptors(Document.prototype);
@@ -32,7 +27,7 @@ export class DocumentRewrite extends Rewrite {
 			enumerable: true,
 			get: wrap_function(defaultView.get, (target, that, args) => {
 				if(that != document)throw new TypeError('Illegal invocation');
-				return this.client.window;
+				return this.client.window.proxy;
 			}),
 			set: undefined,
 		});
@@ -40,7 +35,7 @@ export class DocumentRewrite extends Rewrite {
 		Object.defineProperty(Document.prototype, 'URL', {
 			get: wrap_function(URL.get, (target, that, args) => {
 				if(that != document)throw new TypeError('Illegal invocation');
-				return this.client.location.href;
+				return this.client.location.proxy.href;
 			}),
 			configurable: true,
 			enumerable: true,
@@ -56,12 +51,12 @@ export class DocumentRewrite extends Rewrite {
 				configurable: false,
 				enumerable: true,
 				get: wrap_function(location.get, (target, that, args) => {
-					if(that != pointer.document_proxy)throw new TypeError('Illegal invocation');
-					return this.client.location;
+					if(that != this.proxy)throw new TypeError('Illegal invocation');
+					return this.client.location.proxy;
 				}),
 				set: wrap_function(location.set, (target, that, [ url ]) => {
-					if(that != pointer.document_proxy)throw new TypeError('Illegal invocation');
-					return this.client.location.href = url;
+					if(that != this.proxy)throw new TypeError('Illegal invocation');
+					return this.client.location.proxy.href = url;
 				}),
 			},
 		});

@@ -33,7 +33,7 @@ export class RewriteJS {
 				case'ThisExpression':
 
 					ctx.replace_with(b.callExpression(
-						b.memberExpression(b.identifier(global_client), b.identifier('this')),
+						b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('window')), b.identifier('get_this')),
 						[ b.thisExpression() ],
 					));
 					
@@ -73,7 +73,7 @@ export class RewriteJS {
 					const code_arg = 'tomp$evalcode';
 					// transform eval(...) into global_client.eval(eval, tomp$evalcode => eval(tomp$evalcode))
 					ctx.replace_with(b.callExpression(
-						b.memberExpression(b.identifier(global_client), b.identifier('eval')),
+						b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('eval')), b.identifier('scope')),
 						[
 							b.identifier('eval'),
 							b.arrowFunctionExpression(
@@ -113,6 +113,7 @@ export class RewriteJS {
 		return code.slice(12 + global_client.length, -1);
 	}
 	serve(serve, url){
+		serve = serve.toString();
 		if(serve.startsWith('data:')){
 			const {mime,data} = ParseDataURI(serve);
 			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;

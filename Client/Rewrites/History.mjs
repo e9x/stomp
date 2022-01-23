@@ -25,7 +25,7 @@ export class HistoryRewrite extends Rewrite {
 			pushState(data, title, url){
 				if(url != undefined){
 					url = url.toString();
-					url = that.client.tomp.html.serve(new URL(url, that.client.location.href).href, that.client.location.href);
+					url = that.client.tomp.html.serve(new URL(url, that.client.location.proxy.href), that.client.location.proxy);
 				}
 				
 				return _History.prototype.pushState.call(this, data, title, url);
@@ -33,7 +33,7 @@ export class HistoryRewrite extends Rewrite {
 			replaceState(data, title, url){
 				if(url != undefined){
 					url = url.toString();
-					url = that.client.tomp.html.serve(new URL(url, that.client.location.href).href, that.client.location.href);
+					url = that.client.tomp.html.serve(new URL(url, that.client.location.proxy).href, that.client.location.proxy);
 				}
 				
 				return _History.prototype.replaceState.call(this, data, title, url);
