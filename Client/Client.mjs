@@ -1,3 +1,4 @@
+import { global } from '../Global.mjs'
 import { TOMP } from '../TOMP.mjs'
 import { Define } from './Define.mjs'
 import { openDB } from 'idb/with-async-ittr';
@@ -28,6 +29,10 @@ export class Client {
 		this.location = new LocationRewrite(this).work();
 		this.document = new DocumentRewrite(this).work();
 		
+	}
+	this(that){
+		if(that == global)return this.window;
+		else return that;
 	}
 	async work(){
 		this.db = await openDB('tomp', 1, {

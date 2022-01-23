@@ -12,7 +12,7 @@ export class DocumentRewrite extends Rewrite {
 		
 		const document_proxy = new Proxy(Object.setPrototypeOf({}, null), handler);
 
-		pointer.document_proxy = document_proxy;
+		pointer.document_proxy = document_defined;
 
 		native_proxies.set(document_proxy, global.document)
 		

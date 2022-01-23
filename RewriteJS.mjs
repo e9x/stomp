@@ -2,6 +2,7 @@ import { ParseDataURI } from './DataURI.mjs'
 import { parse } from 'acorn';
 import { generate } from 'escodegen';
 import { AcornIterator } from './IterateAcorn.mjs';
+import { builders as b } from 'ast-types';
 
 export const global_client = 'tompc$';
 const top_level_variables = ['const','let'];
@@ -31,6 +32,27 @@ export class RewriteJS {
 			switch(ctx.type){
 				case'ThisExpression':
 
+					ctx.replace_with(b.callExpression(
+						b.memberExpression(b.identifier(global_client), b.identifier('this')),
+						[ b.thisExpression() ],
+					));
+					
+					break;
+				case'CallExpression':
+					
+					const {callee} = ctx.node;
+					if(callee.type == 'Identifier' && callee.name == 'eval'){
+						/* May be a JS eval function!
+						eval will only inherit the scope if the following is met:
+						the keyword (not property or function) eval is called
+						the keyword doesnt reference a variable named eval
+						*/
+
+						// transform eval(...) into global_client.eval(eval, tomp$evalcode => eval(tomp$evalcode))
+
+						
+					}
+
 					break;
 				// handle top level const/let in import
 				case'VariableDeclaration':
@@ -38,42 +60,13 @@ export class RewriteJS {
 					if(ctx.parent.node == ast && top_level_variables.includes(ctx.node.kind)){
 						let expressions = [];
 						for(let declaration of ctx.node.declarations){
-							expressions.push({
-								type: 'CallExpression',
-								callee: {
-									type: 'MemberExpression',
-									object: {
-										type: 'MemberExpression',
-										object: {
-											type: 'Identifier',
-											name: global_client,
-										},
-										property: {
-											name: 'Identifier',
-											name: 'define',
-										},
-									},
-									property: {
-										type: 'Identifier',
-										name: ctx.node.kind,
-									},
-								},
-								arguments: [
-									{
-										type: 'Literal',
-										value: declaration.id.name,
-									},
-									declaration.init,
-								],
-							});
+							expressions.push(b.callExpression(
+								b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('define')), b.identifier(ctx.node.kind)),
+								[ b.literal(declaration.id.name), declaration.init ],
+							));
 						}
-						ctx.replace_with({
-							type: 'ExpressionStatement',
-							expression: {
-								type: 'SequenceExpression',
-								expressions,
-							},
-						});
+						
+						ctx.replace_with(b.expressionStatement(b.sequenceExpression(expressions)));
 					}
 					break;
 			}

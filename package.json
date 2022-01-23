@@ -25,12 +25,15 @@
 	"license": "GPL-3.0",
 	"type": "module",
 	"dependencies": {
+		"@babel/types": "^7.16.8",
 		"acorn": "^8.7.0",
+		"ast-types": "^0.14.2",
 		"buffer": "^6.0.3",
 		"css-tree": "^2.0.4",
 		"escodegen": "^2.0.0",
 		"idb": "^7.0.0",
 		"parse5": "^6.0.1",
+		"process": "^0.11.10",
 		"set-cookie-parser": "^2.4.8",
 		"srcset": "^5.0.0",
 		"webpack": "^5.65.0"

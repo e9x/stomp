@@ -23,15 +23,26 @@ function compilation_errors(error, stats = { compilation: { errors: [] } }){
 	return had_error;
 }
 
-const client = webpack({
+const common_options = {
 	mode: 'development',
 	devtool: 'source-map',
+};
+
+const common_plugins = [
+	new webpack.ProvidePlugin({
+		process: 'process/browser',
+	}),
+];
+
+const client = webpack({
+	...common_options,
 	entry: path.join(__dirname, '..', 'Client', 'Entry.mjs'),
 	context: __dirname,
 	output: {
 		path: PublicDir,
 		filename: 'client.js',
 	},
+	plugins: common_plugins,
 });
 
 client.watch({}, (...args) => {
@@ -40,14 +51,14 @@ client.watch({}, (...args) => {
 });
 
 const worker = webpack({
-	mode: 'development',
-	devtool: 'source-map',
+	...common_options,
 	entry: path.join(__dirname, '..', 'Worker', 'Entry.mjs'),
 	context: __dirname,
 	output: {
 		path: PublicDir,
 		filename: 'worker.js',
 	},
+	plugins: common_plugins,
 });
 
 worker.watch({}, (...args) => {

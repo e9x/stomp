@@ -34,22 +34,25 @@ export class AcornContext {
 		return this.node.type;
 	}
 	// If the parent was modified, this function will return new AcornContext if there is only 1 node to replace with, otherwise it will return true, if the parent wasn't modified then it will return false.
-	replace_with(...node){
+	replace_with(...nodes){
 		if(this.root)throw new RangeError('Cannot replace the root.');
 		else if(!this.attached)throw new RangeError('Cannot replace a detached node.');
 		
 		if(this.parent_array){
 			let place = this.parent_object.indexOf(this.node);
 			if(place == -1) return false;
-			this.parent_object.splice(place, 1, ...node);
+			this.parent_object.splice(place, 1, ...nodes);
 		}else{
+			if(nodes.length > 1)throw new RangeError('Replacing property with multiple nodes.');
+
 			delete this.parent.node[this.parent_key];
+			this.parent.node[this.parent_key] = nodes[0];
 		}
 
 		this.attached = false;
 		
-		if(node.length == 1){
-			let created = new AcornContext(node, this.parent, this.parent_key);
+		if(nodes.length == 1){
+			let created = new AcornContext(nodes, this.parent, this.parent_key);
 			delete this.parent;
 			return created;
 		}else{
