@@ -4,6 +4,9 @@ import { openDB } from 'idb/with-async-ittr';
 import { WindowRewrite } from './Rewrites/Window.mjs';
 import { LocationRewrite } from './Rewrites/Location.mjs';
 import { WebSocketRewrite } from './Rewrites/WebSocket.mjs';
+import { DocumentRewrite } from './Rewrites/Document.mjs';
+import { HistoryRewrite } from './Rewrites/History.mjs';
+import { StorageRewrite } from './Rewrites/Storage.mjs';
 
 export class Client {
 	constructor(config){
@@ -13,9 +16,12 @@ export class Client {
 		this.ready = this.work();
 		this.window = new WindowRewrite(this).work();
 		this.location = new LocationRewrite(this).work();
+		this.document = new DocumentRewrite(this).work();
 		this.with = this.create_with();
 		
+		new HistoryRewrite(this).work();
 		new WebSocketRewrite(this).work();
+		new StorageRewrite(this).work();
 		
 	}
 	create_with(){
@@ -26,6 +32,16 @@ export class Client {
 			get(){
 				// check for illegal invocation
 				return that.window;
+			},
+			set: undefined,
+			configurable: false,
+			enumerable: true,
+		});
+		
+		Object.defineProperty(w, 'document', {
+			get(){
+				// check for illegal invocation
+				return that.document;
 			},
 			set: undefined,
 			configurable: false,

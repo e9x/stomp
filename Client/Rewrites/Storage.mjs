@@ -6,7 +6,7 @@ export class StorageRewrite extends Rewrite {
 		const that = this;
 
 		class Storage {
-			[Symbol(Symbol.toStringTag)] = 'Storage';
+			[Symbol.toStringTag] = 'Storage';
 			clear(){}
 			getItem(key){}
 			key(keyNum){}
@@ -16,6 +16,6 @@ export class StorageRewrite extends Rewrite {
 			constructor(){}
 		};
 
-		this.global.Storage = Storage;
+		global.Storage = Storage;
 	}
 };
