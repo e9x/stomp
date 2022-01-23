@@ -1,6 +1,6 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { mirror_attributes, wrap_function, bind_natives, native_proxies } from '../RewriteUtil.mjs';
+import { mirror_attributes, bind_natives, native_proxies, proxy_multitarget } from '../RewriteUtil.mjs';
 
 export class WindowRewrite extends Rewrite {
 	work(){
@@ -8,58 +8,30 @@ export class WindowRewrite extends Rewrite {
 		
 		bind_natives(global);
 		
-		const window_defined = this.get_window_defined();
+		const window_defined = this.get_defined();
 
-		const window_target = Object.setPrototypeOf({}, null);
-
-		const window_proxy = new Proxy(window_target, {
-			get(target, prop, receiver){
-				if(prop in window_defined)target = window_defined;
-				else target = global;
-				return Reflect.get(target, prop, receiver);
-			},
-			set(target, prop, value){
-				if(prop in window_defined)target = window_defined;
-				else target = global;
-				return Reflect.set(target, prop, value);	
-			},
-			has(target, prop){
-				if(prop in window_defined)target = window_defined;
-				else target = global;
-				return Reflect.has(target, prop);	
-			},
-			getOwnPropertyDescriptor(target, prop){
-				if(prop in window_defined)target = window_defined;
-				else target = global;
-
-				const desc = Reflect.getOwnPropertyDescriptor(target, prop);
-				Reflect.defineProperty(window_target, prop, desc);
-				return desc;
-			},
-			defineProperty(target, prop, desc){
-				if(prop in window_defined)target = window_defined;
-				else target = global;
-				
-				Reflect.defineProperty(window_target, prop, desc);
-				return Reflect.defineProperty(target, prop, desc);
-			},
-			deleteProperty(target, prop, descriptor){
-				if(prop in window_defined)target = window_defined;
-				else target = global;
-				return Reflect.deleteProperty(target, prop, descriptor);
-			},
-		});
+		const window_proxy = new Proxy(Object.setPrototypeOf({}, null), proxy_multitarget(window_defined, global));
 
 		native_proxies.set(window_proxy, global)
 		
+		this.define_properties(window_proxy);
+
+		return { window_defined, window_proxy };
+	}
+	define_properties(window_proxy){
+		const that = this;
+		const { origin, self, frames } = Object.getOwnPropertyDescriptors(global);
+
 		Object.defineProperty(global, 'origin', {
-			get(){
+			get: mirror_attributes(origin.get, function(){
 				return that.client.location.origin;
-			},
-			set(value){
+			}),
+			set: mirror_attributes(origin.set, function(){
 				delete global.origin;
-				global.origin = value;
-			}
+				return global.origin = value;
+			}),
+			configurable: true,
+			enumerable: true,
 		});
 
 		Object.defineProperty(global, 'globalThis', {
@@ -68,13 +40,35 @@ export class WindowRewrite extends Rewrite {
 			enumerable: true,
 		});
 		
-		return { window_defined, window_proxy };
+		Object.defineProperty(global, 'self', {
+			get: mirror_attributes(self.get, function(){
+				return that.client.window;
+			}),
+			set: mirror_attributes(frames.set, function(){
+				delete global.self;
+				return global.self = value;
+			}),
+			configurable: true,
+			enumerable: true,
+		});
+
+		Object.defineProperty(global, 'frames', {
+			get: mirror_attributes(frames.get, function(){
+				return that.client.window;
+			}),
+			set: mirror_attributes(frames.set, function(value){
+				delete global.frames;
+				return global.frames = value;
+			}),
+			configurable: true,
+			enumerable: true,
+		});
 	}
-	get_window_defined(){
+	get_defined(){
 		const that = this;
 		const { location, window, document, top } = Object.getOwnPropertyDescriptors(global);
 
-		const window_defined = Object.defineProperties(Object.setPrototypeOf({}, null), {
+		const defined = Object.defineProperties(Object.setPrototypeOf({}, null), {
 			location: {
 				configurable: false,
 				enumerable: true,
@@ -111,6 +105,6 @@ export class WindowRewrite extends Rewrite {
 			},
 		});
 
-		return window_defined;
+		return defined;
 	}
 };

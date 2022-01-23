@@ -38,6 +38,40 @@ export function resolve_native(proxy/*?*/){
 	else return proxy;
 }
 
+function pick_target(first, second, prop){
+	if(prop in first){
+		return first;
+	}
+
+	return second;
+}
+
+export function proxy_multitarget(first, second){
+	return {
+		get(_, prop, receiver){
+			return Reflect.get(pick_target(first, second, prop), prop, receiver);
+		},
+		set(_, prop, value){
+			return Reflect.set(pick_target(first, second, prop), prop, value);	
+		},
+		has(_, prop){
+			return Reflect.has(pick_target(first, second, prop), prop);	
+		},
+		getOwnPropertyDescriptor(_, prop){
+			const desc = Reflect.getOwnPropertyDescriptor(pick_target(first, second, prop), prop);
+			Reflect.defineProperty(_, prop, desc);
+			return desc;
+		},
+		defineProperty(_, prop, desc){
+			Reflect.defineProperty(_, prop, desc);
+			return Reflect.defineProperty(pick_target(first, second, prop), prop, desc);
+		},
+		deleteProperty(_, prop, descriptor){
+			return Reflect.deleteProperty(pick_target(first, second, prop), prop, descriptor);
+		},
+	};
+}
+
 export function bind_natives(target){
 	for(let prop in target){
 		const desc = Object.getOwnPropertyDescriptor(target, prop);
