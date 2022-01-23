@@ -14,7 +14,7 @@ export class WindowRewrite extends Rewrite {
 			let changed = false;
 
 			if(typeof desc.value == 'function'){
-				global[prop] = wrap_function(desc.value, (target, that, args) => {
+				desc.value = wrap_function(desc.value, (target, that, args) => {
 					return Reflect.apply(target, that == window_proxy ? global : that, args);
 				});
 
