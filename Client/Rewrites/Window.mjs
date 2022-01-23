@@ -7,8 +7,7 @@ export class WindowRewrite extends Rewrite {
 		const that = this;
 		
 		bind_natives(global);
-		bind_natives(EventTarget.prototype);
-
+		
 		const window_defined = this.get_window_defined();
 
 		const window_target = Object.setPrototypeOf({}, null);
