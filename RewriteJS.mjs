@@ -14,7 +14,10 @@ export class RewriteJS {
 		if(this.tomp.noscript)return '';
 
 		try{
-			var ast = parse(code, { ecmaVersion: 2020 });
+			var ast = parse(code, { 
+				ecmaVersion: 2020,
+				allowImportExportEverywhere: true,
+			});
 		}catch(err){
 			if(err instanceof SyntaxError){
 				return `throw new SyntaxError(${JSON.stringify(err.message)})`;
@@ -26,10 +29,13 @@ export class RewriteJS {
 
 		for(let ctx of new AcornIterator(ast)){
 			switch(ctx.type){
+				case'ThisExpression':
+
+					break;
 				// handle top level const/let in import
 				case'VariableDeclaration':
 					
-					if(ctx.parent.node == ast && top_level_variables.includes(ctx.node.like)){
+					if(ctx.parent.node == ast && top_level_variables.includes(ctx.node.kind)){
 						let expressions = [];
 						for(let declaration of ctx.node.declarations){
 							expressions.push({
@@ -49,7 +55,7 @@ export class RewriteJS {
 									},
 									property: {
 										type: 'Identifier',
-										name: ctx.node.like,
+										name: ctx.node.kind,
 									},
 								},
 								arguments: [
