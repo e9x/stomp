@@ -72,25 +72,7 @@ export class RewriteJS {
 			}
 		}
 		
-		ast = {
-			type: 'WithStatement',
-			object: {
-				type: 'MemberExpression',
-				object: {
-					type: 'Identifier',
-					name: global_client,
-				},
-				property: {
-					type: 'Identifier',
-					name: 'with',	
-				},
-				computed: false,
-			},
-			body: {
-				type: 'BlockStatement',
-				body: ast.body,
-			},
-		};
+		ast = b.withStatement(b.memberExpression(b.identifier(global_client), b.identifier('with')), b.blockStatement(ast.body));
 		
 		code = generate(ast);
 		return code;
