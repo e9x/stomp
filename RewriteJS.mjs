@@ -7,6 +7,8 @@ import { builders as b } from 'ast-types';
 export const global_client = 'tompc$';
 const top_level_variables = ['const','let'];
 
+const global_access = b.memberExpression(b.identifier(global_client), b.identifier('access'));
+
 export class RewriteJS {
 	constructor(tomp){
 		this.tomp = tomp;
@@ -57,14 +59,6 @@ export class RewriteJS {
 					ctx.node.source.value = this.serve(new URL(ctx.node.source.value, url), url);
 					
 					break;
-				case'ThisExpression':
-
-					ctx.replace_with(b.callExpression(
-						b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('window')), b.identifier('get_this')),
-						[ b.thisExpression() ],
-					));
-					
-					break;
 				case'Identifier':
 
 					if (ctx.parent.type == 'MemberExpression' && ctx.parent_key == 'property') break; // window.location;
@@ -83,13 +77,13 @@ export class RewriteJS {
 					if (ctx.node[this.dont_rewrite]) break;
 
 					if(ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
-						ctx.parent.replace_with(b.callExpression(b.identifier('$corrosionSet$'), [
+						ctx.parent.replace_with(b.callExpression(b.identifier('set$'), [
 							this.attribute_dont_rewrite(b.identifier(ctx.node.name)),
 							ctx.parent.node.right,
 							b.literal(ctx.parent.node.operator),
 						]));
 					}else{
-						ctx.parent.replace_with(b.callExpression(b.identifier('$corrosionGet$'), [
+						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get$')), [
 							this.attribute_dont_rewrite(b.identifier(ctx.node.name)),
 						]));
 					}
@@ -125,7 +119,7 @@ export class RewriteJS {
 
 					if(!rewrite)break;
 
-					let identifier = '$corrosionGet$m';
+					let identifier = 'get$m';
 					let rewrite_ctx = ctx;
 					
 					const args = [
@@ -136,24 +130,24 @@ export class RewriteJS {
 					if (ctx.node.computed) args[1][this.prevent_rewrite] = true;
 
 					if (ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left') {
-						identifier = '$corrosionSet$m';
+						identifier = 'set$m';
 						rewrite_ctx = ctx.parent;
 						args.push(ctx.parent.node.right, b.literal(ctx.parent.node.operator));
 					};
 
 					if (ctx.parent.node.type == 'CallExpression' && ctx.parent_key == 'callee') {
-						identifier = '$corrosionCall$m';
+						identifier = 'call$m';
 						rewrite_ctx = ctx.parent;
 						args.push(b.arrayExpression(...ctx.parent.node.arguments));
 					};
 
 					if (ctx.parent.node.type == 'UpdateExpression') {
-						identifier = '$corrosionSet$m';
+						identifier = 'set$m';
 						rewrite_ctx = ctx.parent;
 						args.push(b.nullLiteral(), b.literal(ctx.parent.node.operator));
 					};
 					
-					rewrite_ctx.replace_with(b.callExpression(b.identifier(identifier), args));
+					rewrite_ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier(identifier)), args));
 					
 					break;
 				/*case'Identifier':

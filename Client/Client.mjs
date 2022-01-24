@@ -9,6 +9,7 @@ import { HistoryRewrite } from './Rewrites/History.mjs';
 import { StorageRewrite } from './Rewrites/Storage.mjs';
 import { RequestRewrite } from './Rewrites/Request.mjs';
 import { EvalRewrite } from './Rewrites/Eval.mjs';
+import { AccessRewrite } from './Rewrites/Access.mjs';
 
 /*import * as acorn from 'acorn';
 self.acorn = acorn;*/
@@ -24,11 +25,12 @@ export class Client {
 		new StorageRewrite(this).work();
 		new RequestRewrite(this).work();
 		
+		this.access = new AccessRewrite(this);
 		this.eval = new EvalRewrite(this);
 		this.window = new WindowRewrite(this);
 		this.location = new LocationRewrite(this);
 		this.document = new DocumentRewrite(this);
-		
+
 		this.eval.work();
 		this.window.work();
 		this.location.work();

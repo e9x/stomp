@@ -4,10 +4,7 @@ import { bind_natives, native_proxies, proxy_multitarget, wrap_function } from '
 
 export class WindowRewrite extends Rewrite {
 	legal_windows = [global,null,undefined/*,global*/];
-	get_this(that){
-		if(that == global)return this.proxy;
-		else return that;
-	}
+	global = global;
 	work(){
 		this.defined = this.get_defined();
 		

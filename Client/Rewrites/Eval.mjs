@@ -1,6 +1,5 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { wrap_function, bind_natives, native_proxies, proxy_multitarget } from '../RewriteUtil.mjs';
 
 const js_eval = global.eval;
 

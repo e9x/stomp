@@ -2,6 +2,7 @@ import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 
 export class LocationRewrite extends Rewrite {
+	global = location;
 	work(){
 		const that = this;
 
@@ -17,7 +18,7 @@ export class LocationRewrite extends Rewrite {
 				set(value){
 					const urlo = that.page_urlo;
 					urlo[prop] = value;
-					global.location.href = that.client.tomp.url.wrap(urlo, 'worker:html');
+					that.global.href = that.client.tomp.url.wrap(urlo, 'worker:html');
 					return value;
 				},
 			});
@@ -31,7 +32,7 @@ export class LocationRewrite extends Rewrite {
 			},
 			set(value){
 				const urlo = new URL(value, that.page_urlo);
-				global.location.href = that.client.tomp.url.wrap(urlo, 'worker:html');
+				that.global.href = that.client.tomp.url.wrap(urlo, 'worker:html');
 				return value;
 			},
 		});
@@ -41,7 +42,7 @@ export class LocationRewrite extends Rewrite {
 			enumerable: true,
 			writable: false,
 			value(url){
-				global.location.assign(that.client.tomp.url.wrap(new URL(url, that.page_url), 'worker:html'));
+				that.global.assign(that.client.tomp.url.wrap(new URL(url, that.page_url), 'worker:html'));
 			},
 		});
 
@@ -50,7 +51,7 @@ export class LocationRewrite extends Rewrite {
 			enumerable: true,
 			writable: false,
 			value(url){
-				global.location.replace(that.client.tomp.url.wrap(new URL(url, that.page_url), 'worker:html'));
+				that.global.replace(that.client.tomp.url.wrap(new URL(url, that.page_url), 'worker:html'));
 			},
 		});
 
@@ -59,7 +60,7 @@ export class LocationRewrite extends Rewrite {
 			enumerable: true,
 			writable: false,
 			value(){
-				global.location.reload();
+				that.global.reload();
 			},
 		});
 
@@ -77,13 +78,13 @@ export class LocationRewrite extends Rewrite {
 			enumerable: true,
 			get(){
 				// should have no items
-				return global.location.ancestorOrigins;
+				return that.global.ancestorOrigins;
 			},
 			set: undefined,
 		});
 	}
 	get page_url(){
-		const url = global.location.href.slice(global.location.href.indexOf(this.client.tomp.directory));
+		const url = this.global.href.slice(this.global.href.indexOf(this.client.tomp.directory));
 		const { field } = this.client.tomp.url.get_attributes(url);
 
 		return this.client.tomp.url.unwrap(field);
