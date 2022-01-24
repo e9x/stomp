@@ -15,10 +15,9 @@ export class RewriteJS {
 		if(this.tomp.noscript)return '';
 
 		try{
-			console.log(module ? 'module' : 'script');
 			var ast = parse(code, { 
 				ecmaVersion: 2022,
-				allowAwaitOutsideFunction: true,
+				allowAwaitOutsideFunction: module,
 				sourceType: module ? 'module' : 'script',
 			});
 		}catch(err){
@@ -58,7 +57,17 @@ export class RewriteJS {
 						if(ctx.parent.parent.type == 'MemberExpression')break;
 					}
 
-					ctx.replace_with(b.memberExpression(b.identifier('window'), b.identifier(ctx.node.name)));
+					if(ctx.parent.type == 'VariableDeclarator'){
+						if(ctx.parent_key != 'init')break;
+					}
+
+					let newm = b.memberExpression(b.memberExpression(b.identifier('tompc$'), b.identifier('window')), b.identifier('proxy'));
+
+					if(ctx.node.name != 'window'){
+						newm = b.memberExpression(newm, b.identifier(ctx.node.name));
+					}
+
+					ctx.replace_with(newm);
 					
 					break;
 				case'CallExpression':
@@ -72,42 +81,25 @@ export class RewriteJS {
 					the keyword (not property or function) eval is called
 					the keyword doesnt reference a variable named eval
 					*/
-
-					const code_arg = 'tomp$evalcode';
-					// transform eval(...) into global_client.eval(eval, tomp$evalcode => eval(tomp$evalcode))
+					
+					// transform eval(...) into global_client.eval(eval, x => eval(...x))
 					ctx.replace_with(b.callExpression(
 						b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('eval')), b.identifier('scope')),
 						[
 							b.identifier('eval'),
 							b.arrowFunctionExpression(
-								[ b.identifier(code_arg) ],
-								b.callExpression(b.identifier('eval'), [ b.spreadElement(b.identifier(code_arg)) ]),
+								[ b.identifier('x') ],
+								b.callExpression(b.identifier('eval'), [ b.spreadElement(b.identifier('x')) ]),
 							),
 							...ctx.node.arguments,
 						],
 					));
 					
 					break;
-				// handle top level const/let in import
-				case'VariableDeclaration':
-					
-					if(module || !global_scope || ctx.parent.node != ast || !top_level_variables.includes(ctx.node.kind))break;
-
-					let expressions = [];
-					for(let declaration of ctx.node.declarations){
-						expressions.push(b.callExpression(
-							b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('define')), b.identifier(ctx.node.kind)),
-							[ b.literal(declaration.id.name), declaration.init ],
-						));
-					}
-					
-					ctx.replace_with(b.expressionStatement(b.sequenceExpression(expressions)));
-
-					break;
 			}
 		}
 		
-		// ast = b.withStatement(b.memberExpression(b.identifier(global_client), b.identifier('with')), b.blockStatement(ast.body));
+		ast = b.withStatement(b.memberExpression(b.identifier(global_client), b.identifier('with')), b.blockStatement(ast.body));
 		
 		code = generate(ast);
 		return code;

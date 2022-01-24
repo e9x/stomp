@@ -25,7 +25,7 @@ export function wrap_function(fn, wrap, construct){
 
 	return wrapped
 };
-		
+
 Function.prototype.toString = wrap_function(Function.prototype.toString, (target, that, args) => {
 	if(function_strings.has(that))return function_strings.get(that);
 	else return Reflect.apply(target, that, args);
@@ -38,36 +38,36 @@ export function resolve_native(proxy/*?*/){
 	else return proxy;
 }
 
-function pick_target(fallback, targets, prop){
-	for(let possible of targets)if(prop in possible){
-		return possible;
+function pick_target(first, second, prop){
+	if(prop in first){
+		return first;
 	}
 
-	return fallback;
+	return second;
 }
 
-export function proxy_multitarget(fallback, ...targets){
+export function proxy_multitarget(first, second){
 	return {
 		get(_, prop, receiver){
-			return Reflect.get(pick_target(fallback, targets, prop), prop, receiver);
+			return Reflect.get(pick_target(first, second, prop), prop, receiver);
 		},
 		set(_, prop, value){
-			return Reflect.set(pick_target(fallback, targets, prop), prop, value);	
+			return Reflect.set(pick_target(first, second, prop), prop, value);	
 		},
 		has(_, prop){
-			return Reflect.has(pick_target(fallback, targets, prop), prop);	
+			return Reflect.has(pick_target(first, second, prop), prop);	
 		},
 		getOwnPropertyDescriptor(_, prop){
-			const desc = Reflect.getOwnPropertyDescriptor(pick_target(fallback, targets, prop), prop);
+			const desc = Reflect.getOwnPropertyDescriptor(pick_target(first, second, prop), prop);
 			Reflect.defineProperty(_, prop, desc);
 			return desc;
 		},
 		defineProperty(_, prop, desc){
 			Reflect.defineProperty(_, prop, desc);
-			return Reflect.defineProperty(pick_target(fallback, targets, prop), prop, desc);
+			return Reflect.defineProperty(pick_target(first, second, prop), prop, desc);
 		},
 		deleteProperty(_, prop, descriptor){
-			return Reflect.deleteProperty(pick_target(fallback, targets, prop), prop, descriptor);
+			return Reflect.deleteProperty(pick_target(first, second, prop), prop, descriptor);
 		},
 	};
 }
@@ -76,7 +76,7 @@ export function bind_natives(target){
 	for(let prop in target){
 		const desc = Object.getOwnPropertyDescriptor(target, prop);
 
-		if(!desc || !desc.configurable)continue;
+		if(!desc?.configurable)continue;
 
 		let changed = false;
 
@@ -95,6 +95,7 @@ export function bind_natives(target){
 
 			changed = true;
 		}
+
 		if(typeof desc.set == 'function'){
 			desc.set = wrap_function(desc.set, (target, that, args) => {
 				return Reflect.apply(target, resolve_native(that), args);

@@ -1,4 +1,3 @@
-import { global } from '../Global.mjs'
 import { TOMP } from '../TOMP.mjs'
 import { Define } from './Define.mjs'
 import { openDB } from 'idb/with-async-ittr';
@@ -17,8 +16,8 @@ self.acorn = acorn;*/
 export class Client {
 	constructor(config){
 		this.tomp = new TOMP(config);
-		this.define = new Define(this);
 		this.ready = this.work();
+		this.define = new Define(this);
 		
 		new HistoryRewrite(this).work();
 		new WebSocketRewrite(this).work();
@@ -34,9 +33,6 @@ export class Client {
 		this.window.work();
 		this.location.work();
 		this.document.work();
-		
-		this.with = this.window.defined;
-		
 	}
 	async work(){
 		this.db = await openDB('tomp', 1, {

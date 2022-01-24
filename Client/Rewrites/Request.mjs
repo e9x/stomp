@@ -1,7 +1,6 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { wrap_function, native_proxies } from '../RewriteUtil.mjs';
-import { wrap } from 'idb';
 
 export class RequestRewrite extends Rewrite {
 	work(){
@@ -23,8 +22,10 @@ export class RequestRewrite extends Rewrite {
 			}
 		});
 
+		const legal_windows = [null,undefined,global];
+
 		global.fetch = wrap_function(global.fetch, async (target, that, [input, init]) => {
-			if(that != global)throw new TypeError('Illegal invocation');
+			if(!legal_windows.includes(that))throw new TypeError('Illegal invocation');
 			
 			if(input instanceof Request){
 				const raw = this.raw_requests.get(input);
