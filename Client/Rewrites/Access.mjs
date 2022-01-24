@@ -80,54 +80,18 @@ export class AccessRewrite extends Rewrite {
 		if(!this.client.service_worker && obj == global.top)return global.top;
         return obj;
     }
-    set$(obj, val, operator){
+    set$(obj, val, is_number = false){
         if(obj == this.client.location.global){
-			obj = this.client.location.proxy;
-			// return this.set$(this.client.location.proxy, val, operator);
+			val = this.client.tomp.html.serve(val, this.client.location);
 		}
+
+		// var++;
+		if(is_number && typeof val != 'number')val = NaN;
 		
-		if(!this.client.service_worker && global != global.top && obj == global.top){
+		/*if(!this.client.service_worker && global != global.top && obj == global.top){
 			return global.top[global_client].access.set$(global.top, val, operator);
-		}
-		
-		switch(operator){
-			case '+=':
-				return obj += val;
-			case '-=':
-				return obj -= val;
-			case '*=':
-				return obj *= val;
-			case '/=':
-				return obj /= val;
-			case '%=':
-				return obj %= val;
-			case '**=':
-				return obj **= val;
-			case '<<=':
-				return obj <<= val;
-			case '>>=':
-				return obj >>= val;
-			case '>>>=':
-				return obj >>>= val;
-			case '&=':
-				return obj &= val;
-			case '^=':
-				return obj ^= val;
-			case '|=':
-				return obj |= val;
-			case '&&=':
-				return obj &&= val;
-			case '||=':
-				return obj ||= val;
-			case '??=':
-				return obj ??= val;
-			case '++':
-				return obj++;
-			case '--':
-				return obj--;
-			case '=':
-			default:
-				return obj = val;
-		}
+		}*/
+
+		return val;
 	}
 };

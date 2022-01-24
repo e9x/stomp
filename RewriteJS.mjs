@@ -59,29 +59,57 @@ export class RewriteJS {
 					ctx.node.source.value = this.serve(new URL(ctx.node.source.value, url), url);
 					
 					break;
+				case'UpdateExpression':
+					
+					let arg = ctx.node.argument;
+
+					if(arg.type != 'Identifier' || arg[this.dont_rewrite])break;
+					
+					ctx.replace_with(b.assignmentExpression(
+						'=',
+						this.attribute_dont_rewrite(arg),
+						b.callExpression(b.memberExpression(global_access, b.identifier('set$')), [
+							this.attribute_dont_rewrite(arg),
+							b.binaryExpression(ctx.node.operator.slice(0, -1), b.callExpression(b.memberExpression(global_access, b.identifier('get$')), [
+								this.attribute_dont_rewrite(arg),
+							]), b.literal(1)),
+							b.literal(true), // is_number
+						]),
+					));
+					
+					break;
 				case'Identifier':
 
-					if (ctx.parent.type == 'MemberExpression' && ctx.parent_key == 'property') break; // window.location;
-					if (ctx.parent.type == 'LabeledStatement') break; // { location: null, };
-					if (ctx.parent.type == 'VariableDeclarator' && ctx.parent_key == 'id') break;
-					if (ctx.parent.type == 'Property' && ctx.parent_key == 'key') break;
-					if (ctx.parent.type == 'MethodDefinition') break;
-					if (ctx.parent.type == 'ClassDeclaration') break;
-					if (ctx.parent.type == 'RestElement') break;
-					if (ctx.parent.type == 'ExportSpecifier') break;
-					if (ctx.parent.type == 'ImportSpecifier') break;
-					if ((ctx.parent.type == 'FunctionDeclaration' || ctx.parent.type == 'FunctionExpression' || ctx.parent.type == 'ArrowFunctionExpression') && ctx.parent_key == 'params') break;
-					if ((ctx.parent.type == 'FunctionDeclaration' || ctx.parent.type == 'FunctionExpression') && ctx.parent_key == 'id') break;
-					if (ctx.parent.type == 'AssignmentPattern' && ctx.parent_key == 'left') break;
-					if (!this.undefinable.includes(ctx.node.name)) break;
-					if (ctx.node[this.dont_rewrite]) break;
+					if(ctx.parent.type == 'MemberExpression' && ctx.parent_key == 'property')break; // window.location;
+					if(ctx.parent.type == 'LabeledStatement')break; // { location: null, };
+					if(ctx.parent.type == 'VariableDeclarator' && ctx.parent_key == 'id')break;
+					if(ctx.parent.type == 'Property' && ctx.parent_key == 'key')break;
+					if(ctx.parent.type == 'MethodDefinition')break;
+					if(ctx.parent.type == 'ClassDeclaration')break;
+					if(ctx.parent.type == 'RestElement')break;
+					if(ctx.parent.type == 'ExportSpecifier')break;
+					if(ctx.parent.type == 'ImportSpecifier')break;
+					// identifier++; handled above
+					if(ctx.parent.type == 'UpdateExpression')break;
+					if((ctx.parent.type == 'FunctionDeclaration' || ctx.parent.type == 'FunctionExpression' || ctx.parent.type == 'ArrowFunctionExpression') && ctx.parent_key == 'params')break;
+					if((ctx.parent.type == 'FunctionDeclaration' || ctx.parent.type == 'FunctionExpression') && ctx.parent_key == 'id')break;
+					if(ctx.parent.type == 'AssignmentPattern' && ctx.parent_key == 'left') break;
+					if(!this.undefinable.includes(ctx.node.name))break;
+					if(ctx.node[this.dont_rewrite])break;
 
 					if(ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
-						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set$')), [
+						ctx.parent.replace_with(b.assignmentExpression(
+							'=',
 							this.attribute_dont_rewrite(b.identifier(ctx.node.name)),
-							ctx.parent.node.right,
-							b.literal(ctx.parent.node.operator),
-						]));
+							b.callExpression(b.memberExpression(global_access, b.identifier('set$')), [
+								this.attribute_dont_rewrite(b.identifier(ctx.node.name)),
+								ctx.parent.node.operator == '='
+									? ctx.parent.node.right
+									: b.binaryExpression(ctx.parent.node.operator.slice(0, -1), b.callExpression(b.memberExpression(global_access, b.identifier('get$')), [
+										this.attribute_dont_rewrite(b.identifier(ctx.node.name)),
+									]), ctx.parent.node.right),
+							]),
+						));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get$')), [
 							this.attribute_dont_rewrite(b.identifier(ctx.node.name)),
