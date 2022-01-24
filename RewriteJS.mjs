@@ -11,14 +11,15 @@ export class RewriteJS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	wrap(code, url, module = false, global_scope = false){
+	wrap(code, url){
 		if(this.tomp.noscript)return '';
 
 		try{
 			var ast = parse(code, { 
 				ecmaVersion: 2022,
-				allowAwaitOutsideFunction: module,
-				sourceType: module ? 'module' : 'script',
+				allowAwaitOutsideFunction: true,
+				allowReturnOutsideFunction: true, 
+				allowImportExportEverywhere: true,
 			});
 		}catch(err){
 			if(err instanceof SyntaxError){
@@ -99,21 +100,19 @@ export class RewriteJS {
 			}
 		}
 		
-		ast = b.withStatement(b.memberExpression(b.identifier(global_client), b.identifier('with')), b.blockStatement(ast.body));
-		
 		code = generate(ast);
 		return code;
 	}
 	unwrap(code, url){
 		return code.slice(12 + global_client.length, -1);
 	}
-	serve(serve, url, module = false){
+	serve(serve, url){
 		serve = serve.toString();
 		if(serve.startsWith('data:')){
 			const {mime,data} = ParseDataURI(serve);
 			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
 		}
-		return this.tomp.url.wrap(serve, module ? 'worker:js:module' : 'worker:js');
+		return this.tomp.url.wrap(serve, 'worker:js');
 	}
 };
 

@@ -42,7 +42,7 @@ export class RewriteHTML {
 			const type = get_mime(attrs.type || '').toLowerCase();
 			
 			if(js_types.includes(type)){
-				return this.tomp.js.wrap(value, url, js_module_types.includes(type), true);
+				return this.tomp.js.wrap(value, url);
 			}else{
 				return value;
 			}
@@ -94,7 +94,7 @@ export class RewriteHTML {
 			src: (value, url, attrs) => {
 				const type = get_mime(attrs.type || '').toLowerCase();
 				const resolved = new URL(value, url).href;
-				if(js_types.includes(type))return this.tomp.js.serve(resolved, url, js_module_types.includes(type), true);
+				if(js_types.includes(type))return this.tomp.js.serve(resolved, url);
 				else return this.tomp.binary.serve(resolved, url);
 			},
 			nonce: () => this.delete_attribute,	
