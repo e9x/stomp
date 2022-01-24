@@ -11,6 +11,8 @@ export class RewriteJS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
+	providers = ['window','document'];
+	undefinable = ['top','location'];
 	wrap(code, url){
 		if(this.tomp.noscript)return '';
 
@@ -32,6 +34,29 @@ export class RewriteJS {
 
 		for(let ctx of new AcornIterator(ast)){
 			switch(ctx.type){
+				case'ImportExpression':
+					
+					// todo: add tompc$.import()
+					ctx.replace_with(b.callExpression(
+						b.memberExpression(b.identifier(global_client), b.identifier('import')),
+						[
+							b.arrowFunctionExpression(
+								[ b.identifier('x') ],
+								b.callExpression(
+									b.importExpression(b.identifier('x')),
+									[ b.spreadElement(b.identifier('x')) ],
+								),
+							),
+							ctx.node.source,
+						],
+					));
+
+					break;
+				case'ImportDeclaration':
+					
+					ctx.node.source.value = this.serve(new URL(ctx.node.source.value, url), url);
+					
+					break;
 				case'ThisExpression':
 
 					ctx.replace_with(b.callExpression(
@@ -41,13 +66,104 @@ export class RewriteJS {
 					
 					break;
 				case'Identifier':
+
+					if (ctx.parent.type == 'MemberExpression' && ctx.parent_key == 'property') break; // window.location;
+					if (ctx.parent.type == 'LabeledStatement') break; // { location: null, };
+					if (ctx.parent.type == 'VariableDeclarator' && ctx.parent_key == 'id') break;
+					if (ctx.parent.type == 'Property' && ctx.parent_key == 'key') break;
+					if (ctx.parent.type == 'MethodDefinition') break;
+					if (ctx.parent.type == 'ClassDeclaration') break;
+					if (ctx.parent.type == 'RestElement') break;
+					if (ctx.parent.type == 'ExportSpecifier') break;
+					if (ctx.parent.type == 'ImportSpecifier') break;
+					if ((ctx.parent.type == 'FunctionDeclaration' || ctx.parent.type == 'FunctionExpression' || ctx.parent.type == 'ArrowFunctionExpression') && ctx.parent_key == 'params') break;
+					if ((ctx.parent.type == 'FunctionDeclaration' || ctx.parent.type == 'FunctionExpression') && ctx.parent_key == 'id') break;
+					if (ctx.parent.type == 'AssignmentPattern' && ctx.parent_key == 'left') break;
+					if (!this.undefinable.includes(ctx.node.name)) break;
+					if (ctx.node[this.dont_rewrite]) break;
+
+					if(ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
+						ctx.parent.replace_with(b.callExpression(b.identifier('$corrosionSet$'), [
+							this.attribute_dont_rewrite(b.identifier(ctx.node.name)),
+							ctx.parent.node.right,
+							b.literal(ctx.parent.node.operator),
+						]));
+					}else{
+						ctx.parent.replace_with(b.callExpression(b.identifier('$corrosionGet$'), [
+							this.attribute_dont_rewrite(b.identifier(ctx.node.name)),
+						]));
+					}
+					
+					break;
+				case'MemberExpression':
+					
+					let rewrite = false;
+					if(ctx.parent.type == 'UnaryExpression' && ctx.parent.node.operator == 'delete')break;
+					if(ctx.parent.type == 'NewExpression' && ctx.parent_key == 'callee')break;
+					if(ctx.parent.type === 'CallExpression' && ctx.parent_key == 'callee')break;
+					if(ctx.node[this.prevent_rewrite]) return;
+
+					switch(ctx.node.property.type) {
+						case'Identifier':
+							if(ctx.node.computed)rewrite = true;
+							
+							if (!ctx.node.computed && this.undefinable.includes(ctx.node.property.name)) {
+								ctx.node.property = b.literal(ctx.node.property.name);
+								rewrite = true;
+							};
+							break;
+						case'Literal':
+							if(this.undefinable.includes(node.property.name))rewrite = true;
+							break;
+						case'TemplateLiteral':
+							rewrite = true;
+							break;
+						default:
+							if(ctx.node.computed)rewrite = true;
+							break;
+					};
+
+					if(!rewrite)break;
+
+					let identifier = '$corrosionGet$m';
+					let rewrite_ctx = ctx;
+					
+					const args = [
+						ctx.node.object,
+						ctx.node.property,
+					];
+
+					if (ctx.node.computed) args[1][this.prevent_rewrite] = true;
+
+					if (ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left') {
+						identifier = '$corrosionSet$m';
+						rewrite_ctx = ctx.parent;
+						args.push(ctx.parent.node.right, b.literal(ctx.parent.node.operator));
+					};
+
+					if (ctx.parent.node.type == 'CallExpression' && ctx.parent_key == 'callee') {
+						identifier = '$corrosionCall$m';
+						rewrite_ctx = ctx.parent;
+						args.push(b.arrayExpression(...ctx.parent.node.arguments));
+					};
+
+					if (ctx.parent.node.type == 'UpdateExpression') {
+						identifier = '$corrosionSet$m';
+						rewrite_ctx = ctx.parent;
+						args.push(b.nullLiteral(), b.literal(ctx.parent.node.operator));
+					};
+					
+					rewrite_ctx.replace_with(b.callExpression(b.identifier(identifier), args));
+					
+					break;
+				/*case'Identifier':
 					
 					/*
 					 * allow eval.toString
 					 * disallow window.eval.toString
 					 * disallow window.eval
 					 * do the same for top,location,window,document
-					*/
+					/
 					
 					if(!(['top','location','window','document'].includes(ctx.node.name)))break;
 					
@@ -70,7 +186,7 @@ export class RewriteJS {
 
 					ctx.replace_with(newm);
 					
-					break;
+					break;*/
 				case'CallExpression':
 					
 					const {callee} = ctx.node;
@@ -99,9 +215,13 @@ export class RewriteJS {
 					break;
 			}
 		}
-		
-		code = generate(ast);
-		return code;
+
+		return generate(ast);
+	}
+	dont_rewrite = Symbol();
+	attribute_dont_rewrite(node){
+		node[this.prevent_rewrite] = true;
+		return node;
 	}
 	unwrap(code, url){
 		return code.slice(12 + global_client.length, -1);
