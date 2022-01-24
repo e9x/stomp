@@ -209,8 +209,8 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	});
 }
 
-export async function SendJS(server, server_request, field){
-	return await SendRewrittenScript(server.tomp.js, server, server_request, field, /*global_scope*/ true);
+export async function SendJS(server, server_request, field, module){
+	return await SendRewrittenScript(server.tomp.js, server, server_request, field, /* module */ module, /*global_scope*/ true);
 }
 
 export async function SendCSS(server, server_request, field){

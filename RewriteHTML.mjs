@@ -6,7 +6,8 @@ import { parseSrcset, stringifySrcset } from 'srcset';
 
 const essential_nodes = ['#documentType','#document','#text','html','head','body'];
 
-export const js_types = ['text/javascript','application/javascript','module',''];
+export const js_module_types = ['module'];
+export const js_types = ['text/javascript','application/javascript','',...js_module_types];
 export const css_types = ['text/css',''];
 export const html_types = ['image/svg+xml', 'text/html',''];
 
@@ -38,11 +39,18 @@ function P5_object_attrs(object){
 export class RewriteHTML {
 	content_router = {
 		script: (value, url, attrs) => {
-			if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.wrap(value, url, true);
-			else return value;
+			const type = get_mime(attrs.type || '').toLowerCase();
+			
+			if(js_types.includes(type)){
+				return this.tomp.js.wrap(value, url, js_module_types.includes(type), true);
+			}else{
+				return value;
+			}
 		},
 		style: (value, url, attrs) => {
-			if(css_types.includes(get_mime(attrs.type || '')))return this.tomp.css.wrap(value, url);
+			const type = get_mime(attrs.type || '').toLowerCase();
+			
+			if(css_types.includes(type))return this.tomp.css.wrap(value, url);
 			else return value;
 		},
 	};
@@ -84,8 +92,9 @@ export class RewriteHTML {
 		script: {
 			// attrs const
 			src: (value, url, attrs) => {
+				const type = get_mime(attrs.type || '').toLowerCase();
 				const resolved = new URL(value, url).href;
-				if(js_types.includes(get_mime(attrs.type || '')))return this.tomp.js.serve(resolved, url);
+				if(js_types.includes(type))return this.tomp.js.serve(resolved, url, js_module_types.includes(type), true);
 				else return this.tomp.binary.serve(resolved, url);
 			},
 			nonce: () => this.delete_attribute,	

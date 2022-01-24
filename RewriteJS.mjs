@@ -11,13 +11,15 @@ export class RewriteJS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	wrap(code, url, global_scope){
+	wrap(code, url, module = false, global_scope = false){
 		if(this.tomp.noscript)return '';
 
 		try{
+			console.log(module ? 'module' : 'script');
 			var ast = parse(code, { 
-				ecmaVersion: 2020,
-				allowImportExportEverywhere: true,
+				ecmaVersion: 2022,
+				allowAwaitOutsideFunction: true,
+				sourceType: module ? 'module' : 'script',
 			});
 		}catch(err){
 			if(err instanceof SyntaxError){
@@ -40,13 +42,14 @@ export class RewriteJS {
 					break;
 				case'Identifier':
 					
-					if(ctx.node.name != 'eval')break;
-					
 					/*
 					 * allow eval.toString
 					 * disallow window.eval.toString
 					 * disallow window.eval
+					 * do the same for top,location,window,document
 					*/
+					
+					if(!(['top','location','window','document'].includes(ctx.node.name)))break;
 					
 					if(ctx.parent.type == 'MemberExpression'){
 						if(ctx.parent_key != 'object')break;
@@ -55,7 +58,7 @@ export class RewriteJS {
 						if(ctx.parent.parent.type == 'MemberExpression')break;
 					}
 
-					ctx.replace_with(b.memberExpression(b.identifier('window'), b.identifier('eval')));
+					ctx.replace_with(b.memberExpression(b.identifier('window'), b.identifier(ctx.node.name)));
 					
 					break;
 				case'CallExpression':
@@ -88,7 +91,7 @@ export class RewriteJS {
 				// handle top level const/let in import
 				case'VariableDeclaration':
 					
-					if(!global_scope || ctx.parent.node != ast || !top_level_variables.includes(ctx.node.kind))break;
+					if(module || !global_scope || ctx.parent.node != ast || !top_level_variables.includes(ctx.node.kind))break;
 
 					let expressions = [];
 					for(let declaration of ctx.node.declarations){
@@ -104,7 +107,7 @@ export class RewriteJS {
 			}
 		}
 		
-		ast = b.withStatement(b.memberExpression(b.identifier(global_client), b.identifier('with')), b.blockStatement(ast.body));
+		// ast = b.withStatement(b.memberExpression(b.identifier(global_client), b.identifier('with')), b.blockStatement(ast.body));
 		
 		code = generate(ast);
 		return code;
@@ -112,13 +115,13 @@ export class RewriteJS {
 	unwrap(code, url){
 		return code.slice(12 + global_client.length, -1);
 	}
-	serve(serve, url){
+	serve(serve, url, module = false){
 		serve = serve.toString();
 		if(serve.startsWith('data:')){
 			const {mime,data} = ParseDataURI(serve);
 			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
 		}
-		return this.tomp.url.wrap(serve, 'worker:js');
+		return this.tomp.url.wrap(serve, module ? 'worker:js:module' : 'worker:js');
 	}
 };
 
