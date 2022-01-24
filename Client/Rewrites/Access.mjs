@@ -1,30 +1,31 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
+import { global_client } from '../../RewriteJS.mjs';
 
 export class AccessRewrite extends Rewrite {
 	get$m(obj, key) {
-		if (!this.serviceWorker && this.window != this.window.parent && obj == this.window.parent) {
-			return this.parent.$corrosion.get$m(this.parent, key);
-		};
-		if (!this.serviceWorker && this.window != this.window.top && obj == this.window.top) {
-			return this.top.$corrosion.get$m(this.top, key);
-		};
-		if (obj == this.window && key == 'location' || !this.serviceWorker && obj == this.window.document && key == 'location') return this.location;
-		if (!this.serviceWorker && obj == this.window && key == 'parent' && this.window != this.window.parent) return this.parent;	
-		if (!this.serviceWorker && obj == this.window && key == 'top' && this.window != this.window.top) return this.top;
+		if (!this.client.service_worker && global != global.top && obj == global.top) {
+			return global.top[global_client].access.get$m(obj, key);
+		}
+		
+		if (obj == global && key == 'location' || !this.client.service_worker && obj == global.document && key == 'location') {
+			return this.client.location.proxy;
+		}
+		
+		if (!this.client.service_worker && obj == global && key == 'top' && global != global.top) {
+			return global.top;
+		}
+		
 		return obj[key];
     }
     set$m(obj, key, val, operator) {
-		if(!this.serviceWorker && this.window != this.window.parent && obj == this.window.parent){
-			return this.parent.$corrosion.set$m(this.parent, key, val, operator);
+		if(!this.client.service_worker && global != global.top && obj == global.top){
+			return global.top[global_client].access.set$m(global.top, key, val, operator);
 		}
 
-		if(!this.serviceWorker && this.window != this.window.top && obj == this.window.top){
-			return this.top.$corrosion.set$m(this.top, key, val, operator);
-		}
-
-		if(obj == this.window && key == 'location' || !this.serviceWorker && obj == this.window.document && key == 'location'){
-			obj = this;
+		if(obj == global && key == 'location' || !this.client.service_worker && obj == global.document && key == 'location'){
+			obj = location;
+			key = 'href';
 		}
 
 		switch(operator) {
@@ -68,33 +69,25 @@ export class AccessRewrite extends Rewrite {
 		};
     }
     call$m(obj, key, args){
-		if(!this.serviceWorker && this.window != this.window.parent && obj == this.window.parent){
-			return this.parent.$corrosion.call$m(this.parent, key, args);
-		}
-
-        if(!this.serviceWorker && this.window != this.window.top && obj == this.window.top){
-			return this.top.$corrosion.call$m(this.top, key, args);
+        if(!this.client.service_worker && global != global.top && obj == global.top){
+			return this.top[global_client].access.call$m(global.top, key, args);
 		}
 
 		return obj[key](...args);
     }
     get$(obj){
 		if(obj == this.client.location.global)return this.client.location.proxy;
-		if(!this.serviceWorker && obj == this.window.parent)return this.parent;
-		if(!this.serviceWorker && obj == this.window.top)return this.top;
+		if(!this.client.service_worker && obj == global.top)return global.top;
         return obj;
     }
     set$(obj, val, operator){
         if(obj == this.client.location.global){
-			return this.set$(this.location, val, operator);
+			obj = this.client.location.proxy;
+			// return this.set$(this.client.location.proxy, val, operator);
 		}
 		
-		if(!this.serviceWorker && this.window != this.window.parent && obj == this.window.parent){
-			return this.parent.set$(this.parent, val, operator);
-		}
-		
-		if(!this.serviceWorker && this.window != this.window.top && obj == this.window.top){
-			return this.top.set$(this.top, val, operator);
+		if(!this.client.service_worker && global != global.top && obj == global.top){
+			return global.top[global_client].access.set$(global.top, val, operator);
 		}
 		
 		switch(operator){

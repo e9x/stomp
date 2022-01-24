@@ -77,7 +77,7 @@ export class RewriteJS {
 					if (ctx.node[this.dont_rewrite]) break;
 
 					if(ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
-						ctx.parent.replace_with(b.callExpression(b.identifier('set$'), [
+						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set$')), [
 							this.attribute_dont_rewrite(b.identifier(ctx.node.name)),
 							ctx.parent.node.right,
 							b.literal(ctx.parent.node.operator),
@@ -150,42 +150,13 @@ export class RewriteJS {
 					rewrite_ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier(identifier)), args));
 					
 					break;
-				/*case'Identifier':
-					
-					/*
-					 * allow eval.toString
-					 * disallow window.eval.toString
-					 * disallow window.eval
-					 * do the same for top,location,window,document
-					/
-					
-					if(!(['top','location','window','document'].includes(ctx.node.name)))break;
-					
-					if(ctx.parent.type == 'MemberExpression'){
-						if(ctx.parent_key != 'object')break;
-						// must be the top level memberexpression eg eval.toString
-						// not window.eval.toString 2nd level
-						if(ctx.parent.parent.type == 'MemberExpression')break;
-					}
-
-					if(ctx.parent.type == 'VariableDeclarator'){
-						if(ctx.parent_key != 'init')break;
-					}
-
-					let newm = b.memberExpression(b.memberExpression(b.identifier('tompc$'), b.identifier('window')), b.identifier('proxy'));
-
-					if(ctx.node.name != 'window'){
-						newm = b.memberExpression(newm, b.identifier(ctx.node.name));
-					}
-
-					ctx.replace_with(newm);
-					
-					break;*/
 				case'CallExpression':
 					
 					const {callee} = ctx.node;
 
 					if(callee.type != 'Identifier' || callee.name != 'eval')break;
+
+					if(!ctx.node.arguments.length)break;
 
 					/* May be a JS eval function!
 					eval will only inherit the scope if the following is met:
@@ -194,18 +165,15 @@ export class RewriteJS {
 					*/
 					
 					// transform eval(...) into global_client.eval(eval, x => eval(...x))
-					ctx.replace_with(b.callExpression(
-						b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('eval')), b.identifier('scope')),
-						[
-							b.identifier('eval'),
-							b.arrowFunctionExpression(
-								[ b.identifier('x') ],
-								b.callExpression(b.identifier('eval'), [ b.spreadElement(b.identifier('x')) ]),
-							),
-							...ctx.node.arguments,
-						],
-					));
-					
+					ctx.replace_with(b.callExpression(b.identifier('eval'), [
+						b.spreadElement(
+							b.callExpression(b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('eval')), b.identifier('scope')), [
+								b.identifier('eval'),
+								...ctx.node.arguments,
+							])
+						),
+					]));
+
 					break;
 			}
 		}
