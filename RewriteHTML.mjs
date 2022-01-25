@@ -226,7 +226,7 @@ export class RewriteHTML {
 				childNodes: [
 					{
 						nodeName: '#text',
-						value: `window.${global_client}=new ${global_client}(${JSON.stringify(this.tomp)})`,
+						value: `${global_client}(${JSON.stringify(this.tomp)})`,
 					}
 				],
 				attrs: [],
@@ -291,7 +291,7 @@ export class RewriteHTML {
 				continue;
 			}
 
-			if(ctx.type == 'a' && !attrs.has('target'))attrs.set('target', one_target);
+			if(ctx.type == 'a' && !attrs.has('target') && one_target != undefined)attrs.set('target', one_target);
 
 			if(Array.isArray(ctx.node?.childNodes) && ctx.type in this.content_router){
 				const text = ctx.node?.childNodes[0];

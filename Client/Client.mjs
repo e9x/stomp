@@ -2,29 +2,23 @@ import { TOMP } from '../TOMP.mjs'
 import { openDB } from 'idb/with-async-ittr';
 import { LocationRewrite } from './Rewrites/Location.mjs';
 import { WebSocketRewrite } from './Rewrites/WebSocket.mjs';
-import { HistoryRewrite } from './Rewrites/History.mjs';
-import { StorageRewrite } from './Rewrites/Storage.mjs';
 import { RequestRewrite } from './Rewrites/Request.mjs';
 import { EvalRewrite } from './Rewrites/Eval.mjs';
 import { AccessRewrite } from './Rewrites/Access.mjs';
-
-/*import * as acorn from 'acorn';
-self.acorn = acorn;*/
 
 export class Client {
 	constructor(config){
 		this.tomp = new TOMP(config);
 		this.ready = this.work();
 		
-		new HistoryRewrite(this).work();
 		new WebSocketRewrite(this).work();
-		new StorageRewrite(this).work();
 		new RequestRewrite(this).work();
 		
 		this.access = new AccessRewrite(this);
 		this.eval = new EvalRewrite(this);
 		this.location = new LocationRewrite(this);
 
+		this.access.work();
 		this.eval.work();
 		this.location.work();
 	}
