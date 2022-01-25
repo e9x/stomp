@@ -54,7 +54,7 @@ export class RewriteHTML {
 			src.url = this.tomp.binary.serve(resolved, url);
 		}
 
-		return stringifySrcset(parsed);
+		attrs.set(attr, stringifySrcset(parsed));
 	};
 	attribute_router = {
 		[this.all_nodes]: {
