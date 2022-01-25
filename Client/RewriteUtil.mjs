@@ -1,5 +1,21 @@
 export const function_strings = new Map();
 
+// reflect functions may be updated during runtime
+export const Reflect = {
+	apply: Reflect.apply.bind(Reflect),
+	construct: Reflect.construct.bind(Reflect),
+	defineProperty: Reflect.defineProperty.bind(Reflect),
+	deleteProperty: Reflect.deleteProperty.bind(Reflect),
+	get: Reflect.get.bind(Reflect),
+	getOwnPropertyDescriptor: Reflect.getOwnPropertyDescriptor.bind(Reflect),
+	getPrototypeOf: Reflect.getPrototypeOf.bind(Reflect),
+	isExtensible: Reflect.isExtensible.bind(Reflect),
+	ownKeys: Reflect.ownKeys.bind(Reflect),
+	preventExtensions: Reflect.preventExtensions.bind(Reflect),
+	set: Reflect.set.bind(Reflect),
+	setPrototypeOf: Reflect.setPrototypeOf.bind(Reflect),
+};
+
 export function mirror_attributes(from, to){
 	function_strings.set(to, from.toString());
 	Object.defineProperty(to, 'length', Object.getOwnPropertyDescriptor(from, 'length'));

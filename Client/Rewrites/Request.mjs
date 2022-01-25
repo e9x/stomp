@@ -1,6 +1,6 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { wrap_function, native_proxies } from '../RewriteUtil.mjs';
+import { wrap_function, Reflect } from '../RewriteUtil.mjs';
 
 export class RequestRewrite extends Rewrite {
 	work(){
