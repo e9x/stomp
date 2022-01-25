@@ -154,7 +154,7 @@ export async function SendBinary(server, server_request, field){
 	var exact_response_headers = Object.setPrototypeOf(Object.fromEntries([...response_headers.entries()]), null);
 	MapHeaderNamesFromArray(response.raw_header_names, exact_response_headers);
 	
-	if(status_empty.includes(response.statusCode)){
+	if(status_empty.includes(+response.statusCode)){
 		return new Response({
 			headers: exact_response_headers,
 			status: response.status,
@@ -183,7 +183,7 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	
 	var send = new Uint8Array();
 
-	if(status_empty.includes(response.statusCode)){
+	if(status_empty.includes(+response.statusCode)){
 		return new Response({
 			headers: response_headers,
 			status: response.status,
@@ -225,7 +225,7 @@ export async function SendHTML(server, server_request, field){
 	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, response);
 
 	var send = new Uint8Array();
-	if(!status_empty.includes(response.statusCode)){
+	if(!status_empty.includes(+response.statusCode)){
 		if(html_types.includes(get_mime(response_headers.get('content-type') || ''))){
 			send = server.tomp.html.wrap(await response.text(), url.toString());
 			for(let remove of remove_encoding_headers)response_headers.delete(remove);
