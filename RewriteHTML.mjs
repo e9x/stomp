@@ -39,7 +39,7 @@ function P5_object_attrs(object){
 export class RewriteHTML {
 	content_router = {
 		script: (value, url, attrs) => {
-			const type = get_mime(attrs.type || '').toLowerCase();
+			const type = get_mime(attrs['type'] || '').toLowerCase();
 			
 			if(js_types.includes(type)){
 				return this.tomp.js.wrap(value, url);
@@ -48,27 +48,26 @@ export class RewriteHTML {
 			}
 		},
 		style: (value, url, attrs) => {
-			const type = get_mime(attrs.type || '').toLowerCase();
+			const type = get_mime(attrs['type'] || '').toLowerCase();
 			
 			if(css_types.includes(type))return this.tomp.css.wrap(value, url);
 			else return value;
 		},
 	};
-	delete_attribute = Symbol();
 	delete_node = Symbol();
 	all_nodes = Symbol();
 	set_attributes = Symbol();
-	binary_src = (value, url, attrs) => {
+	binary_src = attr => (value, url, attrs) => {
 		const resolved = new URL(value, url).href;
-		return this.tomp.binary.serve(resolved, url);
+		attrs[attr] = this.tomp.binary.serve(resolved, url);
 	};
-	html_src = (value, url, attrs) => {
+	html_src = attr => (value, url, attrs) => {
 		const nurl = new URL(value, url);
 		if(nurl.protocol == 'javascript:')return 'javascript:' + this.tomp.js.wrap(nurl.pathname, url);
 		const resolved = nurl.href;
-		return this.tomp.html.serve(resolved, url);
+		attrs[attr] = this.tomp.html.serve(resolved, url);
 	};
-	binary_srcset = (value, url, attrs) => {
+	binary_srcset = attr => (value, url, attrs) => {
 		const parsed = parseSrcset(value);
 
 		for(let src of parsed){
@@ -86,81 +85,91 @@ export class RewriteHTML {
 			},
 		},
 		use: {
-			'xlink:href': this.html_src,
-			'href': this.html_src,
+			'xlink:href': this.html_src('xlink:href'),
+			'href': this.html_src('href'),
 		},
 		script: {
 			// attrs const
 			src: (value, url, attrs) => {
-				const type = get_mime(attrs.type || '').toLowerCase();
+				const type = get_mime(attrs['type'] || '').toLowerCase();
 				const resolved = new URL(value, url).href;
-				if(js_types.includes(type))return this.tomp.js.serve(resolved, url);
-				else return this.tomp.binary.serve(resolved, url);
+				
+				if(js_types.includes(type)){
+					attrs['src'] = this.tomp.js.serve(resolved, url);
+				}else{
+					attrs['src'] = this.tomp.binary.serve(resolved, url);
+				}
 			},
-			nonce: () => this.delete_attribute,	
-			integrity: () => this.delete_attribute,	
+			nonce: (value, url, attrs) => {
+				delete attrs['nonce'];
+			},
+			integrity: (value, url, attrs) => {
+				delete attrs['integrity'];
+			},
 		},
 		iframe: {
-			src: this.html_src,
+			src: this.html_src('src'),
 		},
 		img: {
-			src: this.binary_src,
-			srcset: this.binary_srcset,
+			src: this.binary_src('src'),
+			srcset: this.binary_srcset('srcset'),
 		},
 		audio: {
-			src: this.binary_src,
+			src: this.binary_src('src'),
 		},
 		source: {
-			src: this.binary_src,
-			srcset: this.binary_srcset,
+			src: this.binary_src('src'),
+			srcset: this.binary_srcset('srcset'),
 		},
 		video: {
-			src: this.binary_src,
-			poster: this.binary_src,
+			src: this.binary_src('src'),
+			poster: this.binary_src('poster'),
 		},
 		a: {
-			href: this.html_src,
+			href: this.html_src('href'),
 		},
 		link: {
 			href: (value, url, attrs) => {
 				const resolved = new URL(value, url).href;
 				
-				switch(attrs.rel){
+				switch(attrs['rel']){
 					case'preload':
-						switch(attrs.as){
+						switch(attrs['as']){
 							case'style':
-								return this.tomp.css.serve(resolved, url);
-								break;
+								attrs['href'] = this.tomp.css.serve(resolved, url);
+								return;
 							case'worker':
 							case'script':
-								return this.tomp.js.serve(resolved, url);
-								break;
+								attrs['href'] = this.tomp.js.serve(resolved, url);
+								return;
 							case'object':
 							case'document':
-								return this.tomp.html.serve(resolved, url);
-								break;
+								attrs['href'] = this.tomp.html.serve(resolved, url);
+								return;
 							default:
-								return this.tomp.binary.serve(resolved, url);
-								break;
+								attrs['href'] = this.tomp.binary.serve(resolved, url);
+								return;
 						}
 						break;
 					case'manifest':
-						return this.tomp.manifest.serve(resolved, url);
-						break;
+						attrs['href'] = this.tomp.manifest.serve(resolved, url);
+						return;
 					case'alternate':
 					case'amphtml':
 					// case'profile':
-						return this.tomp.html.serve(resolved, url);
-						break;
+						attrs['href'] = this.tomp.html.serve(resolved, url);
+						return;
 					case'stylesheet':
-						return this.tomp.css.serve(resolved, url);
-						break;
+						attrs['href'] = this.tomp.css.serve(resolved, url);
+						return;
 					default:
-						return this.tomp.binary.serve(resolved, url);
-						break;
+						attrs['href'] = this.tomp.binary.serve(resolved, url);
+						return;
 				}
 			},
-			integrity: () => this.delete_attribute,
+			integrity: (value, url, attrs) => {
+				delete attrs['integrity'];
+			},
 		},
 		meta: {
 			content: (value, url, attrs) => {
@@ -169,50 +178,46 @@ export class RewriteHTML {
 				switch(attrs['http-equiv']){
 					case'content-security-policy':
 						return this.delete_node;
-						break;
 					case'refresh':
-						return this.wrap_http_refresh(value, url);
-						break;
+						attrs['content'] = this.wrap_http_refresh(value, url);
+						return;
 				}
 				
-				switch(attrs.itemprop){
+				switch(attrs['itemprop']){
 					case'image':
-						return this.tomp.binary.serve(resolved, url);
+						attrs['content'] = this.tomp.binary.serve(resolved, url);
+						return;
 						break;
 				}
 
-				switch(attrs.property){
+				switch(attrs['property']){
 					case'og:url':
 					case'og:video:url':
 					case'og:video:secure_url':
-						return this.tomp.html.serve(resolved, url);
-						break;
+						attrs['content'] = this.tomp.html.serve(resolved, url);
+						return;
 					case'og:image':
-						return this.tomp.binary.serve(resolved, url);
-						break;
+						attrs['content'] = this.tomp.binary.serve(resolved, url);
+						return;
 				}
 
-				switch(attrs.name){
+				switch(attrs['name']){
 					case'referrer':
 						return this.delete_node;
-						break;
 					case'twitter:app:url:googleplay':
 					case'twitter:url':
 					case'parsely-link':
 					case'parsely-image-url':
-						return this.tomp.html.serve(resolved, url);
-						break;
+						attrs['content'] = this.tomp.html.serve(resolved, url);
+						return;
 					case'twitter:image':
 					case'sailthru.image.thumb':
 					case'msapplication-TileImage':
-						return this.tomp.binary.serve(resolved, url);
-						break;
+						attrs['content'] = this.tomp.binary.serve(resolved, url);
+						return;
 					case'style-tools':
-						return this.tomp.css.serve(resolved, url);
-						break;
-					default:
-						return value;
-						break;
+						attrs['content'] = this.tomp.css.serve(resolved, url);
+						return;
 				}
 			},
 		},
@@ -255,12 +260,11 @@ export class RewriteHTML {
 		for(let name in route){
 			try{
 				const result = route[name](attrs[name], url, attrs);
-				if(result == this.delete_attribute)delete attrs[name];
-				else if(result == this.delete_node){
+				
+				if(result == this.delete_node){
 					ctx.detach();
 					return false;
 				}
-				else attrs[name] = result;
 			}catch(err){
 				console.error(err);
 				delete attrs[name];
@@ -274,12 +278,11 @@ export class RewriteHTML {
 		for(let name in route)if(name in attrs){
 			try{
 				const result = route[name](attrs[name], url, attrs);
-				if(result == this.delete_attribute)delete attrs[name];
-				else if(result == this.delete_node){
+				
+				if(result == this.delete_node){
 					ctx.detach();
 					return false;
 				}
-				else attrs[name] = result;
 			}catch(err){
 				this.tomp.log.error(err);
 				delete attrs[name];
@@ -317,7 +320,7 @@ export class RewriteHTML {
 			if(ctx.type == 'base' && ctx.parent?.type == 'head' && !one_base){
 				one_base = true;
 				if('href' in attrs)try{
-					url = new URL(attrs.href, url);
+					url = new URL(attrs['href'], url);
 				}catch(err){
 					this.tomp.log.error(err);
 				}
@@ -347,12 +350,12 @@ export class RewriteHTML {
 			if(!ctx.attached)continue;
 			
 			if(ctx.type == 'form'){
-				const action_resolved = new URL(attrs.action || '', url).href;
+				const action_resolved = new URL(attrs['action'] || '', url).href;
 				
-				if(attrs.method?.toUpperCase() == 'POST'){
-					attrs.action = this.tomp.html.serve(action_resolved, url);
+				if(attrs['method']?.toUpperCase() == 'POST'){
+					attrs['action'] = this.tomp.html.serve(action_resolved, url);
 				}else{
-					attrs.action = this.tomp.form.serve(action_resolved, url);
+					attrs['action'] = this.tomp.form.serve(action_resolved, url);
 				}
 			}
 
