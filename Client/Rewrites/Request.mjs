@@ -36,8 +36,6 @@ export class RequestRewrite extends Rewrite {
 				if(typeof init == 'object' && init != undefined){
 					init = {...init};
 					
-					const headers = init.headers;
-
 					if(init.headers != undefined && !(init.headers instanceof Headers)){
 						// preserve header capitalization for http/1 and http/1.1
 						init.headers = Object.setPrototypeOf({...init.headers, 'x-tomp-impl-names': JSON.stringify(Object.keys(init.headers)) }, null)
@@ -53,10 +51,32 @@ export class RequestRewrite extends Rewrite {
 			return response;
 		});
 
-		global.XMLHttpRequest.prototype.open = wrap_function(global.XMLHttpRequest.prototype.open, (target, that, [method, url, async, username, password]) => {
+		const xml_raw_names = new WeakMap();
+
+		XMLHttpRequest.prototype.open = wrap_function(XMLHttpRequest.prototype.open, (target, that, [method, url, async, username, password]) => {
+			xml_raw_names.set(that, new Set());
 			url = this.client.tomp.binary.serve(new URL(url, this.client.location.proxy), this.client.location.proxy);
-			
 			return Reflect.apply(target, that, [ method, url, async, username, password ]);
+		});
+
+		const { setRequestHeader } = XMLHttpRequest.prototype;
+
+		XMLHttpRequest.prototype.setRequestHeader = wrap_function(XMLHttpRequest.prototype.setRequestHeader, (target, that, [header, value]) => {
+			if(xml_raw_names.has(this)){
+				const raw = xml_raw_names.get(this);
+				// if raw is undefined, xmlhttprequest likely isnt open and therefore cant have any headers set
+				raw.add(header);
+			}
+			
+			return Reflect.apply(target, that, [header, value]);
+		});
+
+		XMLHttpRequest.prototype.send = wrap_function(XMLHttpRequest.prototype.setRequestHeader, (target, that, [header, value]) => {
+			if(xml_raw_names.has(this)){
+				const raw = xml_raw_names.get(this);
+				setRequestHeader.call(that, 'x-tomp-impl-names', JSON.stringify([...raw]));
+			}
+			return Reflect.apply(target, that, [header, value]);
 		});
 
 		global.Request = Request;

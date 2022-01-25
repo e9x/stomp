@@ -11,7 +11,7 @@ window[global_client] = config => {
 	}else if(typeof WorkerGlobalScope == 'function' && self instanceof WorkerGlobalScope){
 		created = new Client(config);
 	}else if(typeof Window == 'function' && self instanceof Window){
-		created = new PageClient();
+		created = new PageClient(config);
 	}else{
 		throw new Error('Unknown context!');
 	}

@@ -236,7 +236,7 @@ export class RewriteHTML {
 		return nodes;
 	}
 	// returns false if the ctx was detached
-	route_attributes(route, ctx, attrs, url, test_has){
+	route_attributes(route, ctx, attrs, url, test_has = true){
 		for(let name in route)if(!test_has || attrs.has(name)){
 			try{
 				const result = route[name](attrs.get(name), url, attrs);
@@ -290,9 +290,9 @@ export class RewriteHTML {
 				ctx.node.tagName = 'tomp-base';
 				continue;
 			}
-
+			
 			if(ctx.type == 'a' && !attrs.has('target') && one_target != undefined)attrs.set('target', one_target);
-
+			
 			if(Array.isArray(ctx.node?.childNodes) && ctx.type in this.content_router){
 				const text = ctx.node?.childNodes[0];
 				
