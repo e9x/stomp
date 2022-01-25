@@ -1,19 +1,21 @@
+import { global } from '../Global.mjs';
+
 export const function_strings = new Map();
 
 // reflect functions may be updated during runtime
 export const Reflect = {
-	apply: Reflect.apply.bind(Reflect),
-	construct: Reflect.construct.bind(Reflect),
-	defineProperty: Reflect.defineProperty.bind(Reflect),
-	deleteProperty: Reflect.deleteProperty.bind(Reflect),
-	get: Reflect.get.bind(Reflect),
-	getOwnPropertyDescriptor: Reflect.getOwnPropertyDescriptor.bind(Reflect),
-	getPrototypeOf: Reflect.getPrototypeOf.bind(Reflect),
-	isExtensible: Reflect.isExtensible.bind(Reflect),
-	ownKeys: Reflect.ownKeys.bind(Reflect),
-	preventExtensions: Reflect.preventExtensions.bind(Reflect),
-	set: Reflect.set.bind(Reflect),
-	setPrototypeOf: Reflect.setPrototypeOf.bind(Reflect),
+	apply: global.Reflect.apply.bind(global.Reflect),
+	construct: global.Reflect.construct.bind(global.Reflect),
+	defineProperty: global.Reflect.defineProperty.bind(global.Reflect),
+	deleteProperty: global.Reflect.deleteProperty.bind(global.Reflect),
+	get: global.Reflect.get.bind(global.Reflect),
+	getOwnPropertyDescriptor: global.Reflect.getOwnPropertyDescriptor.bind(global.Reflect),
+	getPrototypeOf: global.Reflect.getPrototypeOf.bind(global.Reflect),
+	isExtensible: global.Reflect.isExtensible.bind(global.Reflect),
+	ownKeys: global.Reflect.ownKeys.bind(global.Reflect),
+	preventExtensions: global.Reflect.preventExtensions.bind(global.Reflect),
+	set: global.Reflect.set.bind(global.Reflect),
+	setPrototypeOf: global.Reflect.setPrototypeOf.bind(global.Reflect),
 };
 
 export function mirror_attributes(from, to){
