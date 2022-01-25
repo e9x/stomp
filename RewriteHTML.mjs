@@ -298,9 +298,9 @@ export class RewriteHTML {
 			scriptingEnabled: false,
 		});
 			
-		var inserted_script = false;
+		let inserted_script = false;
 
-		var one_base = false;
+		let one_base = false;
 
 		for(let ctx of new Parse5Iterator(ast)) {
 			if(!ctx.node.attrs){ // #text node
@@ -308,7 +308,6 @@ export class RewriteHTML {
 			}
 
 			if(ctx.type == 'noscript' && this.tomp.noscript){
-				// todo: move all noscript childNodes into the noscript parent
 				ctx.node.tagName = 'span';
 				continue;
 			}
