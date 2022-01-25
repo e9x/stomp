@@ -39,6 +39,8 @@ const remove_csp_headers = [
 	'x-xss-protection',
 ];
 
+const status_empty = [101,204,205,304];
+
 async function handle_common_request(server, server_request, request_headers, url){
 	if(server_request.headers.has('referer')){
 		const ref = new URL(server_request.headers.get('referer'));
@@ -152,37 +154,20 @@ export async function SendBinary(server, server_request, field){
 	var exact_response_headers = Object.setPrototypeOf(Object.fromEntries([...response_headers.entries()]), null);
 	MapHeaderNamesFromArray(response.raw_header_names, exact_response_headers);
 	
-	return new Response(response.body, {
-		headers: exact_response_headers,
-		status: response.status,
-		statusText: response.statusText,
-	});
+	if(status_empty.includes(response.statusCode)){
+		return new Response({
+			headers: exact_response_headers,
+			status: response.status,
+			statusText: response.statusText,
+		});
+	}else{
+		return new Response(response.body, {
+			headers: exact_response_headers,
+			status: response.status,
+			statusText: response.statusText,
+		});
+	}
 }
-
-export async function SendForm(server, server_request, field){
-	const headers = new Headers();
-
-	const search_ind = field.indexOf('?');
-	if(search_ind == -1)return void server.send_json(400, { message: messages['error.badform.get'] });
-	const search = field.slice(search_ind);
-	field = field.slice(0, search_ind);
-	
-	const {gd_error,url} = await get_data(server, server_request, field);
-	if(gd_error)return gd_error;
-	
-	const orig_search_ind = url.path.indexOf('?');
-	
-	url.path = url.path.slice(0, orig_search_ind == -1 ? url.length : orig_search_ind) + search;
-	headers.set('location', server.tomp.html.serve(url.toString()));
-	// server.tomp.html.serve(updated, updated);
-
-	return new Response(new Uint8Array(), {
-		headers,
-		status: 302,
-	});
-}
-
-const status_empty = [204,304];
 
 async function SendRewrittenScript(rewriter, server, server_request, field, ...args){
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
@@ -197,16 +182,22 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	const response_headers = await handle_common_response(rewriter, server, server_request, url, response);
 	
 	var send = new Uint8Array();
-	if(!status_empty.includes(response.statusCode)){
-		send = rewriter.wrap(await response.text(), url.toString(), ...args);
-		for(let remove of remove_encoding_headers)response_headers.delete(remove);
-	}
 
-	return new Response(send, {
-		headers: response_headers,
-		status: response.status,
-		statusText: response.statusText,
-	});
+	if(status_empty.includes(response.statusCode)){
+		return new Response({
+			headers: response_headers,
+			status: response.status,
+			statusText: response.statusText,
+		});
+	}else{
+		for(let remove of remove_encoding_headers)response_headers.delete(remove);
+
+		return new Response(rewriter.wrap(await response.text(), url.toString(), ...args), {
+			headers: response_headers,
+			status: response.status,
+			statusText: response.statusText,
+		});
+	}
 }
 
 export async function SendJS(server, server_request, field){
@@ -252,5 +243,29 @@ export async function SendHTML(server, server_request, field){
 		headers: response_headers,
 		status: response.status,
 		statusText: response.statusText,
+	});
+}
+
+
+export async function SendForm(server, server_request, field){
+	const headers = new Headers();
+
+	const search_ind = field.indexOf('?');
+	if(search_ind == -1)return void server.send_json(400, { message: messages['error.badform.get'] });
+	const search = field.slice(search_ind);
+	field = field.slice(0, search_ind);
+	
+	const {gd_error,url} = await get_data(server, server_request, field);
+	if(gd_error)return gd_error;
+	
+	const orig_search_ind = url.path.indexOf('?');
+	
+	url.path = url.path.slice(0, orig_search_ind == -1 ? url.length : orig_search_ind) + search;
+	headers.set('location', server.tomp.html.serve(url.toString()));
+	// server.tomp.html.serve(updated, updated);
+
+	return new Response(new Uint8Array(), {
+		headers,
+		status: 302,
 	});
 }
