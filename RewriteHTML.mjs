@@ -1,6 +1,6 @@
 import { ParseDataURI } from './DataURI.mjs'
 import { serialize, parse, parseFragment } from 'parse5';
-import { Parse5Iterator } from './IterateParse5.mjs';
+import { Parse5Iterator, Parse5AttributeMap } from './IterateParse5.mjs';
 import { global_client } from './RewriteJS.mjs';
 import { parseSrcset, stringifySrcset } from 'srcset';
 
@@ -15,31 +15,10 @@ export function get_mime(content_type){
 	return content_type.split(';')[0];
 }
 
-function P5_attribute_object(attrs){
-	const result = Object.setPrototypeOf({}, null);
-	
-	for(let { name, value } of attrs){
-		if(!(name in result))result[name] = value;
-	}
-
-	return result;
-};
-
-function P5_object_attrs(object){
-	const result = [];
-	
-	for(let [ name, value ] of Object.entries(object)){
-		if(typeof value != 'string')throw new TypeError(`Attribute ${name} was not a string.`);
-		result.push({ name, value });
-	}
-
-	return result;
-};
-
 export class RewriteHTML {
 	content_router = {
 		script: (value, url, attrs) => {
-			const type = get_mime(attrs['type'] || '').toLowerCase();
+			const type = get_mime(attrs.get('type') || '').toLowerCase();
 			
 			if(js_types.includes(type)){
 				return this.tomp.js.wrap(value, url);
@@ -48,7 +27,7 @@ export class RewriteHTML {
 			}
 		},
 		style: (value, url, attrs) => {
-			const type = get_mime(attrs['type'] || '').toLowerCase();
+			const type = get_mime(attrs.get('type') || '').toLowerCase();
 			
 			if(css_types.includes(type))return this.tomp.css.wrap(value, url);
 			else return value;
@@ -59,13 +38,13 @@ export class RewriteHTML {
 	set_attributes = Symbol();
 	binary_src = attr => (value, url, attrs) => {
 		const resolved = new URL(value, url).href;
-		attrs[attr] = this.tomp.binary.serve(resolved, url);
+		attrs.set(attr, this.tomp.binary.serve(resolved, url));
 	};
 	html_src = attr => (value, url, attrs) => {
 		const nurl = new URL(value, url);
 		if(nurl.protocol == 'javascript:')return 'javascript:' + this.tomp.js.wrap(nurl.pathname, url);
 		const resolved = nurl.href;
-		attrs[attr] = this.tomp.html.serve(resolved, url);
+		attrs.set(attr, this.tomp.html.serve(resolved, url));
 	};
 	binary_srcset = attr => (value, url, attrs) => {
 		const parsed = parseSrcset(value);
@@ -91,20 +70,20 @@ export class RewriteHTML {
 		script: {
 			// attrs const
 			src: (value, url, attrs) => {
-				const type = get_mime(attrs['type'] || '').toLowerCase();
+				const type = get_mime(attrs.get('type') || '').toLowerCase();
 				const resolved = new URL(value, url).href;
 				
 				if(js_types.includes(type)){
-					attrs['src'] = this.tomp.js.serve(resolved, url);
+					attrs.set('src', this.tomp.js.serve(resolved, url));
 				}else{
-					attrs['src'] = this.tomp.binary.serve(resolved, url);
+					attrs.set('src', this.tomp.binary.serve(resolved, url));
 				}
 			},
 			nonce: (value, url, attrs) => {
-				delete attrs['nonce'];
+				attrs.delete('nonce');
 			},
 			integrity: (value, url, attrs) => {
-				delete attrs['integrity'];
+				attrs.delete('integrity');
 			},
 		},
 		iframe: {
@@ -132,91 +111,91 @@ export class RewriteHTML {
 			href: (value, url, attrs) => {
 				const resolved = new URL(value, url).href;
 				
-				switch(attrs['rel']){
+				switch(attrs.get('rel')){
 					case'preload':
-						switch(attrs['as']){
+						switch(attrs.get('as')){
 							case'style':
-								attrs['href'] = this.tomp.css.serve(resolved, url);
+								attrs.set('href', this.tomp.css.serve(resolved, url));
 								return;
 							case'worker':
 							case'script':
-								attrs['href'] = this.tomp.js.serve(resolved, url);
+								attrs.set('href', this.tomp.js.serve(resolved, url));
 								return;
 							case'object':
 							case'document':
-								attrs['href'] = this.tomp.html.serve(resolved, url);
+								attrs.set('href', this.tomp.html.serve(resolved, url));
 								return;
 							default:
-								attrs['href'] = this.tomp.binary.serve(resolved, url);
+								attrs.set('href', this.tomp.binary.serve(resolved, url));
 								return;
 						}
 						break;
 					case'manifest':
-						attrs['href'] = this.tomp.manifest.serve(resolved, url);
+						attrs.set('href', this.tomp.manifest.serve(resolved, url));
 						return;
 					case'alternate':
 					case'amphtml':
 					// case'profile':
-						attrs['href'] = this.tomp.html.serve(resolved, url);
+						attrs.set('href', this.tomp.html.serve(resolved, url));
 						return;
 					case'stylesheet':
-						attrs['href'] = this.tomp.css.serve(resolved, url);
+						attrs.set('href', this.tomp.css.serve(resolved, url));
 						return;
 					default:
-						attrs['href'] = this.tomp.binary.serve(resolved, url);
+						attrs.set('href', this.tomp.binary.serve(resolved, url));
 						return;
 				}
 			},
 			integrity: (value, url, attrs) => {
-				delete attrs['integrity'];
+				attrs.delete('integrity');
 			},
 		},
 		meta: {
 			content: (value, url, attrs) => {
 				const resolved = new URL(value, url).href;
 				
-				switch(attrs['http-equiv']){
+				switch(attrs.get('http-equiv')){
 					case'content-security-policy':
 						return this.delete_node;
 					case'refresh':
-						attrs['content'] = this.wrap_http_refresh(value, url);
+						attrs.set('content', this.wrap_http_refresh(value, url));
 						return;
 				}
 				
-				switch(attrs['itemprop']){
+				switch(attrs.get('itemprop')){
 					case'image':
-						attrs['content'] = this.tomp.binary.serve(resolved, url);
+						attrs.set('content', this.tomp.binary.serve(resolved, url));
 						return;
 						break;
 				}
 
-				switch(attrs['property']){
+				switch(attrs.get('property')){
 					case'og:url':
 					case'og:video:url':
 					case'og:video:secure_url':
-						attrs['content'] = this.tomp.html.serve(resolved, url);
+						attrs.set('content', this.tomp.html.serve(resolved, url));
 						return;
 					case'og:image':
-						attrs['content'] = this.tomp.binary.serve(resolved, url);
+						attrs.set('content', this.tomp.binary.serve(resolved, url));
 						return;
 				}
 
-				switch(attrs['name']){
+				switch(attrs.get('name')){
 					case'referrer':
 						return this.delete_node;
 					case'twitter:app:url:googleplay':
 					case'twitter:url':
 					case'parsely-link':
 					case'parsely-image-url':
-						attrs['content'] = this.tomp.html.serve(resolved, url);
+						attrs.set('content', this.tomp.html.serve(resolved, url));
 						return;
 					case'twitter:image':
 					case'sailthru.image.thumb':
 					case'msapplication-TileImage':
-						attrs['content'] = this.tomp.binary.serve(resolved, url);
+						attrs.set('content', this.tomp.binary.serve(resolved, url));
 						return;
 					case'style-tools':
-						attrs['content'] = this.tomp.css.serve(resolved, url);
+						attrs.set('content', this.tomp.css.serve(resolved, url));
 						return;
 				}
 			},
@@ -256,28 +235,11 @@ export class RewriteHTML {
 
 		return nodes;
 	}
-	route_set_attributes(route, ctx, attrs, url){
-		for(let name in route){
-			try{
-				const result = route[name](attrs[name], url, attrs);
-				
-				if(result == this.delete_node){
-					ctx.detach();
-					return false;
-				}
-			}catch(err){
-				console.error(err);
-				delete attrs[name];
-			}
-		}
-
-		return true;
-	}
 	// returns false if the ctx was detached
-	route_attributes(route, ctx, attrs, url){
-		for(let name in route)if(name in attrs){
+	route_attributes(route, ctx, attrs, url, test_has){
+		for(let name in route)if(!test_has || attrs.has(name)){
 			try{
-				const result = route[name](attrs[name], url, attrs);
+				const result = route[name](attrs.get(name), url, attrs);
 				
 				if(result == this.delete_node){
 					ctx.detach();
@@ -285,7 +247,7 @@ export class RewriteHTML {
 				}
 			}catch(err){
 				this.tomp.log.error(err);
-				delete attrs[name];
+				attrs.delete(name);
 			}
 		}
 
@@ -312,14 +274,12 @@ export class RewriteHTML {
 				continue;
 			}
 
-			let attrs = P5_attribute_object(ctx.node.attrs);
-			// remove from memory
-			delete ctx.node.attrs;
+			let attrs = new Parse5AttributeMap(ctx.node.attrs);
 			
 			if(ctx.type == 'base' && ctx.parent?.type == 'head' && !one_base){
 				one_base = true;
-				if('href' in attrs)try{
-					url = new URL(attrs['href'], url);
+				if(attrs.has('href'))try{
+					url = new URL(attrs.get('href'), url);
 				}catch(err){
 					this.tomp.log.error(err);
 				}
@@ -343,32 +303,30 @@ export class RewriteHTML {
 			
 			if(ctx.type in this.attribute_router){
 				if(!this.route_attributes(this.attribute_router[ctx.type], ctx, attrs, url))continue;
-				if(!this.route_set_attributes(this.attribute_router[ctx.type][this.set_attributes], ctx, attrs, url))continue;
+				if(!this.route_attributes(this.attribute_router[ctx.type][this.set_attributes], ctx, attrs, url, true))continue;
 			}
-
-			if(!ctx.attached)continue;
 			
 			if(ctx.type == 'form'){
-				const action_resolved = new URL(attrs['action'] || '', url).href;
+				const action_resolved = new URL(attrs.get('action') || '', url).href;
 				
-				if(attrs['method']?.toUpperCase() == 'POST'){
-					attrs['action'] = this.tomp.html.serve(action_resolved, url);
+				if(attrs.get('method')?.toUpperCase() == 'POST'){
+					attrs.set('method', this.tomp.html.serve(action_resolved, url));
 				}else{
-					attrs['action'] = this.tomp.form.serve(action_resolved, url);
+					attrs.set('method', this.tomp.form.serve(action_resolved, url));
 				}
 			}
 
-			for(let name in attrs)if(name.startsWith('on')){
-				attrs[name] = this.tomp.js.wrap(attrs[name], url);
+			for(let [ name, value ] of attrs)if(name.startsWith('on')){
+				attrs.set(name, this.tomp.js.wrap(value, url));
 			}
-			
-			ctx.node.attrs = P5_object_attrs(attrs);
 			
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)
 			// on the first non-essential node (not html,head,or body), insert the client script before it
 			if(!inserted_script && !essential_nodes.includes(ctx.type)){
 				inserted_script = ctx.insert_before(...this.get_head(url));
 			}
+
+			attrs.sync();
 		}
 
 		return serialize(ast);
