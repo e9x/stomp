@@ -54,6 +54,11 @@ export class RequestRewrite extends Rewrite {
 		const xml_raw_names = new WeakMap();
 
 		XMLHttpRequest.prototype.open = wrap_function(XMLHttpRequest.prototype.open, (target, that, [method, url, async, username, password]) => {
+			if(!async){
+				// alternatively, make tompfetch compatible with xmlhttprequest..
+				throw new Error('TOMP does not support synchronous XMLHTTPRequests. See https://bugs.chromium.org/p/chromium/issues/detail?id=602051')
+			}
+
 			xml_raw_names.set(that, new Set());
 			url = this.client.tomp.binary.serve(new URL(url, this.client.location.proxy), this.client.location.proxy);
 			return Reflect.apply(target, that, [ method, url, async, username, password ]);
@@ -71,12 +76,12 @@ export class RequestRewrite extends Rewrite {
 			return Reflect.apply(target, that, [header, value]);
 		});
 
-		XMLHttpRequest.prototype.send = wrap_function(XMLHttpRequest.prototype.setRequestHeader, (target, that, [header, value]) => {
+		XMLHttpRequest.prototype.send = wrap_function(XMLHttpRequest.prototype.send, (target, that, [body]) => {
 			if(xml_raw_names.has(this)){
 				const raw = xml_raw_names.get(this);
 				setRequestHeader.call(that, 'x-tomp-impl-names', JSON.stringify([...raw]));
 			}
-			return Reflect.apply(target, that, [header, value]);
+			return Reflect.apply(target, that, [body]);
 		});
 
 		global.Request = Request;
