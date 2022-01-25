@@ -1,13 +1,13 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { wrap_function, Reflect, getOwnPropertyDescriptors } from '../RewriteUtil.mjs';
+import { wrap_function, Reflect } from '../RewriteUtil.mjs';
 
 export class RequestRewrite extends Rewrite {
 	work(){
 		const that = this;
 		const { original_request, Request } = this.get_request();
 		
-		const desc_url = getOwnPropertyDescriptors(Response.prototype, 'url');
+		const desc_url = Reflect.getOwnPropertyDescriptor(Response.prototype, 'url');
 
 		Navigator.prototype.sendBeacon = wrap_function(Navigator.prototype.sendBeacon, (target, that, [url, data]) => {
 			if(that != navigator)throw new TypeError('Illegal invocation');	
