@@ -67,8 +67,8 @@ export class RequestRewrite extends Rewrite {
 		const { setRequestHeader } = XMLHttpRequest.prototype;
 
 		XMLHttpRequest.prototype.setRequestHeader = wrap_function(XMLHttpRequest.prototype.setRequestHeader, (target, that, [header, value]) => {
-			if(xml_raw_names.has(this)){
-				const raw = xml_raw_names.get(this);
+			if(xml_raw_names.has(that)){
+				const raw = xml_raw_names.get(that);
 				// if raw is undefined, xmlhttprequest likely isnt open and therefore cant have any headers set
 				raw.add(header);
 			}
@@ -77,8 +77,8 @@ export class RequestRewrite extends Rewrite {
 		});
 
 		XMLHttpRequest.prototype.send = wrap_function(XMLHttpRequest.prototype.send, (target, that, [body]) => {
-			if(xml_raw_names.has(this)){
-				const raw = xml_raw_names.get(this);
+			if(xml_raw_names.has(that)){
+				const raw = xml_raw_names.get(that);
 				setRequestHeader.call(that, 'x-tomp-impl-names', JSON.stringify([...raw]));
 			}
 			return Reflect.apply(target, that, [body]);
