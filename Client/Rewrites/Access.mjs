@@ -35,7 +35,8 @@ export class AccessRewrite extends Rewrite {
 		if(target == this.client.location.global){
 			value = this.client.tomp.html.serve(new URL(value, this.client.location.proxy), this.client.location.proxy);
 		}
-		
-		return value;
+
+		if(parent != global)return parent[global_client].access.set(target, value);
+		else return value;
 	}
 };
