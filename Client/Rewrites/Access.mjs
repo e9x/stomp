@@ -1,6 +1,5 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { global_client } from '../../RewriteJS.mjs';
 import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 
 export class AccessRewrite extends Rewrite {
@@ -17,11 +16,26 @@ export class AccessRewrite extends Rewrite {
 			return result;
 		});
 		
-		global.Reflect.getOwnPropertyDescriptor = wrap_function(global.Reflect.getOwnPropertyDescriptor, (target, that, [ obj, prop ]) => {
-			if(obj == global && )
-
+		const get_desc = (target, that, [ obj, prop ]) => {
+			if(obj == global && prop == 'location')return {...this.client.location.description};
+			if(this.client.constructor.type == 'page' && obj == global.document && prop == 'location')return {...this.client.location.description_document};
+			
 			let result = Reflect.apply(target, that, [ obj, prop ]);
 			result = this.get(result);
+			return result;
+		};
+		
+		const reflect_desc = global.Reflect.getOwnPropertyDescriptor = wrap_function(global.Reflect.getOwnPropertyDescriptor, get_desc);
+		
+		global.Object.getOwnPropertyDescriptor = wrap_function(global.Object.getOwnPropertyDescriptor, get_desc);
+
+		global.Object.getOwnPropertyDescriptors = wrap_function(global.Object.getOwnPropertyDescriptors, (target, that, [ obj ]) => {
+			let result = Reflect.apply(target, that, [ obj ]);
+
+			if(obj == global && 'location' in result){
+				result.location = reflect_desc(global, 'location');
+			}
+
 			return result;
 		});
 	}

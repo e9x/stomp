@@ -7,6 +7,7 @@ import { EvalRewrite } from './Rewrites/Eval.mjs';
 import { AccessRewrite } from './Rewrites/Access.mjs';
 
 export class Client {
+	static type = 'worker';
 	constructor(config){
 		this.tomp = new TOMP(config);
 		this.ready = this.work();
@@ -18,9 +19,11 @@ export class Client {
 		this.eval = new EvalRewrite(this);
 		this.location = new LocationRewrite(this);
 
-		this.access.work();
 		this.eval.work();
 		this.location.work();
+	
+		// work access last
+		this.access.work();
 	}
 	async work(){
 		this.db = await openDB('tomp', 1, {

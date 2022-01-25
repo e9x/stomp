@@ -1,12 +1,13 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
+import { getOwnPropertyDescriptors } from '../RewriteUtil.mjs';
 
 export class HistoryRewrite extends Rewrite {
 	work(){
 		const that = this;
 		const _History = global.History;
 		const instances = [global.history];
-		const {length,scrollRestoration,state} = Object.getOwnPropertyDescriptors(_History.prototype);
+		const {length,scrollRestoration,state} = getOwnPropertyDescriptors(_History.prototype);
 
 		class History {
 			constructor(){
