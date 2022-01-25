@@ -5,22 +5,41 @@ import { wrap_function, Reflect } from '../RewriteUtil.mjs';
 export class LocationRewrite extends Rewrite {
 	global = location;
 	work(){
-		const desc = Object.getOwnPropertyDescriptor(global, 'location');
+		{
+			const desc = Object.getOwnPropertyDescriptor(global, 'location');
 
-		this.definition = {
-			configurable: false,
-			enumerable: true,
-			get: wrap_function(desc.get, (target, that, args) => {
-				let result = Reflect.apply(target, that, args);
-				result = this.client.access.get(result);
-				return result;
-			}),
-			set: wrap_function(desc.set, (target, that, [ value ]) => {
-				const result = this.client.access.get(Reflect.apply(target, that, [ value ]));
-				return result;
-			}),
-			
-		};
+			this.description = {
+				configurable: false,
+				enumerable: true,
+				get: wrap_function(desc.get, (target, that, args) => {
+					let result = Reflect.apply(target, that, args);
+					result = this.client.access.get(result);
+					return result;
+				}),
+				set: wrap_function(desc.set, (target, that, [ value ]) => {
+					const result = this.client.access.get(Reflect.apply(target, that, [ value ]));
+					return result;
+				}),
+			};
+		}
+
+		if(this.client.constructor.type == 'page'){
+			const desc = Object.getOwnPropertyDescriptor(global.document, 'location');
+
+			this.description_document = {
+				configurable: false,
+				enumerable: true,
+				get: wrap_function(desc.get, (target, that, args) => {
+					let result = Reflect.apply(target, that, args);
+					result = this.client.access.get(result);
+					return result;
+				}),
+				set: wrap_function(desc.set, (target, that, [ value ]) => {
+					const result = this.client.access.get(Reflect.apply(target, that, [ value ]));
+					return result;
+				}),
+			};
+		}
 
 		const that = this;
 

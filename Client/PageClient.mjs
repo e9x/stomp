@@ -3,6 +3,7 @@ import { HistoryRewrite } from './Rewrites/History.mjs';
 import { StorageRewrite } from './Rewrites/Storage.mjs';
 
 export class PageClient extends Client {
+	static type = 'page';
 	constructor(config){
 		super(config);
 
