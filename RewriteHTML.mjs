@@ -263,6 +263,7 @@ export class RewriteHTML {
 		let inserted_script = false;
 
 		let one_base = false;
+		let one_target;
 
 		for(let ctx of new Parse5Iterator(ast)) {
 			if(!ctx.node.attrs){ // #text node
@@ -283,10 +284,14 @@ export class RewriteHTML {
 				}catch(err){
 					this.tomp.log.error(err);
 				}
-				// todo: handle target
-				ctx.detach();
+				
+				if(attrs.has('target'))one_target = attrs.get('target');
+
+				ctx.node.tagName = 'tomp-base';
 				continue;
 			}
+
+			if(ctx.type == 'a' && !attrs.has('target'))attrs.set('target', one_target);
 
 			if(Array.isArray(ctx.node?.childNodes) && ctx.type in this.content_router){
 				const text = ctx.node?.childNodes[0];
