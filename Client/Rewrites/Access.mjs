@@ -1,41 +1,30 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { global_client } from '../../RewriteJS.mjs';
+import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 
 export class AccessRewrite extends Rewrite {
-	get_prop(obj, key) {
-		if (!this.client.service_worker && global != global.top && obj == global.top) {
-			return global.top[global_client].access.get$m(obj, key);
-		}
+	work(){
+		global.Reflect.get = wrap_function(global.Reflect.get, (target, that, args) => {
+			let result = Reflect.apply(target, that, args);
+			result = this.get(result);
+			return result;
+		});
 		
-		if (obj == global && key == 'location' || !this.client.service_worker && obj == global.document && key == 'location') {
-			return this.client.location.proxy;
-		}
+		global.Reflect.set = wrap_function(global.Reflect.set, (target, that, [ obj, prop, value ]) => {
+			let result = Reflect.apply(target, that, [ obj, prop, this.set(Reflect.get(obj, prop), value) ]);
+			result = this.get(result);
+			return result;
+		});
 		
-		if (!this.client.service_worker && obj == global && key == 'top' && global != global.top) {
-			return global.top;
-		}
-		
-		return obj[key];
-    }
-    set_prop(obj, key, val) {
-		if(obj[key] == this.client.location.global){
-			val = this.client.tomp.html.serve(val, this.client.location);
-		}
+		global.Reflect.getOwnPropertyDescriptor = wrap_function(global.Reflect.getOwnPropertyDescriptor, (target, that, [ obj, prop ]) => {
+			if(obj == global && )
 
-		/*if(!this.client.service_worker && global != global.top && obj == global.top){
-			return global.top[global_client].access.set$(global.top, val, operator);
-		}*/
-
-		return val;
-    }
-    call_prop(obj, key, args){
-        if(!this.client.service_worker && global != global.top && obj == global.top){
-			return this.top[global_client].access.call_prop(global.top, key, args);
-		}
-
-		return obj[key](...args);
-    }
+			let result = Reflect.apply(target, that, [ obj, prop ]);
+			result = this.get(result);
+			return result;
+		});
+	}
     get(obj){
 		if(obj == this.client.eval.global)return this.client.eval.eval_global_proxy;
 		if(obj == this.client.location.global)return this.client.location.proxy;
@@ -46,10 +35,6 @@ export class AccessRewrite extends Rewrite {
 		if(target == this.client.location.global){
 			value = this.client.tomp.html.serve(new URL(value, this.client.location.proxy), this.client.location.proxy);
 		}
-
-		/*if(!this.client.service_worker && global != global.top && target == global.top){
-			return global.top[global_client].access.set$(global.top, value, operator);
-		}*/
 		
 		return value;
 	}

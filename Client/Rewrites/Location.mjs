@@ -1,9 +1,27 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
+import { wrap_function, Reflect } from '../RewriteUtil.mjs';
 
 export class LocationRewrite extends Rewrite {
 	global = location;
 	work(){
+		const desc = Object.getOwnPropertyDescriptor(global, 'location');
+
+		this.definition = {
+			configurable: false,
+			enumerable: true,
+			get: wrap_function(desc.get, (target, that, args) => {
+				let result = Reflect.apply(target, that, args);
+				result = this.client.access.get(result);
+				return result;
+			}),
+			set: wrap_function(desc.set, (target, that, [ value ]) => {
+				const result = this.client.access.get(Reflect.apply(target, that, [ value ]));
+				return result;
+			}),
+			
+		};
+
 		const that = this;
 
 		this.proxy = Object.setPrototypeOf({}, Location.prototype);
