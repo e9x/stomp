@@ -110,4 +110,4 @@ export function bind_natives(target){
 	}
 }
 
-bind_natives(EventTarget.prototype);
+// bind_natives(EventTarget.prototype);

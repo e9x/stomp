@@ -53,6 +53,12 @@ export class RequestRewrite extends Rewrite {
 			return response;
 		});
 
+		global.XMLHttpRequest.prototype.open = wrap_function(global.XMLHttpRequest.prototype.open, (target, that, [method, url, async, username, password]) => {
+			url = this.client.tomp.binary.serve(new URL(url, this.client.location.proxy), this.client.location.proxy);
+			
+			return Reflect.apply(target, that, [ method, url, async, username, password ]);
+		});
+
 		global.Request = Request;
 	}
 	response_url = new WeakMap();
