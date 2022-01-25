@@ -135,7 +135,7 @@ export class RewriteJS {
 							};
 							break;
 						case'Literal':
-							if(this.undefinable.includes(node.property.name))rewrite = true;
+							if(this.undefinable.includes(ctx.node.property.name))rewrite = true;
 							break;
 						case'TemplateLiteral':
 							rewrite = true;
