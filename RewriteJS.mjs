@@ -202,7 +202,7 @@ export class RewriteJS {
 					the keyword doesnt reference a variable named eval
 					*/
 					
-					// transform eval(...) into global_client.eval(eval, x => eval(...x))
+					// transform eval(...) into eval(...tompc$.eval.eval_scope(eval, ...['code',{note:"eval is possibly a var"}]))
 					ctx.replace_with(b.callExpression(b.identifier('eval'), [
 						b.spreadElement(
 							b.callExpression(b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('eval')), b.identifier('eval_scope')), [

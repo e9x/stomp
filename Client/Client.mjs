@@ -1,5 +1,4 @@
 import { TOMP } from '../TOMP.mjs'
-import { Define } from './Define.mjs'
 import { openDB } from 'idb/with-async-ittr';
 import { LocationRewrite } from './Rewrites/Location.mjs';
 import { WebSocketRewrite } from './Rewrites/WebSocket.mjs';
@@ -16,7 +15,6 @@ export class Client {
 	constructor(config){
 		this.tomp = new TOMP(config);
 		this.ready = this.work();
-		this.define = new Define(this);
 		
 		new HistoryRewrite(this).work();
 		new WebSocketRewrite(this).work();
