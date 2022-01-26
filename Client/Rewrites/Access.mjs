@@ -1,6 +1,7 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { Reflect, wrap_function } from '../RewriteUtil.mjs';
+import { undefinable } from '../../RewriteJS.mjs';
 
 export class AccessRewrite extends Rewrite {
 	work(){
@@ -29,18 +30,18 @@ export class AccessRewrite extends Rewrite {
 		global.Object.getOwnPropertyDescriptors = wrap_function(global.Object.getOwnPropertyDescriptors, (target, that, [ obj ]) => {
 			let result = Reflect.apply(target, that, [ obj ]);
 
-			if('location' in result){
-				result.location = this.get_desc(result.location);
+			for(let key of undefinable)if(key in result){
+				result[key] = this.get_desc(result[key]);
 			}
-
+			
 			return result;
 		});
 
 		global.Object.entries = wrap_function(global.Object.entries, (target, that, [ obj ]) => {
 			let result = Reflect.apply(target, that, [ obj ]);
 
-			for(let pair of result)if(pair[0] == 'location')pair[1] = this.get(pair[1]);
-
+			for(let pair of result)if(undefinable.includes(pair[0]))pair[1] = this.get(pair[1]);
+			
 			return result;
 		});
 		
@@ -63,6 +64,12 @@ export class AccessRewrite extends Rewrite {
 			}
 		}
 
+		if(typeof desc.value == 'function'){
+			if(desc.value == this.client.eval.global_description.value){
+				return {...this.client.eval.description};
+			}
+		}
+
 		if(parent != global && global_client in parent)return parent[global_client].access.get_desc(desc);
 		else return desc;
 	}
@@ -81,5 +88,12 @@ export class AccessRewrite extends Rewrite {
 
 		if(parent != global && global_client in parent)return parent[global_client].access.set(target, value);
 		else return value;
+	}
+	pattern(obj){
+		for(let key of undefinable)if(key in obj){
+			obj[key] = this.get(obj[key]);
+		}
+
+		return obj;
 	}
 };

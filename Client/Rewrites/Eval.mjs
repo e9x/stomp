@@ -1,8 +1,9 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { wrap_function } from '../RewriteUtil.mjs';
+import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 
 export class EvalRewrite extends Rewrite {
+	global_description = Reflect.getOwnPropertyDescriptor(global, 'eval');
 	global = global.eval;
 	eval_global_proxy = wrap_function(this.global, (target, that, [ code ]) => this.eval_global(code));
 	eval_global(x){
@@ -15,4 +16,10 @@ export class EvalRewrite extends Rewrite {
 			return [ code, ...args ];
 		}
 	}
+	description = {
+		configurable: true,
+		enumerable: false,
+		value: this.eval_global_proxy,
+		writable: true,
+	};
 };

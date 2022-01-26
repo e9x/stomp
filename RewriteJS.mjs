@@ -9,12 +9,15 @@ const top_level_variables = ['const','let'];
 
 const global_access = b.memberExpression(b.identifier(global_client), b.identifier('access'));
 
+export const providers = ['window','document'];
+export const undefinable = ['eval','location'];
+// only eval and location are of interest
+
+
 export class RewriteJS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	providers = ['window','document'];
-	undefinable = ['eval','top','location'];
 	wrap(code, url){
 		if(this.tomp.noscript)return '';
 
@@ -59,6 +62,15 @@ export class RewriteJS {
 					ctx.node.source.value = this.serve(new URL(ctx.node.source.value, url), url);
 					
 					break;
+				case 'VariableDeclarator':
+					
+					if(ctx.node.id.type != 'ObjectPattern')break;
+					
+					ctx.node.init = b.callExpression(b.memberExpression(global_access, b.identifier('pattern')), [
+						ctx.node.init,
+					]);
+
+					break;
 				case'Identifier':
 
 					if(ctx.parent.type == 'MemberExpression' && ctx.parent_key == 'property')break; // window.location;
@@ -73,7 +85,7 @@ export class RewriteJS {
 					if((ctx.parent.type == 'FunctionDeclaration' || ctx.parent.type == 'FunctionExpression' || ctx.parent.type == 'ArrowFunctionExpression') && ctx.parent_key == 'params')break;
 					if((ctx.parent.type == 'FunctionDeclaration' || ctx.parent.type == 'FunctionExpression') && ctx.parent_key == 'id')break;
 					if(ctx.parent.type == 'AssignmentPattern' && ctx.parent_key == 'left') break;
-					if(!this.undefinable.includes(ctx.node.name))break;
+					if(!undefinable.includes(ctx.node.name))break;
 					if(ctx.node[this.dont_rewrite])break;
 
 					
@@ -129,13 +141,13 @@ export class RewriteJS {
 						case'Identifier':
 							if(ctx.node.computed)rewrite = true;
 							
-							if(!this.undefinable.includes(ctx.node.property.name))break;
-							
+							if(!undefinable.includes(ctx.node.property.name))break;
+
 							rewrite = true;
 							
 							break;
 						case'Literal':
-							if(this.undefinable.includes(ctx.node.property.value))rewrite = true;
+							if(undefinable.includes(ctx.node.property.value))rewrite = true;
 							break;
 						case'TemplateLiteral':
 							rewrite = true;
