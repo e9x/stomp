@@ -90,10 +90,12 @@ export class AccessRewrite extends Rewrite {
 		else return value;
 	}
 	pattern(obj){
-		for(let key of undefinable)if(key in obj){
-			obj[key] = this.get(obj[key]);
+		const result = {...obj};
+
+		for(let key of undefinable)if(key in result){
+			result[key] = this.get(result[key]);
 		}
 
-		return obj;
+		return result;
 	}
 };
