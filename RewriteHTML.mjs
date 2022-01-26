@@ -91,6 +91,7 @@ export class RewriteHTML {
 		},
 		img: {
 			src: this.binary_src('src'),
+			lowsrc: this.binary_src('src'),
 			srcset: this.binary_srcset('srcset'),
 		},
 		audio: {

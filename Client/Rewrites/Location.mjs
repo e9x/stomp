@@ -8,6 +8,8 @@ export class LocationRewrite extends Rewrite {
 		{
 			const desc = Object.getOwnPropertyDescriptor(global, 'location');
 
+			this.global_description = desc;
+
 			this.description = {
 				configurable: false,
 				enumerable: true,
@@ -25,6 +27,8 @@ export class LocationRewrite extends Rewrite {
 
 		if(this.client.constructor.type == 'page'){
 			const desc = Object.getOwnPropertyDescriptor(global.document, 'location');
+
+			this.global_description_document = desc;
 
 			this.description_document = {
 				configurable: false,
@@ -121,10 +125,7 @@ export class LocationRewrite extends Rewrite {
 		});
 	}
 	get page_url(){
-		const url = this.global.href.slice(this.global.href.indexOf(this.client.tomp.directory));
-		const { field } = this.client.tomp.url.get_attributes(url);
-
-		return this.client.tomp.url.unwrap(field);
+		return this.client.tomp.url.unwrap_ez(this.global.href);
 	}
 	get page_urlo(){
 		return new URL(this.page_url);
