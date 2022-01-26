@@ -4,56 +4,54 @@ import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../RewriteUti
 
 export class HTMLRewrite extends Rewrite {
 	work(){
-		this.image();
-		
+		for(let clname in this.router){
+			const cls = global[clname];
+
+			if(!cls)continue;
+
+			const proto = cls.prototype;
+
+			this.router[clname](proto, getOwnPropertyDescriptors(proto));
+		}
 	}
 	og_set_attribute = Element.prototype.setAttribute;
 	og_get_attribute = Element.prototype.getAttribute;
 	router = {
-		HTMLImageElement: ['src','srcset'], // automatically apply attribute_description
+		HTMLImageElement: (proto, descs)  => {
+			for(let attr of ['src','srcset'])Reflect.defineProperty(proto, attr, {
+				configurable: true,
+				enumerable: true,
+				...this.attribute_description(attr, descs[attr]),
+			});
+
+			Reflect.defineProperty(proto, 'currentSrc', {
+				configurable: true,
+				enumerable: true,
+				get: wrap_function(descs.currentSrc.get, (target, that, args) => {
+					let result = Reflect.apply(target, that, args);
+					result = this.client.tomp.url.unwrap_ez(result);
+					return result;
+				}),
+			});
+		}
+		
 	};
 	// TODO
 	get_attribute(node, attribute){
-		return Reflect.apply(this.og_get_attribute, node, []);
+		return Reflect.apply(this.og_get_attribute, node, [ attribute ]);
 	}
 	set_attribute(node, attribute, value){
-		return Reflect.apply(this.og_set_attribute, node, [ value ]);
+		return Reflect.apply(this.og_set_attribute, node, [ attribute, value ]);
 	}
 	attribute_description(attribute, desc){
 		return {
 			get: wrap_function(desc.get, (target, that) => {
-				return Reflect.apply(this.get_attribute, that, [ attribute ]);
+				return this.get_attribute(that, attribute);
 			}),
 			set: wrap_function(desc.set, (target, that, [ value ]) => {
-				Reflect.apply(this.set_attribute, that, [ attribute, value ]);
+				this.set_attribute(that, attribute, value);
 				return value;
 			}),
 		};
-	}
-	image(){
-		const imp = global.HTMLImageElement.prototype;
-		const { src, srcset, currentSrc } = getOwnPropertyDescriptors(imp);
-
-		Reflect.defineProperty(imp, 'src', {
-			configurable: true,
-			enumerable: true,
-			...this.attribute_description('src', src),
-		});
-		
-		Reflect.defineProperty(imp, 'srcset', {
-			configurable: true,
-			enumerable: true,
-			...this.attribute_description('srcset', srcset),
-		});
-
-		Reflect.defineProperty(imp, 'currentSrc', {
-			configurable: true,
-			enumerable: true,
-			get: wrap_function(currentSrc.get, (target, that, args) => {
-				let result = Reflect.apply(target, that, args);
-				result = this.client.tomp.url.unwrap_ez(result);
-				return result;
-			}),
-		});
 	}
 };
