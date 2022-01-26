@@ -123,19 +123,20 @@ export class RewriteJS {
 					if(ctx.parent.type == 'UnaryExpression' && ctx.parent.node.operator == 'delete')break;
 					if(ctx.parent.type == 'NewExpression' && ctx.parent_key == 'callee')break;
 					if(ctx.parent.type === 'CallExpression' && ctx.parent_key == 'callee')break;
-					if(ctx.node[this.prevent_rewrite]) return;
+					if(ctx.node[this.prevent_rewrite]) break;
 
 					switch(ctx.node.property.type) {
 						case'Identifier':
 							if(ctx.node.computed)rewrite = true;
 							
-							if (!ctx.node.computed && this.undefinable.includes(ctx.node.property.name)) {
-								ctx.node.property = b.identifier(ctx.node.property.name);
-								rewrite = true;
-							};
+							if(!this.undefinable.includes(ctx.node.property.name))break;
+
+							ctx.node.property = ctx.node.property.name;
+							rewrite = true;
+							
 							break;
 						case'Literal':
-							if(this.undefinable.includes(ctx.node.property.name))rewrite = true;
+							if(this.undefinable.includes(ctx.node.property.value))rewrite = true;
 							break;
 						case'TemplateLiteral':
 							rewrite = true;
