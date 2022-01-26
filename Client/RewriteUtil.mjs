@@ -27,12 +27,30 @@ export function mirror_attributes(from, to){
 	return to;
 };
 
+const error_reporting = true;
+
+function report_error(err){
+	console.log('Caught error in wrapper:\n', err);
+}
+
 export function wrap_function(fn, wrap, construct){
 	const wrapped = 'prototype' in fn ? function attach(...args){
-		return wrap(fn, this, args);
+		if(!error_reporting){
+			return wrap(fn, this, args);
+		}else try{
+			return wrap(fn, this, args);
+		}catch(err){
+			report_error(err);
+		}
 	} : {
 		attach(...args) {
-			return wrap(fn, this, args);
+			if(!error_reporting){
+				return wrap(fn, this, args);
+			}else try{
+				return wrap(fn, this, args);
+			}catch(err){
+				report_error(err);
+			}
 		},
 	}['attach'];
 	
