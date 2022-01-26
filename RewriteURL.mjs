@@ -70,4 +70,11 @@ export class RewriteURL {
 
 		return result
 	}
+	unwrap_ez(url){
+		// cut all characters before the prefix, get the field, unwrap
+		const cut = url.slice(url.indexOf(this.tomp.directory));
+		const { field } = this.get_attributes(cut);
+
+		return this.unwrap(field).toString();
+	}
 };

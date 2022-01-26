@@ -44,10 +44,7 @@ export class RequestRewrite extends Rewrite {
 			}
 			
 			const response = await Reflect.apply(target, that, [ input, init ]);
-			const got_url = desc_url.get.call(response);
-			const sliced = got_url.slice(got_url.indexOf(this.client.tomp.directory));
-			const { field } = this.client.tomp.url.get_attributes(sliced);
-			this.response_url.set(response, this.client.tomp.url.unwrap(field, this.client.location.proxy).toString());
+			this.response_url.set(response, this.client.tomp.url.unwrap_ez(desc_url.get.call(response)));
 			return response;
 		});
 
@@ -174,11 +171,7 @@ export class RequestRewrite extends Rewrite {
 				return signal.get.call(Request.#invoke(this));
 			}
 			get url(){
-				const got_url = url.get.call(Request.#invoke(this));
-				const sliced = got_url.slice(got_url.indexOf(that.client.tomp.directory));
-				const { field } = that.client.tomp.url.get_attributes(sliced);
-				
-				return that.client.tomp.url.unwrap(field).toString();
+				return that.client.tomp.url.unwrap_ez(url.get.call(Request.#invoke(this)));
 			}
 		};
 

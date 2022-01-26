@@ -121,10 +121,7 @@ export class LocationRewrite extends Rewrite {
 		});
 	}
 	get page_url(){
-		const url = this.global.href.slice(this.global.href.indexOf(this.client.tomp.directory));
-		const { field } = this.client.tomp.url.get_attributes(url);
-
-		return this.client.tomp.url.unwrap(field);
+		return this.client.tomp.url.unwrap_ez(this.global.href);
 	}
 	get page_urlo(){
 		return new URL(this.page_url);

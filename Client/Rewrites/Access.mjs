@@ -38,6 +38,24 @@ export class AccessRewrite extends Rewrite {
 
 			return result;
 		});
+
+		global.Object.entries = wrap_function(global.Object.entries, (target, that, [ obj ]) => {
+			let result = Reflect.apply(target, that, [ obj ]);
+
+			for(let pair of result)if(pair[0] == 'location')pair[1] = this.get(pair[1]);
+
+			return result;
+		});
+		
+		global.Object.values = wrap_function(global.Object.values, (target, that, [ obj ]) => {
+			let result = Reflect.apply(target, that, [ obj ]);
+
+			for(let i = 0; i < result.length; i++){
+				result[i] = this.get(result[i]);
+			}
+			
+			return result;
+		});
 	}
     get(obj){
 		if(obj == this.client.eval.global)return this.client.eval.eval_global_proxy;
