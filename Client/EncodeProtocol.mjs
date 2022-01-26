@@ -2,7 +2,7 @@ const valid_chars = "!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ^_`abcdefghij
 const reserved_chars = "%";
 
 export function valid_protocol(protocol){
-	protocol = protocol.toString();
+	protocol = String(protocol);
 
 	for(let i = 0; i < protocol.length; i++){
 		const char = protocol[i];
@@ -16,7 +16,7 @@ export function valid_protocol(protocol){
 }
 
 export function encode_protocol(protocol){
-	protocol = protocol.toString();
+	protocol = String(protocol);
 
 	let result = '';
 	

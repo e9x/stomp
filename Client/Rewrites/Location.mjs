@@ -69,7 +69,7 @@ export class LocationRewrite extends Rewrite {
 			configurable: false,
 			enumerable: true,
 			get(){
-				return that.page_url.toString();
+				return String(that.page_url);
 			},
 			set(value){
 				const urlo = new URL(value, that.page_urlo);

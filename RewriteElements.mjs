@@ -18,6 +18,9 @@ export class TOMPElement {
 	set text(value){
 		throw new Error('set text(value) not implemented');
 	}
+	get parent(){
+		throw new Error('get parent() not implemented');
+	}
 };
 
 export function get_mime(content_type){
@@ -136,6 +139,10 @@ export class RewriteElements {
 
 		element.attributes.set(attr, stringifySrcset(parsed));
 	};
+	delete_attr = attr => (value, url, element) => {
+		element.attributes.set(`data-tomp-${attr}`, value);
+		element.attributes.delete('integrity');
+	};
 	all_style(value, url, element){
 		return this.tomp.css.wrap(value, url, true);
 	}
@@ -155,12 +162,8 @@ export class RewriteElements {
 					element.attributes.set('src', this.tomp.binary.serve(resolved, url));
 				}
 			},
-			nonce: (value, url, element) => {
-				element.attributes.delete('nonce');
-			},
-			integrity: (value, url, element) => {
-				element.attributes.delete('integrity');
-			},
+			nonce: this.delete_attr('nonce'),
+			integrity: this.delete_attr('integrity'),
 		},
 		iframe: {
 			src: this.html_src('src'),
@@ -223,14 +226,14 @@ export class RewriteElements {
 						break;
 				}
 			},
-			integrity: (value, url, element) => {
-				element.attributes.delete('integrity');
-			},
+			integrity: this.delete_attr('integrity'),
 		},
 		meta: {
 			content: (value, url, element) => {
 				const resolved = new URL(value, url).href;
 				
+				element.attributes.set('data-tomp-content', value);
+
 				switch(element.attributes.get('http-equiv')){
 					case'content-security-policy':
 						element.detach();
