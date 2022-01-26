@@ -17,11 +17,8 @@ export class AccessRewrite extends Rewrite {
 		});
 		
 		const get_desc = (target, that, [ obj, prop ]) => {
-			if(obj == global && prop == 'location')return {...this.client.location.description};
-			if(this.client.constructor.type == 'page' && obj == global.document && prop == 'location')return {...this.client.location.description_document};
-			
 			let result = Reflect.apply(target, that, [ obj, prop ]);
-			result = this.get(result);
+			result = this.get_desc(result);
 			return result;
 		};
 		
@@ -32,8 +29,8 @@ export class AccessRewrite extends Rewrite {
 		global.Object.getOwnPropertyDescriptors = wrap_function(global.Object.getOwnPropertyDescriptors, (target, that, [ obj ]) => {
 			let result = Reflect.apply(target, that, [ obj ]);
 
-			if(obj == global && 'location' in result){
-				result.location = reflect_desc(global, 'location');
+			if('location' in result){
+				result.location = this.get_desc(result.location);
 			}
 
 			return result;
@@ -53,22 +50,36 @@ export class AccessRewrite extends Rewrite {
 			for(let i = 0; i < result.length; i++){
 				result[i] = this.get(result[i]);
 			}
-			
+
 			return result;
 		});
+	}
+	get_desc(desc){
+		if(typeof desc.get == 'function'){
+			if(desc.get == this.client.location.global_description.get){
+				return {...this.client.location.description};
+			}else if(desc.get == this.client.location.global_description_document.get){
+				return {...this.client.location.description_document};
+			}
+		}
+
+		if(parent != global && global_client in parent)return parent[global_client].access.get_desc(desc);
+		else return desc;
 	}
     get(obj){
 		if(obj == this.client.eval.global)return this.client.eval.eval_global_proxy;
 		if(obj == this.client.location.global)return this.client.location.proxy;
 		if(!this.client.service_worker && obj == global.top)return global.top;
-        return obj;
+       
+		if(parent != global && global_client in parent)return parent[global_client].access.get(obj);
+		else return obj;
     }
     set(target, value){
 		if(target == this.client.location.global){
 			value = this.client.tomp.html.serve(new URL(value, this.client.location.proxy), this.client.location.proxy);
 		}
 
-		if(parent != global)return parent[global_client].access.set(target, value);
+		if(parent != global && global_client in parent)return parent[global_client].access.set(target, value);
 		else return value;
 	}
 };

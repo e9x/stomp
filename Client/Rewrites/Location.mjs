@@ -8,6 +8,8 @@ export class LocationRewrite extends Rewrite {
 		{
 			const desc = Object.getOwnPropertyDescriptor(global, 'location');
 
+			this.global_description = desc;
+
 			this.description = {
 				configurable: false,
 				enumerable: true,
@@ -25,6 +27,8 @@ export class LocationRewrite extends Rewrite {
 
 		if(this.client.constructor.type == 'page'){
 			const desc = Object.getOwnPropertyDescriptor(global.document, 'location');
+
+			this.global_description_document = desc;
 
 			this.description_document = {
 				configurable: false,
