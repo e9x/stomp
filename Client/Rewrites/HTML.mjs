@@ -12,11 +12,11 @@ export class HTMLRewrite extends Rewrite {
 	get_attribute = Element.prototype.getAttribute;
 	attribute_description(attribute, desc){
 		return {
-			get: wrap_function(desc.get, (target, that, args) => {
-				return Reflect.apply(this.get_attribute, that, [ value ]);
+			get: wrap_function(desc.get, (target, that) => {
+				return Reflect.apply(this.get_attribute, that, [ attribute ]);
 			}),
-			set: wrap_function(desc.get, (target, that, [ value ]) => {
-				return Reflect.apply(this.set_attribute, that, [ value ]);
+			set: wrap_function(desc.set, (target, that, [ value ]) => {
+				return Reflect.apply(this.set_attribute, that, [ attribute, value ]);
 			}),
 		};
 	}
