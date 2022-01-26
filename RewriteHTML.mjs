@@ -1,207 +1,64 @@
 import { ParseDataURI } from './DataURI.mjs'
 import { serialize, parse, parseFragment } from 'parse5';
-import { Parse5Iterator, Parse5AttributeMap } from './IterateParse5.mjs';
+import { Parse5Iterator } from './IterateParse5.mjs';
 import { global_client } from './RewriteJS.mjs';
-import { parseSrcset, stringifySrcset } from 'srcset';
+import { TOMPElement } from './RewriteElements.mjs';
 
 const essential_nodes = ['#documentType','#document','#text','html','head','body'];
 
-export const js_module_types = ['module'];
-export const js_types = ['text/javascript','application/javascript','',...js_module_types];
-export const css_types = ['text/css',''];
-export const html_types = ['image/svg+xml', 'text/html',''];
+class TOMPElementParse5 extends TOMPElement {
+	#ctx = {};
+	constructor(ctx){
+		super();
+		
+		this.#ctx = ctx;
 
-export function get_mime(content_type){
-	return content_type.split(';')[0];
-}
-
-export class RewriteHTML {
-	content_router = {
-		script: (value, url, attrs) => {
-			const type = get_mime(attrs.get('type') || '').toLowerCase();
-			
-			if(js_types.includes(type)){
-				return this.tomp.js.wrap(value, url);
-			}else{
-				return value;
-			}
-		},
-		style: (value, url, attrs) => {
-			const type = get_mime(attrs.get('type') || '').toLowerCase();
-			
-			if(css_types.includes(type))return this.tomp.css.wrap(value, url);
-			else return value;
-		},
-	};
-	delete_node = Symbol();
-	all_nodes = Symbol();
-	set_attributes = Symbol();
-	binary_src = attr => (value, url, attrs) => {
-		const resolved = new URL(value, url).href;
-		attrs.set(attr, this.tomp.binary.serve(resolved, url));
-	};
-	html_src = attr => (value, url, attrs) => {
-		const nurl = new URL(value, url);
-		if(nurl.protocol == 'javascript:')return 'javascript:' + this.tomp.js.wrap(nurl.pathname, url);
-		const resolved = nurl.href;
-		attrs.set(attr, this.tomp.html.serve(resolved, url));
-	};
-	binary_srcset = attr => (value, url, attrs) => {
-		const parsed = parseSrcset(value);
-
-		for(let src of parsed){
-			const resolved = new URL(src.url, url).href;
-			src.url = this.tomp.binary.serve(resolved, url);
+		for(let { name, value } of this.#ctx.node.attrs){
+			if(!this.attributes.has(name))this.attributes.set(name, value);
 		}
 
-		attrs.set(attr, stringifySrcset(parsed));
-	};
-	attribute_router = {
-		[this.all_nodes]: {
-			// on*
-			style: (value, url, attrs) => {
-				return this.tomp.css.wrap(value, url, true);
+		this.#ctx.node.attrs.length = 0;
+	}
+	get type(){
+		return this.#ctx.node.nodeName;
+	}
+	set type(value){
+		this.#ctx.node.tagName = value;
+		this.#ctx.node.nodeName = value;
+		return value;
+	}
+	get detached(){
+		return this.#ctx.detached;
+	}
+	detach(){
+		this.#ctx.detach();
+	}
+	sync(){
+		this.#ctx.node.attrs.length = 0;
+		
+		for(let [ name, value ] of this.attributes){
+			if(typeof value != 'string')throw new TypeError(`Attribute ${name} was not a string.`);
+			this.#ctx.node.attrs.push({ name, value });
+		}
+	}
+	get text(){
+		return this.#ctx.node?.childNodes[0]?.value;
+	}
+	set text(value){
+		this.#ctx.node.childNodes = [
+			{
+				nodeName: '#text',
+				value,
+				parentNode: this.#ctx.node,
 			},
-		},
-		use: {
-			'xlink:href': this.html_src('xlink:href'),
-			'href': this.html_src('href'),
-		},
-		script: {
-			// attrs const
-			src: (value, url, attrs) => {
-				const type = get_mime(attrs.get('type') || '').toLowerCase();
-				const resolved = new URL(value, url).href;
-				
-				if(js_types.includes(type)){
-					attrs.set('src', this.tomp.js.serve(resolved, url));
-				}else{
-					attrs.set('src', this.tomp.binary.serve(resolved, url));
-				}
-			},
-			nonce: (value, url, attrs) => {
-				attrs.delete('nonce');
-			},
-			integrity: (value, url, attrs) => {
-				attrs.delete('integrity');
-			},
-		},
-		iframe: {
-			src: this.html_src('src'),
-		},
-		img: {
-			src: this.binary_src('src'),
-			lowsrc: this.binary_src('src'),
-			srcset: this.binary_srcset('srcset'),
-		},
-		audio: {
-			src: this.binary_src('src'),
-		},
-		source: {
-			src: this.binary_src('src'),
-			srcset: this.binary_srcset('srcset'),
-		},
-		video: {
-			src: this.binary_src('src'),
-			poster: this.binary_src('poster'),
-		},
-		a: {
-			href: this.html_src('href'),
-		},
-		link: {
-			href: (value, url, attrs) => {
-				const resolved = new URL(value, url).href;
-				
-				switch(attrs.get('rel')){
-					case'preload':
-						switch(attrs.get('as')){
-							case'style':
-								attrs.set('href', this.tomp.css.serve(resolved, url));
-								return;
-							case'worker':
-							case'script':
-								attrs.set('href', this.tomp.js.serve(resolved, url));
-								return;
-							case'object':
-							case'document':
-								attrs.set('href', this.tomp.html.serve(resolved, url));
-								return;
-							default:
-								attrs.set('href', this.tomp.binary.serve(resolved, url));
-								return;
-						}
-						break;
-					case'manifest':
-						attrs.set('href', this.tomp.manifest.serve(resolved, url));
-						return;
-					case'alternate':
-					case'amphtml':
-					// case'profile':
-						attrs.set('href', this.tomp.html.serve(resolved, url));
-						return;
-					case'stylesheet':
-						attrs.set('href', this.tomp.css.serve(resolved, url));
-						return;
-					default:
-						attrs.set('href', this.tomp.binary.serve(resolved, url));
-						return;
-				}
-			},
-			integrity: (value, url, attrs) => {
-				attrs.delete('integrity');
-			},
-		},
-		meta: {
-			content: (value, url, attrs) => {
-				const resolved = new URL(value, url).href;
-				
-				switch(attrs.get('http-equiv')){
-					case'content-security-policy':
-						return this.delete_node;
-					case'refresh':
-						attrs.set('content', this.wrap_http_refresh(value, url));
-						return;
-				}
-				
-				switch(attrs.get('itemprop')){
-					case'image':
-						attrs.set('content', this.tomp.binary.serve(resolved, url));
-						return;
-						break;
-				}
+		];
+	}
+	get parent(){
+		return new TOMPElementParse5(this.#ctx.parent);
+	}
+};
 
-				switch(attrs.get('property')){
-					case'og:url':
-					case'og:video:url':
-					case'og:video:secure_url':
-						attrs.set('content', this.tomp.html.serve(resolved, url));
-						return;
-					case'og:image':
-						attrs.set('content', this.tomp.binary.serve(resolved, url));
-						return;
-				}
-
-				switch(attrs.get('name')){
-					case'referrer':
-						return this.delete_node;
-					case'twitter:app:url:googleplay':
-					case'twitter:url':
-					case'parsely-link':
-					case'parsely-image-url':
-						attrs.set('content', this.tomp.html.serve(resolved, url));
-						return;
-					case'twitter:image':
-					case'sailthru.image.thumb':
-					case'msapplication-TileImage':
-						attrs.set('content', this.tomp.binary.serve(resolved, url));
-						return;
-					case'style-tools':
-						attrs.set('content', this.tomp.css.serve(resolved, url));
-						return;
-				}
-			},
-		},
-	};
+export class RewriteHTML {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
@@ -236,24 +93,6 @@ export class RewriteHTML {
 
 		return nodes;
 	}
-	// returns false if the ctx was detached
-	route_attributes(route, ctx, attrs, url, test_has = true){
-		for(let name in route)if(!test_has || attrs.has(name)){
-			try{
-				const result = route[name](attrs.get(name), url, attrs);
-				
-				if(result == this.delete_node){
-					ctx.detach();
-					return false;
-				}
-			}catch(err){
-				this.tomp.log.error(err);
-				attrs.delete(name);
-			}
-		}
-
-		return true;
-	}
 	wrap(html, url){
 		const ast = parse(html, {
 			// https://github.com/inikulin/parse5/blob/master/packages/parse5/docs/options/parser-options.md#optional-scriptingenabled
@@ -262,77 +101,25 @@ export class RewriteHTML {
 		});
 			
 		let inserted_script = false;
-
-		let one_base = false;
-		let one_target;
+		
+		const persist = {};
 
 		for(let ctx of new Parse5Iterator(ast)) {
 			if(!ctx.node.attrs){ // #text node
 				continue;
 			}
 
-			if(ctx.type == 'noscript' && this.tomp.noscript){
-				ctx.node.tagName = 'span';
-				continue;
-			}
-
-			let attrs = new Parse5AttributeMap(ctx.node.attrs);
+			let element = new TOMPElementParse5(ctx);
 			
-			if(ctx.type == 'base' && ctx.parent?.type == 'head' && !one_base){
-				one_base = true;
-				if(attrs.has('href'))try{
-					url = new URL(attrs.get('href'), url);
-				}catch(err){
-					this.tomp.log.error(err);
-				}
-				
-				if(attrs.has('target'))one_target = attrs.get('target');
-
-				ctx.node.tagName = 'tomp-base';
-				continue;
-			}
-			
-			if(ctx.type == 'a' && !attrs.has('target') && one_target != undefined)attrs.set('target', one_target);
-			
-			if(Array.isArray(ctx.node?.childNodes) && ctx.type in this.content_router){
-				const text = ctx.node?.childNodes[0];
-				
-				if(text?.value.match(/\S/) && text){
-					const result = this.content_router[ctx.type](text.value, url, attrs);
-					text.value = result;
-				}
-			}
-			
-			if(!this.route_attributes(this.attribute_router[this.all_nodes], ctx, attrs, url)){
-				continue;
-			}
-			
-			if(ctx.type in this.attribute_router){
-				if(!this.route_attributes(this.attribute_router[ctx.type], ctx, attrs, url))continue;
-				if(!this.route_attributes(this.attribute_router[ctx.type][this.set_attributes], ctx, attrs, url, true))continue;
-			}
-			
-			if(ctx.type == 'form'){
-				const action_resolved = new URL(attrs.get('action') || '', url).href;
-				
-				if(attrs.get('method')?.toUpperCase() == 'POST'){
-					attrs.set('method', this.tomp.html.serve(action_resolved, url));
-				}else{
-					attrs.set('method', this.tomp.form.serve(action_resolved, url));
-				}
-			}
-
-			for(let [ name, value ] of attrs)if(name.startsWith('on')){
-				attrs.set(name, this.tomp.js.wrap(value, url));
-			}
+			this.tomp.elements.wrap(element, url, persist);
 			
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)
 			// on the first non-essential node (not html,head,or body), insert the client script before it
-			if(!inserted_script && !essential_nodes.includes(ctx.type)){
+			if(!inserted_script && !essential_nodes.includes(ctx.node.nodeName)){
 				inserted_script = ctx.insert_before(...this.get_head(url));
 			}
 
-			attrs.sync();
+			element.sync();
 		}
 
 		return serialize(ast);

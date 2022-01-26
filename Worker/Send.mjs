@@ -1,5 +1,5 @@
 import { MapHeaderNamesFromArray } from './HeaderUtil.mjs'
-import { html_types, get_mime } from '../RewriteHTML.mjs';
+import { html_types, get_mime } from '../RewriteElements.mjs';
 import { TOMPError } from '../TOMPError.mjs';
 import { TOMPFetch } from './TOMPFetch.mjs';
 import { load_setcookies, get_cookies } from './Cookies.mjs';

@@ -104,26 +104,3 @@ export class Parse5Iterator {
 		return this;
 	}
 };
-
-export class Parse5AttributeMap extends Map {
-	#attrs = {};
-	constructor(attrs){
-		super();
-		
-		this.#attrs = attrs;
-
-		for(let { name, value } of this.#attrs){
-			if(!this.has(name))this.set(name, value);
-		}
-
-		this.#attrs.length = 0;
-	}
-	sync(){
-		this.#attrs.length = 0;
-		
-		for(let [ name, value ] of this){
-			if(typeof value != 'string')throw new TypeError(`Attribute ${name} was not a string.`);
-			this.#attrs.push({ name, value });
-		}
-	}
-};
