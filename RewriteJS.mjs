@@ -130,8 +130,7 @@ export class RewriteJS {
 							if(ctx.node.computed)rewrite = true;
 							
 							if(!this.undefinable.includes(ctx.node.property.name))break;
-
-							ctx.node.property = ctx.node.property.name;
+							
 							rewrite = true;
 							
 							break;
