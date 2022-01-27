@@ -52,6 +52,11 @@ class TOMPElementDOM {
 		this.node.remove();
 		const replacement = document.createElement(value);
 		replacement.append(...this.node.children);
+		
+		for(let [attribute,value] of this.attributes){
+			replacement.setAttribute(attribute, value);
+		}
+
 		this.#node = replacement;
 		return value;
 	}
