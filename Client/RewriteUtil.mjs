@@ -64,11 +64,6 @@ export function wrap_function(fn, wrap, construct){
 	return wrapped
 };
 
-Function.prototype.toString = wrap_function(Function.prototype.toString, (target, that, args) => {
-	if(function_strings.has(that))return function_strings.get(that);
-	else return Reflect.apply(target, that, args);
-});
-
 export const native_proxies = new WeakMap();
 
 export function resolve_native(proxy/*?*/){
