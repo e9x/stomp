@@ -64,8 +64,15 @@ export class RewriteElements {
 				tag: 'script',
 				class: 'HTMLScriptElement',
 			},
+			condition: (url, element) => js_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
 			attributes: {
+				'src': { type: 'url', service: 'js' },
+				'crossorigin': { type: 'delete' },
+				'nonce': { type: 'delete' },
 			},
+			// condition could be in attribute or content
+			// for scripts, if the type isnt a valid js mime then its ignored
+			content: { type: 'js' },
 		},
 	];
 	route_attributes(route, element, url){
@@ -137,7 +144,30 @@ export class RewriteElements {
 
 		for(let ab of this.abstract){
 			if(ab.name.tag == element.type){
-				for(let attribute in ab.attributes){
+				
+				if('condition' in ab){
+					if(!ab.condition(url, element))continue;
+				}
+
+
+				if('content' in ab){
+					const content = element.textContent;
+
+					if('condition' in ab.content){
+						if(!ab.content.condition(content, url, element))continue;
+					}
+
+					switch(ab.content.type){
+						case'js':
+							element.textContent = this.tomp.js.wrap(content, url);
+							break;
+						case'css':
+							element.textContent = this.tomp.css.wrap(content, url);
+							break;
+					}	
+				}
+
+				if('attributes' in ab)for(let attribute in ab.attributes){
 					const data = ab.attributes[attribute];
 					
 					const is_delete_wrap = ['delete','custom-wrap-delete-unwrap'].includes(data.type);
@@ -152,6 +182,10 @@ export class RewriteElements {
 					if(!element.attributes.has(attribute))continue;
 					
 					const value = element.attributes.get(attribute);
+
+					if('condition' in data){
+						if(!data.condition(value, url, element))continue;
+					}
 
 					if(is_delete_wrap && wrap){
 						element.attributes.delete(attribute);

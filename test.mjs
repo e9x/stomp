@@ -16,6 +16,14 @@ const input = `
 		<img src='./test' srcset='/272x92dp.png 1x, /272x92dp.png 2x'></img>
 		<script src='../../../assets/beta.js'></script>
 		<a href='click'>click</a>
+		<script type='module' src='/assets/beta.1.js'></script>
+		<script>
+if(location.host != 'www.sys32.dev'){
+	console.warn('Location leak or proxy failure.');
+}
+		</script>
+		<script type='fake' src='/assets/beta.-1.js'></script>
+		<script type='fake'>alert("Won't alert.")</script>
 	</body>
 </html>
 `;
