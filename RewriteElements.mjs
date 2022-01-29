@@ -196,7 +196,7 @@ export class RewriteElements {
 								element.attributes.set('href', this.tomp.css.serve(resolved, url));
 								break;
 							default:
-								this.tomp.log.warn('unknown rel', element.attributes.get('rel'));
+								// this.tomp.log.warn('unknown rel', element.attributes.get('rel'));
 								element.attributes.set('href', this.tomp.binary.serve(resolved, url));
 								break;
 						}
