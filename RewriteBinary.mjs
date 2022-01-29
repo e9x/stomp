@@ -15,4 +15,8 @@ export class RewriteBinary {
 		if(serve.startsWith('data:'))return serve;
 		return this.tomp.url.wrap(serve, 'worker:binary');
 	}
+	unwrap_serving(serving, url){
+		serving = serving.toString();
+		return this.tomp.url.unwrap_ez(serving);
+	}
 };

@@ -236,7 +236,7 @@ export class RewriteJS {
 		return node;
 	}
 	unwrap(code, url){
-		return code.slice(12 + global_client.length, -1);
+		return code;
 	}
 	serve(serve, url){
 		serve = serve.toString();
@@ -245,6 +245,14 @@ export class RewriteJS {
 			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
 		}
 		return this.tomp.url.wrap(serve, 'worker:js');
+	}
+	unwrap_serving(serving, url){
+		serving = serving.toString();
+		if(serving.startsWith('data:')){
+			const {mime,data} = ParseDataURI(serving);
+			return `data:${mime},${encodeURIComponent(this.unwrap(data, url))}`;
+		}
+		return this.tomp.url.unwrap_ez(serving);
 	}
 };
 

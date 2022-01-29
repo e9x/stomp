@@ -74,6 +74,15 @@ export class RewriteElements {
 			// for scripts, if the type isnt a valid js mime then its ignored
 			content: { type: 'js' },
 		},
+		{
+			name: {
+				tag: 'style',
+				class: 'HTMLStyleElement',
+			},
+			condition: (url, element) => css_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
+			// <style> is strictly content-only
+			content: { type: 'css' },
+		},
 	];
 	route_attributes(route, element, url){
 		for(let name in route)if(element.attributes.has(name)){
@@ -164,7 +173,7 @@ export class RewriteElements {
 						case'css':
 							element.textContent = this.tomp.css.wrap(content, url);
 							break;
-					}	
+					}
 				}
 
 				if('attributes' in ab)for(let attribute in ab.attributes){
@@ -200,10 +209,24 @@ export class RewriteElements {
 						switch(data.type){
 							case'url':
 
-								if(wrap){
-									element.attributes.set(attribute, this.tomp.url.wrap(new URL(value, url), data.service));
-								}else{
-									element.attributes.set(attribute, this.tomp.url.unwrap_ez(value, url));
+								switch(data.service){
+									case'js':
+									case'css':
+									case'manifest':
+									case'form':
+										if(wrap){
+											element.attributes.set(attribute, this.tomp[data.service].serve(new URL(value, url), url));
+										}else{
+											element.attributes.set(attribute, this.tomp[data.service].unwrap_serving(value, url));
+										}
+										break;
+									default:
+										if(wrap){
+											element.attributes.set(attribute, this.tomp.url.wrap(new URL(value, url), data.service));
+										}else{
+											element.attributes.set(attribute, this.tomp.url.unwrap_ez(value, url));
+										}
+										break;
 								}
 								
 								break;

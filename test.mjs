@@ -11,12 +11,18 @@ const input = `
 <html>
 	<head>
 		<link rel='stylesheet' href='./assets/beta.css' />
+		<style>
+body {
+	background: url('pretty.jpeg');
+}
+		</style>
 	</head>
-	<body>
+	<body style='background:url("better.png")'>
 		<img src='./test' srcset='/272x92dp.png 1x, /272x92dp.png 2x'></img>
 		<script src='../../../assets/beta.js'></script>
 		<a href='click'>click</a>
 		<script type='module' src='/assets/beta.1.js'></script>
+		<script src='data:application/javascript,covered()'></script>
 		<script>
 if(location.host != 'www.sys32.dev'){
 	console.warn('Location leak or proxy failure.');

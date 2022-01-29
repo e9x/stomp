@@ -15,4 +15,12 @@ export class RewriteForm {
 		if(serve.startsWith('data:'))return serve;
 		return this.tomp.url.wrap(serve, 'worker:form');
 	}
+	unwrap_serving(serving, url){
+		serving = serving.toString();
+		if(serving.startsWith('data:')){
+			const {mime,data} = ParseDataURI(serving);
+			return `data:${mime},${encodeURIComponent(this.unwrap(data, url))}`;
+		}
+		return this.tomp.url.unwrap_ez(serving);
+	}
 };
