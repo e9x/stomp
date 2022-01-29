@@ -274,7 +274,28 @@ export class RewriteJS {
 					
 					break;
 				case'CallExpression':
-				
+					
+					if(ctx.node.callee.type != 'MemberExpression')continue;
+					if(ctx.node.callee.object.type != 'MemberExpression')continue;
+					
+					const parts = [ ctx.node.callee.object.object.name, ctx.node.callee.object.property.name, ctx.node.callee.property.name ];
+					
+					if(parts[0] != global_client)continue;
+
+					switch(parts[1]){
+						case'access':
+
+							break;
+						case'eval':
+							switch(parts[2]){
+								case'eval_scope':
+									ctx.parent.parent.replace_with(b.callExpression(b.identifier('eval'), ctx.node.arguments.slice(1)));
+									break;
+							}
+							break;
+					}
+					
+					break;
 				case'CallExpression':
 					break;
 						

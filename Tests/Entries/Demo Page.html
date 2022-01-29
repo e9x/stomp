@@ -1,14 +1,3 @@
-import { TOMP } from './TOMP.mjs';
-
-const tomp = new TOMP({
-	directory: '/',
-	bare: '/',
-
-});
-
-const input = /*`
-<script type='module' src='/assets/beta.1.js'></script>
-` || */`
 <!DOCTYPE HTML>
 <html>
 	<head>/>
@@ -36,17 +25,13 @@ const { location } = window;
 if(location.host != 'www.sys32.dev'){
 	console.warn('Location leak or proxy failure.');
 }
+const test = eval;
+test();
+window.location;
+window.eval('test');
+eval('what');
 		</script>
 		<script type='fake' src='/assets/beta.-1.js'></script>
 		<script type='fake'>alert("Won't alert.")</script>
 	</body>
 </html>
-`;
-
-const base = new URL('https://www.sys32.dev/');
-const rewritten = tomp.html.wrap(input, base);
-const unrewritten = tomp.html.unwrap(rewritten, base);
-
-console.log(rewritten);
-console.log('UNRW: ==========');
-console.log(unrewritten);
