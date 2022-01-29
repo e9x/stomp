@@ -262,12 +262,15 @@ export class RewriteElements {
 					case'css':
 					case'manifest':
 					case'form':
+					case'binary':
+					case'html':
 						if(wrap){
 							return this.tomp[data.service].serve(new URL(value, url), url);
 						}else{
 							return this.tomp[data.service].unwrap_serving(value, url);
 						}
 					default:
+						console.warn('unknown service:', data.service);
 						if(wrap){
 							return this.tomp.url.wrap(new URL(value, url), data.service);
 						}else{
@@ -362,7 +365,7 @@ export class RewriteElements {
 						custom_unwrap = true;
 						break;
 					case'custom-wrap-url-unwrap':
-						custom_unwrap = true;
+						custom_wrap = true;
 						data.type = 'url';
 						break;
 					case'custom-wrap-delete-unwrap':
