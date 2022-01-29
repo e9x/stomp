@@ -41,19 +41,10 @@ export class RewriteJS {
 			switch(ctx.type){
 				case'ImportExpression':
 					
-					// todo: add tompc$.import()
-					ctx.replace_with(b.callExpression(
-						b.memberExpression(b.identifier(global_client), b.identifier('import')),
-						[
-							b.arrowFunctionExpression(
-								[ b.identifier('x') ],
-								b.callExpression(
-									b.importExpression(b.identifier('x')),
-									[ b.spreadElement(b.identifier('x')) ],
-								),
-							),
+					// todo: add tompc$.eval.import()
+					ctx.replace_with(b.importExpression(b.callExpression(b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('eval')), b.identifier('import')), [
 							ctx.node.source,
-						],
+						]),
 					));
 
 					break;
@@ -101,6 +92,7 @@ export class RewriteJS {
 									])),
 									b.literal(1),
 								),
+								b.literal(generate(ctx.parent.node)),
 							]),
 						));
 					}else if(ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
@@ -118,11 +110,13 @@ export class RewriteJS {
 										]),
 										ctx.parent.node.right,
 									),
+								b.literal(generate(ctx.parent.node)),
 							]),
 						));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
 							ctx.node,
+							b.literal(generate(ctx.parent.node)),
 						]));
 					}
 					
@@ -169,6 +163,7 @@ export class RewriteJS {
 										ctx.node,
 									]), ctx.parent.node.right),
 							]),
+							b.literal(generate(ctx.parent.node)),
 						));
 					}else if (ctx.parent.type == 'UpdateExpression') {
 						ctx.parent.replace_with(b.assignmentExpression(
@@ -185,10 +180,12 @@ export class RewriteJS {
 									b.literal(1),
 								),
 							]),
+							b.literal(generate(ctx.parent.node)),
 						));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
-							ctx.node
+							ctx.node,
+							b.literal(generate(ctx.node)),
 						]));
 					}
 
@@ -224,7 +221,90 @@ export class RewriteJS {
 		return generate(ast);
 	}
 	unwrap(code, url){
-		return code;
+		if(this.tomp.noscript)return '';
+
+		try{
+			var ast = parse(code, { 
+				ecmaVersion: 2022,
+				allowAwaitOutsideFunction: true,
+				allowReturnOutsideFunction: true, 
+				allowImportExportEverywhere: true,
+			});
+		}catch(err){
+			if(err instanceof SyntaxError){
+				return `throw new SyntaxError(${JSON.stringify(err.message)})`;
+			}else throw err;
+		}
+
+		// unload from memory
+		// code = null;
+
+		for(let ctx of new AcornIterator(ast)){
+			switch(ctx.type){
+				case'ImportExpression':
+					
+					// todo: add tompc$.import()
+					/*ctx.replace_with(b.callExpression(
+						b.memberExpression(b.identifier(global_client), b.identifier('import')),
+						[
+							b.arrowFunctionExpression(
+								[ b.identifier('x') ],
+								b.callExpression(
+									b.importExpression(b.identifier('x')),
+									[ b.spreadElement(b.identifier('x')) ],
+								),
+							),
+							ctx.node.source,
+						],
+					));*/
+
+					break;
+				case'ImportDeclaration':
+					
+					ctx.node.source.value = this.unwrap_serving(ctx.node.source.value, url);
+					
+					break;
+				case 'VariableDeclarator':
+					
+					if(ctx.node.id.type != 'ObjectPattern' || !ctx.node.init)break;
+					
+					if(!ctx.node.init.arguments)continue;
+
+					ctx.node.init = ctx.node.init.arguments[0];
+					
+					break;
+				case'CallExpression':
+				
+				case'CallExpression':
+					break;
+						
+					const {callee} = ctx.node;
+
+					if(callee.type != 'Identifier' || callee.name != 'eval')break;
+
+					if(!ctx.node.arguments.length)break;
+					
+					/* May be a JS eval function!
+					eval will only inherit the scope if the following is met:
+					the keyword (not property or function) eval is called
+					the keyword doesnt reference a variable named eval
+					*/
+					
+					// transform eval(...) into eval(...tompc$.eval.eval_scope(eval, ...['code',{note:"eval is possibly a var"}]))
+					ctx.replace_with(b.callExpression(b.identifier('eval'), [
+						b.spreadElement(
+							b.callExpression(b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('eval')), b.identifier('eval_scope')), [
+								b.identifier('eval'),
+								...ctx.node.arguments,
+							])
+						),
+					]));
+
+					break;
+			}
+		}
+
+		return generate(ast);
 	}
 	serve(serve, url){
 		serve = serve.toString();

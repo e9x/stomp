@@ -27,7 +27,12 @@ body {
 		<a href='click'>click</a>
 		<script type='module' src='/assets/beta.1.js'></script>
 		<script src='data:application/javascript,covered()'></script>
+		<script type='module'>
+import './sql.js';
+const { ok } = await import('test');
+		</script>
 		<script>
+const { location } = window;
 if(location.host != 'www.sys32.dev'){
 	console.warn('Location leak or proxy failure.');
 }

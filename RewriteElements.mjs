@@ -65,7 +65,10 @@ export class RewriteElements {
 				'src': { type: 'url', service: 'binary' },
 				'lowsrc': { type: 'url', service: 'binary' },
 				// delete as in move to data-tomp-srcset, create attribute named srcset and set value to result of wrap
-				'srcset': { type: 'custom-wrap-delete-unwrap', wrap: (value, url, element) => this.set_binary_srcset('srcset', value, url, element) },
+				'srcset': {
+					type: 'custom-wrap-delete-unwrap',
+					wrap: (value, url, element) => this.set_binary_srcset('srcset', value, url, element),
+				},
 				'crossorigin': { type: 'delete' },
 			},
 		},
@@ -141,15 +144,6 @@ export class RewriteElements {
 				'src': { type: 'url', service: 'binary' },
 			},
 		},
-		/*{
-			name: {
-				tag: 'audio',
-				class: 'HTMLAudioElement'
-			},
-			attributes: {
-				'src': { type: 'url', service: 'binary' },
-			},
-		}*/
 		{
 			name: {
 				tag: 'video',
@@ -165,44 +159,48 @@ export class RewriteElements {
 				class: 'HTMLLinkElement',
 			},
 			attributes: {
-				'href': { type: 'custom-wrap-url-unwrap', service: 'binary', wrap: (value, url, element) => {
-					const resolved = new URL(value, url).href;
-				
-					switch(element.attributes.get('rel')){
-						case'preload':
-							switch(element.attributes.get('as')){
-								case'style':
-									element.attributes.set('href', this.tomp.css.serve(resolved, url));
-									break;
-								case'worker':
-								case'script':
-									element.attributes.set('href', this.tomp.js.serve(resolved, url));
-									break;
-								case'object':
-								case'document':
-									element.attributes.set('href', this.tomp.html.serve(resolved, url));
-									break;
-								default:
-									element.attributes.set('href', this.tomp.binary.serve(resolved, url));
-									break;
-							}
-							break;
-						case'manifest':
-							element.attributes.set('href', this.tomp.manifest.serve(resolved, url));
-							break;
-						case'alternate':
-						case'amphtml':
-						// case'profile':
-							element.attributes.set('href', this.tomp.html.serve(resolved, url));
-							break;
-						case'stylesheet':
-							element.attributes.set('href', this.tomp.css.serve(resolved, url));
-							break;
-						default:
-							element.attributes.set('href', this.tomp.binary.serve(resolved, url));
-							break;
-					}
-				} },
+				'href': {
+					type: 'custom-wrap-url-unwrap',
+					service: 'binary',
+					wrap: (value, url, element) => {
+						const resolved = new URL(value, url).href;
+					
+						switch(element.attributes.get('rel')){
+							case'preload':
+								switch(element.attributes.get('as')){
+									case'style':
+										element.attributes.set('href', this.tomp.css.serve(resolved, url));
+										break;
+									case'worker':
+									case'script':
+										element.attributes.set('href', this.tomp.js.serve(resolved, url));
+										break;
+									case'object':
+									case'document':
+										element.attributes.set('href', this.tomp.html.serve(resolved, url));
+										break;
+									default:
+										element.attributes.set('href', this.tomp.binary.serve(resolved, url));
+										break;
+								}
+								break;
+							case'manifest':
+								element.attributes.set('href', this.tomp.manifest.serve(resolved, url));
+								break;
+							case'alternate':
+							case'amphtml':
+							// case'profile':
+								element.attributes.set('href', this.tomp.html.serve(resolved, url));
+								break;
+							case'stylesheet':
+								element.attributes.set('href', this.tomp.css.serve(resolved, url));
+								break;
+							default:
+								element.attributes.set('href', this.tomp.binary.serve(resolved, url));
+								break;
+						}
+					},
+				},
 				'integrity': { type: 'delete' },
 			},
 		},
@@ -211,8 +209,19 @@ export class RewriteElements {
 				tag: 'meta',
 				class: 'HTMLMetaElement',
 			},
-			type: 'delete',
-			condition: (url, element) => !element.attributes.has('charset'),
+			attributes: {
+				'content': {
+					type: 'custom-wrap-delete-unwrap',
+					service: 'binary',
+					wrap: (value, url, element) => {
+						switch(element.attributes.get('http-equiv')){
+							case'refresh':
+								element.attributes.set('content', this.tomp.html.wrap_http_refresh(value, url));
+								break;
+						}
+					},
+				},
+			},
 		},
 	];
 	route_attributes(route, element, url){
@@ -270,7 +279,6 @@ export class RewriteElements {
 	// persist is an object containing data usually stored once per page rewrite
 	#wrap(element, url, persist, wrap){
 		if(!wrap && element.attributes.has('data-is-tomp')){
-			element.attributes.set('data-ok','x');
 			element.detach();
 			return;
 		}
