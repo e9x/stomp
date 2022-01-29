@@ -56,6 +56,8 @@ export class AccessRewrite extends Rewrite {
 		});
 	}
 	get_desc(desc){
+		if(typeof desc != 'object' || desc == undefined)return desc;
+
 		if(typeof desc.get == 'function'){
 			if(desc.get == this.client.location.global_description.get){
 				return {...this.client.location.description};

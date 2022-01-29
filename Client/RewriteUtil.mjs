@@ -27,7 +27,7 @@ export function mirror_attributes(from, to){
 	return to;
 };
 
-const error_reporting = true;
+const error_reporting = false;
 
 function report_error(err){
 	console.log('Caught error in wrapper:\n', err);
