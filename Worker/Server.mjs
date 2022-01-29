@@ -75,7 +75,7 @@ export class Server {
 		
 		const hash = url.indexOf('#');
 		
-		if(hash){
+		if(hash != -1){
 			url = url.slice(0, hash);
 		}
 
