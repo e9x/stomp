@@ -109,6 +109,7 @@ export class RewriteJS {
 											ctx.node,
 										]),
 										ctx.parent.node.right,
+										b.literal(generate(ctx.parent.node)),
 									),
 								b.literal(generate(ctx.parent.node)),
 							]),
@@ -162,8 +163,8 @@ export class RewriteJS {
 									: b.binaryExpression(ctx.parent.node.operator.slice(0, -1), b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
 										ctx.node,
 									]), ctx.parent.node.right),
+								b.literal(generate(ctx.parent.node)),
 							]),
-							b.literal(generate(ctx.parent.node)),
 						));
 					}else if (ctx.parent.type == 'UpdateExpression') {
 						ctx.parent.replace_with(b.assignmentExpression(
@@ -179,8 +180,8 @@ export class RewriteJS {
 									])),
 									b.literal(1),
 								),
+								b.literal(generate(ctx.parent.node)),
 							]),
-							b.literal(generate(ctx.parent.node)),
 						));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
@@ -281,15 +282,33 @@ export class RewriteJS {
 					const parts = [ ctx.node.callee.object.object.name, ctx.node.callee.object.property.name, ctx.node.callee.property.name ];
 					
 					if(parts[0] != global_client)continue;
-
+					
+					console.log(ctx.node.x, generate(ctx.parent.node));
+					
 					switch(parts[1]){
 						case'access':
-
+							switch(parts[2]){
+								case'get':
+									ctx.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
+									ctx.remove_descendants_from_stack();
+									break;
+								case'set':
+									ctx.parent.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
+									ctx.parent.remove_descendants_from_stack();
+									break;
+								default:
+									console.warn('unknown', parts);
+									break;
+							}
 							break;
 						case'eval':
 							switch(parts[2]){
 								case'eval_scope':
 									ctx.parent.parent.replace_with(b.callExpression(b.identifier('eval'), ctx.node.arguments.slice(1)));
+									ctx.parent.parent.remove_descendants_from_stack();
+									break;
+								default:
+									console.warn('unknown', parts);
 									break;
 							}
 							break;
