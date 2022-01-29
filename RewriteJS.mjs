@@ -41,11 +41,11 @@ export class RewriteJS {
 			switch(ctx.type){
 				case'ImportExpression':
 					
-					// todo: add tompc$.eval.import()
+					// todo: add tompc$.import(meta, url)
 					ctx.replace_with(b.importExpression(b.callExpression(b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('eval')), b.identifier('import')), [
-							ctx.node.source,
-						]),
-					));
+						b.metaProperty(b.identifier('import'), b.identifier('meta')),
+						ctx.node.source,
+					])));
 
 					break;
 				case'ImportDeclaration':
@@ -117,7 +117,6 @@ export class RewriteJS {
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
 							ctx.node,
-							b.literal(generate(ctx.parent.node)),
 						]));
 					}
 					
@@ -186,7 +185,6 @@ export class RewriteJS {
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
 							ctx.node,
-							b.literal(generate(ctx.node)),
 						]));
 					}
 
@@ -242,24 +240,6 @@ export class RewriteJS {
 
 		for(let ctx of new AcornIterator(ast)){
 			switch(ctx.type){
-				case'ImportExpression':
-					
-					// todo: add tompc$.import()
-					/*ctx.replace_with(b.callExpression(
-						b.memberExpression(b.identifier(global_client), b.identifier('import')),
-						[
-							b.arrowFunctionExpression(
-								[ b.identifier('x') ],
-								b.callExpression(
-									b.importExpression(b.identifier('x')),
-									[ b.spreadElement(b.identifier('x')) ],
-								),
-							),
-							ctx.node.source,
-						],
-					));*/
-
-					break;
 				case'ImportDeclaration':
 					
 					ctx.node.source.value = this.unwrap_serving(ctx.node.source.value, url);
@@ -276,6 +256,8 @@ export class RewriteJS {
 					break;
 				case'CallExpression':
 					
+					// console.log('call', code.slice(ctx.node.start, ctx.node.end));
+
 					if(ctx.node.callee.type != 'MemberExpression')continue;
 					if(ctx.node.callee.object.type != 'MemberExpression')continue;
 					
@@ -287,12 +269,16 @@ export class RewriteJS {
 						case'access':
 							switch(parts[2]){
 								case'get':
-									ctx.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
+									ctx.replace_with(ctx.node.arguments[0]);
 									ctx.remove_descendants_from_stack();
 									break;
 								case'set':
 									ctx.parent.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
 									ctx.parent.remove_descendants_from_stack();
+									break;
+								case'pattern':
+									ctx.replace_with(ctx.node.arguments[0]);
+									ctx.remove_descendants_from_stack();
 									break;
 								default:
 									console.warn('unknown', parts);
@@ -304,6 +290,10 @@ export class RewriteJS {
 								case'eval_scope':
 									ctx.parent.parent.replace_with(b.callExpression(b.identifier('eval'), ctx.node.arguments.slice(1)));
 									ctx.parent.parent.remove_descendants_from_stack();
+									break;
+								case'import':
+									ctx.parent.replace_with(b.callExpression(b.identifier('import'), ctx.node.arguments.slice(1)));
+									ctx.parent.remove_descendants_from_stack();
 									break;
 								default:
 									console.warn('unknown', parts);

@@ -56,7 +56,9 @@ export class AcornContext {
 		return created;
 	}
 	remove_descendants_from_stack(){
-		this.stack.splice(this.stack.indexOf(this), 1);
+		const i = this.stack.indexOf(this);
+		
+		if(i != -1)this.stack.splice(i, 1);
 
 		for(let entry of this.entries){
 			entry.remove_descendants_from_stack();
