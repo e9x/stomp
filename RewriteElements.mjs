@@ -2,7 +2,6 @@ import { parseSrcset, stringifySrcset } from 'srcset';
 
 export class TOMPElement {
 	attributes = new Map();
-	detached = true;
 	detach(){
 		throw new Error('detach() not implemented');
 	}
@@ -36,6 +35,39 @@ export class RewriteElements {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
+	set_binary_srcset = (attr, value, url, element) => {
+		const parsed = parseSrcset(value);
+
+		for(let src of parsed){
+			const resolved = new URL(src.url, url).href;
+			src.url = this.tomp.binary.serve(resolved, url);
+		}
+
+		element.attributes.set(attr, stringifySrcset(parsed));
+	};
+	abstract = [
+		{
+			name: {
+				tag: 'img',
+				class: 'HTMLImageElement',
+			},
+			attributes: {
+				'src': { type: 'url', service: 'binary' },
+				'lowsrc': { type: 'url', service: 'binary' },
+				// delete as in move to data-tomp-srcset, create attribute named srcset and set value to result of wrap
+				'srcset': { type: 'custom-wrap-delete-unwrap', wrap: (value, url, element) => this.set_binary_srcset('srcset', value, url, element) },
+				'crossorigin': { type: 'delete' },
+			},
+		},
+		{
+			name: {
+				tag: 'script',
+				class: 'HTMLScriptElement',
+			},
+			attributes: {
+			},
+		},
+	];
 	route_attributes(route, element, url){
 		for(let name in route)if(element.attributes.has(name)){
 			try{
@@ -48,10 +80,29 @@ export class RewriteElements {
 
 		return true;
 	}
-	// persist is an object containing data usually stored once per page rewrite
 	wrap(element, url, persist){
+		return this.#wrap(element, url, persist, true);
+	}
+	unwrap(element, url, persist){
+		return this.#wrap(element, url, persist, false);
+	}
+	// persist is an object containing data usually stored once per page rewrite
+	#wrap(element, url, persist, wrap){
+		if(!wrap && element.attributes.has('data-is-tomp')){
+			element.attributes.set('data-ok','x');
+			element.detach();
+			return;
+		}
+
 		if(element.type == 'noscript' && this.tomp.noscript){
-			element.tagName = 'span';
+			if(wrap){
+				element.type = 'span';
+				element.attributes.set('data-tomp-was', 'noscript')
+			}else if(element.attributes.get('data-tomp-was') == 'noscript'){
+				element.type = 'noscript';
+				element.attributes.delete('data-tomp-was');
+			}
+
 			return;
 		}
 
@@ -84,8 +135,48 @@ export class RewriteElements {
 			this.all_style(element.attributes.get('style'), url, element);
 		}
 
-		if(element.type in this.attributes){
-			if(!this.route_attributes(this.attributes[element.type], element, url))return;
+		for(let ab of this.abstract){
+			if(ab.name.tag == element.type){
+				for(let attribute in ab.attributes){
+					const data = ab.attributes[attribute];
+					
+					const is_delete_wrap = ['delete','custom-wrap-delete-unwrap'].includes(data.type);
+					const custom_wrap = ['custom-wrap-delete-unwrap'].includes(data.type);
+					const custom_unwrap = ['custom-wrap-custom-unwrap'].includes(data.type);
+					
+					if(is_delete_wrap && !wrap && element.attributes.has(`data-tomp-${attribute}`)){
+						element.attributes.set(attribute, element.attributes.get(`data-tomp-${attribute}`));
+						element.attributes.delete(`data-tomp-${attribute}`);
+					}
+
+					if(!element.attributes.has(attribute))continue;
+					
+					const value = element.attributes.get(attribute);
+
+					if(is_delete_wrap && wrap){
+						element.attributes.delete(attribute);
+						element.attributes.set(`data-tomp-${attribute}`, value);
+					}
+					
+					if(custom_wrap && wrap == true){
+						data.wrap(value, url, element);
+					}else if(custom_unwrap && wrap == false){
+						data.unwrap(value, url, element);
+					}else{
+						switch(data.type){
+							case'url':
+
+								if(wrap){
+									element.attributes.set(attribute, this.tomp.url.wrap(new URL(value, url), data.service));
+								}else{
+									element.attributes.set(attribute, this.tomp.url.unwrap_ez(value, url));
+								}
+								
+								break;
+						}
+					}
+				}
+			}
 		}
 		
 		if(element.type == 'form'){
@@ -239,8 +330,8 @@ export class RewriteElements {
 						element.detach();
 						break;
 					case'refresh':
-					element.attributes.set('content', this.wrap_http_refresh(value, url));
-					break;
+						element.attributes.set('content', this.tomp.html.wrap_http_refresh(value, url));
+						break;
 				}
 				
 				switch(element.attributes.get('itemprop')){

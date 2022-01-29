@@ -52,7 +52,7 @@ class TOMPElementDOM {
 		this.node.remove();
 		const replacement = document.createElement(value);
 		replacement.append(...this.node.children);
-		
+
 		for(let [attribute,value] of this.attributes){
 			replacement.setAttribute(attribute, value);
 		}
@@ -107,14 +107,19 @@ export class HTMLRewrite extends Rewrite {
 			
 			if(attribute == 'style'){
 				result = this.client.tomp.css.unwrap(result, this.client.location.proxy);
-				
 			}
 			
-			return 
+			return result;
 		});
 
 		this.set_attribute = Element.prototype.setAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute, value ]) => {
 			attribute = String(attribute).toLowerCase();
+			value = String(value);
+
+			if(attribute == 'style'){
+				result = this.client.tomp.css.wrap(result, this.client.location.proxy);
+			}
+			
 			return Reflect.apply(target, that, [ attribute, value ]);
 		});
 	}
@@ -137,6 +142,15 @@ export class HTMLRewrite extends Rewrite {
 		return result;
 	}
 	router = {
+		Node: {
+			baseURI: desc => ({
+				get: wrap_function(desc.get, (target, that, args) => {
+					let result = Reflect.apply(target, that, args);
+					result = this.client.tomp.url.wrap(result, this.client.location.proxy);
+					return result;
+				}),
+			}),
+		},
 		HTMLImageElement: {
 			...this.define_attrs('src','lowsrc','srcset'),
 			currentSrc: desc => ({

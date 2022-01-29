@@ -1,5 +1,3 @@
-import { js_types } from "./RewriteHTML.mjs";
-
 export class RewriteManifest {
 	constructor(tomp){
 		this.tomp = tomp;

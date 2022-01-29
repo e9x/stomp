@@ -64,12 +64,12 @@ export class RewriteJS {
 					break;
 				case 'VariableDeclarator':
 					
-					if(ctx.node.id.type != 'ObjectPattern')break;
+					if(ctx.node.id.type != 'ObjectPattern' || !ctx.node.init)break;
 					
 					ctx.node.init = b.callExpression(b.memberExpression(global_access, b.identifier('pattern')), [
 						ctx.node.init,
 					]);
-
+					
 					break;
 				case'Identifier':
 

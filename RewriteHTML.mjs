@@ -28,7 +28,7 @@ class TOMPElementParse5 extends TOMPElement {
 		return value;
 	}
 	get detached(){
-		return this.#ctx.detached;
+		return !this.#ctx.attached;
 	}
 	detach(){
 		this.#ctx.detach();
@@ -75,6 +75,10 @@ export class RewriteHTML {
 						name: 'src',
 						value: `${this.tomp.directory}client.js`,
 					},
+					{
+						name: 'data-is-tomp',
+						value: 'true',
+					},
 				],
 			});
 			
@@ -87,14 +91,19 @@ export class RewriteHTML {
 						value: `${global_client}(${JSON.stringify(this.tomp)})`,
 					}
 				],
-				attrs: [],
+				attrs: [
+					{
+						name: 'data-is-tomp',
+						value: 'true',
+					},
+				],
 			});
 		}
 
 		return nodes;
 	}
-	wrap(html, url){
-		const ast = parse(html, {
+	#wrap(html, url, fragment, wrap){
+		const ast = (fragment ? parseFragment : parse)(html, {
 			// https://github.com/inikulin/parse5/blob/master/packages/parse5/docs/options/parser-options.md#optional-scriptingenabled
 			// <noscript>
 			scriptingEnabled: false,
@@ -111,11 +120,12 @@ export class RewriteHTML {
 
 			let element = new TOMPElementParse5(ctx);
 			
-			this.tomp.elements.wrap(element, url, persist);
+			if(wrap)this.tomp.elements.wrap(element, url, persist);
+			else this.tomp.elements.unwrap(element, url, persist);
 			
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)
 			// on the first non-essential node (not html,head,or body), insert the client script before it
-			if(!inserted_script && !essential_nodes.includes(ctx.node.nodeName)){
+			if(wrap && !element.detached && !inserted_script && !essential_nodes.includes(ctx.node.nodeName)){
 				inserted_script = ctx.insert_before(...this.get_head(url));
 			}
 
@@ -123,6 +133,12 @@ export class RewriteHTML {
 		}
 
 		return serialize(ast);
+	}
+	wrap(html, url, fragment = false){
+		return this.#wrap(html, url, fragment, true);
+	}
+	unwrap(html, url, fragment = false){
+		return this.#wrap(html, url, fragment, false);
 	}
 	// excellent resource
 	// https://web.archive.org/web/20210514140514/https://www.otsukare.info/2015/03/26/refresh-http-header
@@ -136,13 +152,6 @@ export class RewriteHTML {
 		
 		const resolved = new URL(value.slice(urlstart + 4, urlend), url).href;
 		return value.slice(0, urlstart) + this.serve(resolved, url) + value.slice(urlend);
-	}
-	wrap_fragment(html){
-
-	}
-	unwrap(html, url){
-		
-		return html;
 	}
 	serve(serve, url){
 		serve = serve.toString();
