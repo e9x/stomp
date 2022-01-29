@@ -35,7 +35,7 @@ export class Client {
 
 				if(!this.native.is_native(string)){
 					let start = 0;
-					if(!string.startsWith('function ')){
+					if(!string.startsWith('class ') && !string.startsWith('function ')){
 						start = 'function '.length;
 						string = 'function ' + string;
 					}
