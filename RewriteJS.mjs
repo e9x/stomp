@@ -264,13 +264,12 @@ export class RewriteJS {
 					const parts = [ ctx.node.callee.object.object.name, ctx.node.callee.object.property.name, ctx.node.callee.property.name ];
 					
 					if(parts[0] != global_client)continue;
-					
+
 					switch(parts[1]){
 						case'access':
 							switch(parts[2]){
 								case'get':
 									ctx.replace_with(ctx.node.arguments[0]);
-									ctx.remove_descendants_from_stack();
 									break;
 								case'set':
 									ctx.parent.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
@@ -278,7 +277,6 @@ export class RewriteJS {
 									break;
 								case'pattern':
 									ctx.replace_with(ctx.node.arguments[0]);
-									ctx.remove_descendants_from_stack();
 									break;
 								default:
 									console.warn('unknown', parts);
@@ -289,11 +287,9 @@ export class RewriteJS {
 							switch(parts[2]){
 								case'eval_scope':
 									ctx.parent.parent.replace_with(b.callExpression(b.identifier('eval'), ctx.node.arguments.slice(1)));
-									ctx.parent.parent.remove_descendants_from_stack();
 									break;
 								case'import':
 									ctx.parent.replace_with(b.callExpression(b.identifier('import'), ctx.node.arguments.slice(1)));
-									ctx.parent.remove_descendants_from_stack();
 									break;
 								default:
 									console.warn('unknown', parts);
