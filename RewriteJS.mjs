@@ -86,20 +86,18 @@ export class RewriteJS {
 					if((ctx.parent.type == 'FunctionDeclaration' || ctx.parent.type == 'FunctionExpression') && ctx.parent_key == 'id')break;
 					if(ctx.parent.type == 'AssignmentPattern' && ctx.parent_key == 'left') break;
 					if(!undefinable.includes(ctx.node.name))break;
-					if(ctx.node[this.dont_rewrite])break;
-
 					
 					if(ctx.parent.type == 'UpdateExpression'){
 						ctx.parent.replace_with(b.assignmentExpression(
 							'=',
-							this.attribute_dont_rewrite(ctx.node),
+							ctx.node,
 							b.callExpression(b.memberExpression(global_access, b.identifier('set')), [
-								this.attribute_dont_rewrite(ctx.node),
+								ctx.node,
 								b.binaryExpression(
 									ctx.parent.node.operator.slice(0, -1),
 									// convert to number
 									b.unaryExpression('+', b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
-										this.attribute_dont_rewrite(ctx.node),
+										ctx.node,
 									])),
 									b.literal(1),
 								),
@@ -108,15 +106,15 @@ export class RewriteJS {
 					}else if(ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
 						ctx.parent.replace_with(b.assignmentExpression(
 							'=',
-							this.attribute_dont_rewrite(ctx.node),
+							ctx.node,
 							b.callExpression(b.memberExpression(global_access, b.identifier('set')), [
-								this.attribute_dont_rewrite(ctx.node),
+								ctx.node,
 								ctx.parent.node.operator == '='
 									? ctx.parent.node.right
 									: b.binaryExpression(
 										ctx.parent.node.operator.slice(0, -1),
 										b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
-											this.attribute_dont_rewrite(ctx.node),
+											ctx.node,
 										]),
 										ctx.parent.node.right,
 									),
@@ -124,7 +122,7 @@ export class RewriteJS {
 						));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
-							this.attribute_dont_rewrite(ctx.node),
+							ctx.node,
 						]));
 					}
 					
@@ -159,35 +157,30 @@ export class RewriteJS {
 
 					if(!rewrite)break;
 					
-					// wont rewrite anyway
-					// this.attribute_dont_rewrite(ctx.node.property);
-
-					// if (ctx.node.computed) args[1][] = true;
-					
 					if (ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left') {
 						ctx.parent.replace_with(b.assignmentExpression(
 							'=',
-							this.attribute_dont_rewrite(ctx.node),
+							ctx.node,
 							b.callExpression(b.memberExpression(global_access, b.identifier('set')), [
-								this.attribute_dont_rewrite(ctx.node),
+								ctx.node,
 								ctx.parent.node.operator == '='
 									? ctx.parent.node.right
 									: b.binaryExpression(ctx.parent.node.operator.slice(0, -1), b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
-										this.attribute_dont_rewrite(ctx.node),
+										ctx.node,
 									]), ctx.parent.node.right),
 							]),
 						));
 					}else if (ctx.parent.type == 'UpdateExpression') {
 						ctx.parent.replace_with(b.assignmentExpression(
 							'=',
-							this.attribute_dont_rewrite(ctx.node),
+							ctx.node,
 							b.callExpression(b.memberExpression(global_access, b.identifier('set')), [
-								this.attribute_dont_rewrite(ctx.node),
+								ctx.node,
 								b.binaryExpression(
 									ctx.parent.node.operator.slice(0, -1),
 									// convert to number
 									b.unaryExpression('+', b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
-										this.attribute_dont_rewrite(ctx.node),
+										ctx.node,
 									])),
 									b.literal(1),
 								),
@@ -229,11 +222,6 @@ export class RewriteJS {
 		}
 
 		return generate(ast);
-	}
-	dont_rewrite = Symbol();
-	attribute_dont_rewrite(node){
-		node[this.prevent_rewrite] = true;
-		return node;
 	}
 	unwrap(code, url){
 		return code;
