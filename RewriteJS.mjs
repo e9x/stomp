@@ -283,8 +283,6 @@ export class RewriteJS {
 					
 					if(parts[0] != global_client)continue;
 					
-					console.log(ctx.node.x, generate(ctx.parent.node));
-					
 					switch(parts[1]){
 						case'access':
 							switch(parts[2]){

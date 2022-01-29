@@ -56,15 +56,11 @@ export class AcornContext {
 		return created;
 	}
 	remove_descendants_from_stack(){
-		this.no_desc = true;
-		
-		for(let entry of this.entries){
-			const i = this.stack.indexOf(entry);
-			console.log(i);
-			this.stack.splice(i, 1);
-		}
-		
 		this.stack.splice(this.stack.indexOf(this), 1);
+
+		for(let entry of this.entries){
+			entry.remove_descendants_from_stack();
+		}
 	}
 };
 
@@ -76,22 +72,25 @@ export class AcornIterator {
 	next(){
 		if(!this.stack.length) return { value: undefined, done: true };
 		
-		let context = this.stack.pop();
-		
+		const context = this.stack.pop();
+		const entries = [];
+
 		for(let [key, value] of Object.entries(context.node)){
-			if(typeof value?.type == 'string')context.entries.push([key,value]);
+			if(typeof value?.type == 'string')entries.push([key,value]);
 			else if(Array.isArray(value)){
 				for(let sv of value){
-					if(typeof sv?.type == 'string')context.entries.push([key,sv]);
+					if(typeof sv?.type == 'string')entries.push([key,sv]);
 				}
 			}
 		}
 
 		let start = this.stack.length - 1,
-			length = context.entries.length;
+			length = entries.length;
 		
-		for(let [key, node] of context.entries){
-			this.stack[start + length--] = new AcornContext(node, context, key, this.stack);
+		for(let [key, node] of entries){
+			const ent = new AcornContext(node, context, key, this.stack);
+			this.stack[start + length--] = ent;
+			context.entries.push(ent);
 		}
 
 		return { value: context, done: false };
