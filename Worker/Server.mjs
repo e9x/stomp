@@ -71,8 +71,14 @@ export class Server {
 	}
 	request(event){
 		const request = event.request;
-		const url = request.url.slice(request.url.indexOf(this.tomp.directory));
+		let url = request.url.slice(request.url.indexOf(this.tomp.directory));
 		
+		const hash = url.indexOf('#');
+		
+		if(hash){
+			url = url.slice(0, hash);
+		}
+
 		const {service,field} = this.tomp.url.get_attributes(url);
 		
 		if(service.startsWith('worker:')){
