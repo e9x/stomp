@@ -6,9 +6,9 @@ export class RewriteCSS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	wrap(code, url, html){
+	wrap(code, url, inline){
 		try{
-			var ast = parse(code, { context: html ? 'declarationList' : 'stylesheet' });
+			var ast = parse(code, { context: inline ? 'declarationList' : 'stylesheet' });
 		}catch(err){
 			if(err instanceof SyntaxError){
 				return `/*${JSON.stringify(err.message)}*/`;
@@ -22,7 +22,7 @@ export class RewriteCSS {
 				let resolved;
 				
 				try{
-					resolved = new URL(node.value, url).href;
+					resolved = new URL(node.value, url);
 				}catch(err){
 					// console.error(err);
 					return;

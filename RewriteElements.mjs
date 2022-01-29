@@ -45,7 +45,17 @@ export class RewriteElements {
 
 		element.attributes.set(attr, stringifySrcset(parsed));
 	};
+	
 	abstract = [
+		{
+			name: {
+				tag: /./,
+				name: /./,
+			},
+			attributes: {
+				style: { type: 'css', inline: true },
+			},
+		},
 		{
 			name: {
 				tag: 'img',
@@ -69,6 +79,7 @@ export class RewriteElements {
 				'src': { type: 'url', service: 'js' },
 				'crossorigin': { type: 'delete' },
 				'nonce': { type: 'delete' },
+				'integrity': { type: 'delete' },
 			},
 			// condition could be in attribute or content
 			// for scripts, if the type isnt a valid js mime then its ignored
@@ -82,6 +93,126 @@ export class RewriteElements {
 			condition: (url, element) => css_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
 			// <style> is strictly content-only
 			content: { type: 'css' },
+		},
+		{
+			name: {
+				tag: 'a',
+				class: 'HTMLAnchorElement',
+			},
+			attributes: {
+				'href': { type: 'url', service: 'html' },
+			},
+		},
+		{
+			name: {
+				tag: 'iframe',
+				class: 'HTMLIFrameElement',
+			},
+			attributes: {
+				'src': { type: 'url', service: 'html' },
+			},
+		},
+		{
+			name: {
+				tag: 'use',
+				class: 'SVGUseElement',
+			},
+			attributes: {
+				'xlink:href': { type: 'url', service: 'html' },
+				'href': { type: 'url', service: 'html' },
+			},
+		},
+		{
+			name: {
+				tag: 'source',
+				class: 'HTMLSourceElement'
+			},
+			attributes: {
+				'src': { type: 'url', service: 'binary' },
+				'srcset': { type: 'custom-wrap-delete-unwrap', wrap: (value, url, element) => this.set_binary_srcset('srcset', value, url, element) },
+			},
+		},
+		{
+			name: {
+				tag: /^(video|audio)$/,
+				class: 'HTMLMediaElement',
+			},
+			attributes: {
+				'src': { type: 'url', service: 'binary' },
+			},
+		},
+		/*{
+			name: {
+				tag: 'audio',
+				class: 'HTMLAudioElement'
+			},
+			attributes: {
+				'src': { type: 'url', service: 'binary' },
+			},
+		}*/
+		{
+			name: {
+				tag: 'video',
+				class: 'HTMLVideoElement',
+			},
+			attributes: {
+				'poster': { type: 'url', service: 'binary' },
+			},
+		},
+		{
+			name: {
+				tag: 'link',
+				class: 'HTMLLinkElement',
+			},
+			attributes: {
+				'href': { type: 'custom-wrap-url-unwrap', service: 'binary', wrap: (value, url, element) => {
+					const resolved = new URL(value, url).href;
+				
+					switch(element.attributes.get('rel')){
+						case'preload':
+							switch(element.attributes.get('as')){
+								case'style':
+									element.attributes.set('href', this.tomp.css.serve(resolved, url));
+									break;
+								case'worker':
+								case'script':
+									element.attributes.set('href', this.tomp.js.serve(resolved, url));
+									break;
+								case'object':
+								case'document':
+									element.attributes.set('href', this.tomp.html.serve(resolved, url));
+									break;
+								default:
+									element.attributes.set('href', this.tomp.binary.serve(resolved, url));
+									break;
+							}
+							break;
+						case'manifest':
+							element.attributes.set('href', this.tomp.manifest.serve(resolved, url));
+							break;
+						case'alternate':
+						case'amphtml':
+						// case'profile':
+							element.attributes.set('href', this.tomp.html.serve(resolved, url));
+							break;
+						case'stylesheet':
+							element.attributes.set('href', this.tomp.css.serve(resolved, url));
+							break;
+						default:
+							element.attributes.set('href', this.tomp.binary.serve(resolved, url));
+							break;
+					}
+				} },
+				'integrity': { type: 'delete' },
+			},
+		},
+		{
+			name: {
+				tag: 'meta',
+				class: 'HTMLMetaElement',
+			},
+			type: 'delete',
+			condition: (url, element) => !element.attributes.has('charset'),
 		},
 	];
 	route_attributes(route, element, url){
@@ -101,6 +232,40 @@ export class RewriteElements {
 	}
 	unwrap(element, url, persist){
 		return this.#wrap(element, url, persist, false);
+	}
+	abstract_type(value, url, data, wrap){
+		switch(data.type){
+			case'css':
+				if(wrap){
+					return this.tomp.css.wrap(value, url, data.inline);
+				}else{
+					return this.tomp.css.unwrap(value, url, data.inline);
+				}
+			case'js':
+				if(wrap){
+					return this.tomp.js.wrap(value, url);
+				}else{
+					return this.tomp.js.unwrap(value, url);
+				}
+			case'url':
+				switch(data.service){
+					case'js':
+					case'css':
+					case'manifest':
+					case'form':
+						if(wrap){
+							return this.tomp[data.service].serve(new URL(value, url), url);
+						}else{
+							return this.tomp[data.service].unwrap_serving(value, url);
+						}
+					default:
+						if(wrap){
+							return this.tomp.url.wrap(new URL(value, url), data.service);
+						}else{
+							return this.tomp.url.unwrap_ez(value, url);
+						}
+				}
+		}
 	}
 	// persist is an object containing data usually stored once per page rewrite
 	#wrap(element, url, persist, wrap){
@@ -142,61 +307,76 @@ export class RewriteElements {
 			element.attributes.set('target', persist.one_target);
 		}
 		
-		if(element.type in this.content && element.text?.match(/\S/)){
-			const result = this.content[element.type](element.text, url, element);
-			element.text = result;
-		}
-		
-		if(element.attributes.has('style')){
-			this.all_style(element.attributes.get('style'), url, element);
-		}
-
 		for(let ab of this.abstract){
-			if(ab.name.tag == element.type){
-				
+			if(element.type.match(ab.name.tag)){
 				if('condition' in ab){
 					if(!ab.condition(url, element))continue;
 				}
 
+				if(ab.type == 'delete'){
+					if(wrap){
+						element.type = 'tomp-' + element.type;
+					}else if(element.type.startsWith('tomp-')){
+						element.type = element.type.slice('tomp-'.length);
+					}
+					continue;
+				}
 
 				if('content' in ab){
-					const content = element.textContent;
+					const content = element.text;
 
-					if('condition' in ab.content){
-						if(!ab.content.condition(content, url, element))continue;
-					}
+					if(content?.match(/\S/)){
+						let condition = true;
 
-					switch(ab.content.type){
-						case'js':
-							element.textContent = this.tomp.js.wrap(content, url);
-							break;
-						case'css':
-							element.textContent = this.tomp.css.wrap(content, url);
-							break;
+						if('condition' in ab.content){
+							condition = ab.content.condition(content, url, element);
+						}
+						
+						if(condition){
+							const changed = this.abstract_type(content, url, ab.content, wrap);
+
+							if(changed != undefined){
+								element.text = changed;
+							}
+						}
 					}
 				}
 
 				if('attributes' in ab)for(let attribute in ab.attributes){
 					const data = ab.attributes[attribute];
 					
-					const is_delete_wrap = ['delete','custom-wrap-delete-unwrap'].includes(data.type);
-					const custom_wrap = ['custom-wrap-delete-unwrap'].includes(data.type);
-					const custom_unwrap = ['custom-wrap-custom-unwrap'].includes(data.type);
+					let custom_wrap = false;
+					let custom_unwrap = false;
+
+					switch(data.type){
+					case'custom-wrap-custom-unwrap':
+						custom_wrap = true;
+						custom_unwrap = true;
+						break;
+					case'custom-wrap-url-unwrap':
+						custom_unwrap = true;
+						data.type = 'url';
+						break;
+					case'custom-wrap-delete-unwrap':
+						custom_wrap = true;
+						data.type = 'delete';
+						break;
+					}
 					
-					if(is_delete_wrap && !wrap && element.attributes.has(`data-tomp-${attribute}`)){
+					if(data.type == 'delete' && !wrap && element.attributes.has(`data-tomp-${attribute}`)){
 						element.attributes.set(attribute, element.attributes.get(`data-tomp-${attribute}`));
 						element.attributes.delete(`data-tomp-${attribute}`);
 					}
-
+					
 					if(!element.attributes.has(attribute))continue;
 					
-					const value = element.attributes.get(attribute);
+					let value = element.attributes.get(attribute);
 
 					if('condition' in data){
 						if(!data.condition(value, url, element))continue;
 					}
 
-					if(is_delete_wrap && wrap){
+					if(data.type == 'delete' && wrap){
 						element.attributes.delete(attribute);
 						element.attributes.set(`data-tomp-${attribute}`, value);
 					}
@@ -206,30 +386,10 @@ export class RewriteElements {
 					}else if(custom_unwrap && wrap == false){
 						data.unwrap(value, url, element);
 					}else{
-						switch(data.type){
-							case'url':
-
-								switch(data.service){
-									case'js':
-									case'css':
-									case'manifest':
-									case'form':
-										if(wrap){
-											element.attributes.set(attribute, this.tomp[data.service].serve(new URL(value, url), url));
-										}else{
-											element.attributes.set(attribute, this.tomp[data.service].unwrap_serving(value, url));
-										}
-										break;
-									default:
-										if(wrap){
-											element.attributes.set(attribute, this.tomp.url.wrap(new URL(value, url), data.service));
-										}else{
-											element.attributes.set(attribute, this.tomp.url.unwrap_ez(value, url));
-										}
-										break;
-								}
-								
-								break;
+						const changed = this.abstract_type(value, url, data, wrap);
+						
+						if(changed != undefined){
+							element.attributes.set(attribute, changed);
 						}
 					}
 				}
@@ -250,184 +410,4 @@ export class RewriteElements {
 			element.attributes.set(name, this.tomp.js.wrap(value, url));
 		}
 	}
-	content = {
-		script: (value, url, element) => {
-			const type = get_mime(element.attributes.get('type') || '').toLowerCase();
-			
-			if(js_types.includes(type)){
-				return this.tomp.js.wrap(value, url);
-			}else{
-				return value;
-			}
-		},
-		style: (value, url, element) => {
-			const type = get_mime(element.attributes.get('type') || '').toLowerCase();
-			
-			if(css_types.includes(type))return this.tomp.css.wrap(value, url);
-			else return value;
-		},
-	};
-	binary_src = attr => (value, url, element) => {
-		const resolved = new URL(value, url).href;
-		element.attributes.set(attr, this.tomp.binary.serve(resolved, url));
-	};
-	html_src = attr => (value, url, element) => {
-		const nurl = new URL(value, url);
-		if(nurl.protocol == 'javascript:')return 'javascript:' + this.tomp.js.wrap(nurl.pathname, url);
-		const resolved = nurl.href;
-		element.attributes.set(attr, this.tomp.html.serve(resolved, url));
-	};
-	binary_srcset = attr => (value, url, element) => {
-		const parsed = parseSrcset(value);
-
-		for(let src of parsed){
-			const resolved = new URL(src.url, url).href;
-			src.url = this.tomp.binary.serve(resolved, url);
-		}
-
-		element.attributes.set(attr, stringifySrcset(parsed));
-	};
-	delete_attr = attr => (value, url, element) => {
-		element.attributes.set(`data-tomp-${attr}`, value);
-		element.attributes.delete('integrity');
-	};
-	all_style(value, url, element){
-		return this.tomp.css.wrap(value, url, true);
-	}
-	attributes = {
-		use: {
-			'xlink:href': this.html_src('xlink:href'),
-			'href': this.html_src('href'),
-		},
-		script: {
-			src: (value, url, element) => {
-				const type = get_mime(element.attributes.get('type') || '').toLowerCase();
-				const resolved = new URL(value, url).href;
-				
-				if(js_types.includes(type)){
-					element.attributes.set('src', this.tomp.js.serve(resolved, url));
-				}else{
-					element.attributes.set('src', this.tomp.binary.serve(resolved, url));
-				}
-			},
-			nonce: this.delete_attr('nonce'),
-			integrity: this.delete_attr('integrity'),
-		},
-		iframe: {
-			src: this.html_src('src'),
-		},
-		img: {
-			src: this.binary_src('src'),
-			lowsrc: this.binary_src('src'),
-			srcset: this.binary_srcset('srcset'),
-		},
-		audio: {
-			src: this.binary_src('src'),
-		},
-		source: {
-			src: this.binary_src('src'),
-			srcset: this.binary_srcset('srcset'),
-		},
-		video: {
-			src: this.binary_src('src'),
-			poster: this.binary_src('poster'),
-		},
-		a: {
-			href: this.html_src('href'),
-		},
-		link: {
-			href: (value, url, element) => {
-				const resolved = new URL(value, url).href;
-				
-				switch(element.attributes.get('rel')){
-					case'preload':
-						switch(element.attributes.get('as')){
-							case'style':
-								element.attributes.set('href', this.tomp.css.serve(resolved, url));
-								break;
-							case'worker':
-							case'script':
-								element.attributes.set('href', this.tomp.js.serve(resolved, url));
-								break;
-							case'object':
-							case'document':
-								element.attributes.set('href', this.tomp.html.serve(resolved, url));
-								break;
-							default:
-								element.attributes.set('href', this.tomp.binary.serve(resolved, url));
-								break;
-						}
-						break;
-					case'manifest':
-						element.attributes.set('href', this.tomp.manifest.serve(resolved, url));
-						break;
-					case'alternate':
-					case'amphtml':
-					// case'profile':
-						element.attributes.set('href', this.tomp.html.serve(resolved, url));
-						break;
-					case'stylesheet':
-						element.attributes.set('href', this.tomp.css.serve(resolved, url));
-						break;
-					default:
-						element.attributes.set('href', this.tomp.binary.serve(resolved, url));
-						break;
-				}
-			},
-			integrity: this.delete_attr('integrity'),
-		},
-		meta: {
-			content: (value, url, element) => {
-				const resolved = new URL(value, url).href;
-				
-				element.attributes.set('data-tomp-content', value);
-
-				switch(element.attributes.get('http-equiv')){
-					case'content-security-policy':
-						element.detach();
-						break;
-					case'refresh':
-						element.attributes.set('content', this.tomp.html.wrap_http_refresh(value, url));
-						break;
-				}
-				
-				switch(element.attributes.get('itemprop')){
-					case'image':
-						element.attributes.set('content', this.tomp.binary.serve(resolved, url));
-						break;
-				}
-
-				switch(element.attributes.get('property')){
-					case'og:url':
-					case'og:video:url':
-					case'og:video:secure_url':
-						element.attributes.set('content', this.tomp.html.serve(resolved, url));
-						break;
-					case'og:image':
-						element.attributes.set('content', this.tomp.binary.serve(resolved, url));
-						break;
-				}
-
-				switch(element.attributes.get('name')){
-					case'referrer':
-						element.detach();
-						break;
-					case'twitter:app:url:googleplay':
-					case'twitter:url':
-					case'parsely-link':
-					case'parsely-image-url':
-						element.attributes.set('content', this.tomp.html.serve(resolved, url));
-						break;
-					case'twitter:image':
-					case'sailthru.image.thumb':
-					case'msapplication-TileImage':
-						element.attributes.set('content', this.tomp.binary.serve(resolved, url));
-						break;
-					case'style-tools':
-						element.attributes.set('content', this.tomp.css.serve(resolved, url));
-						break;
-				}
-			},
-		},
-	};
 };

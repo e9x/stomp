@@ -59,10 +59,6 @@ export class RewriteURL {
 		
 		const si = path.indexOf('/', 1);
 		
-		/*if(si == -1 || qi == -1){
-			throw { message: messages['error.badurl'] };
-		}*/
-
 		const result = {
 			service: si == -1 ? path : path.slice(0, si),
 			field: si == -1 ? '/' : path.slice(si),

@@ -6,10 +6,14 @@ const tomp = new TOMP({
 
 });
 
-const input = `
+const input = /*`
+<script type='module' src='/assets/beta.1.js'></script>
+` || */`
 <!DOCTYPE HTML>
 <html>
-	<head>
+	<head>/>
+		<meta name='description' content='Web access service' />
+		<meta charset='utf-8' />
 		<link rel='stylesheet' href='./assets/beta.css' />
 		<style>
 body {
@@ -39,7 +43,5 @@ const rewritten = tomp.html.wrap(input, base);
 const unrewritten = tomp.html.unwrap(rewritten, base);
 
 console.log(rewritten);
-
 console.log('UNRW: ==========');
-
 console.log(unrewritten);
