@@ -5,6 +5,9 @@ export class TOMPElement {
 	detach(){
 		throw new Error('detach() not implemented');
 	}
+	sync(){
+		throw new Error('sync() not implemented');
+	}
 	get type(){
 		throw new Error('get type() not implemented');
 	}
@@ -405,5 +408,61 @@ export class RewriteElements {
 		for(let [ name, value ] of element.attributes)if(name.startsWith('on')){
 			element.attributes.set(name, this.tomp.js.wrap(value, url));
 		}
+	}
+	get_attribute(element, url, get_attribute){
+		for(let ab of this.abstract){
+			if(element.type.match(ab.name.tag)){
+				if('condition' in ab){
+					if(!ab.condition(url, element))continue;
+				}
+
+				if('attributes' in ab)for(let attribute in ab.attributes){
+					if(attribute != get_attribute)continue;
+
+					const data = ab.attributes[attribute];
+						
+					if(data.type == 'delete' && !wrap && element.attributes.has(`data-tomp-${attribute}`)){
+						element.attributes.set(attribute, element.attributes.get(`data-tomp-${attribute}`));
+						element.attributes.delete(`data-tomp-${attribute}`);
+					}
+					
+					if(!element.attributes.has(attribute))continue;
+					
+					let value = element.attributes.get(attribute);
+
+					if('condition' in data){
+						if(!data.condition(value, url, element))continue;
+					}
+
+					if(data.type == 'delete' && wrap){
+						element.attributes.delete(attribute);
+						element.attributes.set(`data-tomp-${attribute}`, value);
+					}
+					
+					const changed = this.abstract_type(value, url, element, data, wrap);
+					
+					if(changed != undefined){
+						element.attributes.set(attribute, changed);
+					}
+				}
+			}
+		}
+		
+		if(element.type == 'form'){
+			const action_resolved = new URL(element.attributes.get('action') || '', url).href;
+			
+			if(element.attributes.get('method')?.toUpperCase() == 'POST'){
+				element.attributes.set('method', this.tomp.html.serve(action_resolved, url));
+			}else{
+				element.attributes.set('method', this.tomp.form.serve(action_resolved, url));
+			}
+		}
+
+		for(let [ name, value ] of element.attributes)if(name.startsWith('on')){
+			element.attributes.set(name, this.tomp.js.wrap(value, url));
+		}
+	}
+	set_attribute(element, url, set_attribute, value){
+		
 	}
 };

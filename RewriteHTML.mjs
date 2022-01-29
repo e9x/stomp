@@ -118,7 +118,7 @@ export class RewriteHTML {
 				continue;
 			}
 
-			let element = new TOMPElementParse5(ctx);
+			const element = new TOMPElementParse5(ctx);
 			
 			if(wrap)this.tomp.elements.wrap(element, url, persist);
 			else this.tomp.elements.unwrap(element, url, persist);

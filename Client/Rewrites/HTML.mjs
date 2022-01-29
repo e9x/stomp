@@ -37,6 +37,9 @@ class TOMPElementDOMAttributes {
 			yield [ name, this.get(name) ];
 		}
 	}
+	[Symbol.iterator](){
+		return this.entries();
+	}
 };
 
 class TOMPElementDOM {
@@ -72,6 +75,9 @@ class TOMPElementDOM {
 	detach(){
 		this.#node.remove();
 	}
+	sync(){
+		
+	}
 	get parent(){
 		return new TOMPElementDOM(this.parentNode);
 	}
@@ -100,14 +106,15 @@ export class HTMLRewrite extends Rewrite {
 			}
 		}
 
-		// TODO
 		this.get_attribute = Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute ]) => {
 			attribute = String(attribute).toLowerCase();
-			const result = Reflect.apply(target, that, [ attribute ]);
+			// let result = Reflect.apply(target, that, [ attribute ]);
 			
-			if(attribute == 'style'){
-				result = this.client.tomp.css.unwrap(result, this.client.location.proxy);
-			}
+			const element = new TOMPElementDOM(that);
+			
+			const result = this.client.tomp.elements.get_attribute(element, this.client.location.proxy, attribute);
+
+			element.sync();
 			
 			return result;
 		});
@@ -116,9 +123,7 @@ export class HTMLRewrite extends Rewrite {
 			attribute = String(attribute).toLowerCase();
 			value = String(value);
 
-			if(attribute == 'style'){
-				result = this.client.tomp.css.wrap(result, this.client.location.proxy);
-			}
+			
 			
 			return Reflect.apply(target, that, [ attribute, value ]);
 		});
@@ -152,7 +157,6 @@ export class HTMLRewrite extends Rewrite {
 			}),
 		},
 		HTMLImageElement: {
-			...this.define_attrs('src','lowsrc','srcset'),
 			currentSrc: desc => ({
 				configurable: true,
 				enumerable: true,
