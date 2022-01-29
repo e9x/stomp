@@ -66,7 +66,7 @@ export class RewriteElements {
 				'lowsrc': { type: 'url', service: 'binary' },
 				// delete as in move to data-tomp-srcset, create attribute named srcset and set value to result of wrap
 				'srcset': {
-					type: 'custom-wrap-delete-unwrap',
+					type: 'delete',
 					wrap: (value, url, element) => this.set_binary_srcset('srcset', value, url, element),
 				},
 				'crossorigin': { type: 'delete' },
@@ -132,7 +132,7 @@ export class RewriteElements {
 			},
 			attributes: {
 				'src': { type: 'url', service: 'binary' },
-				'srcset': { type: 'custom-wrap-delete-unwrap', wrap: (value, url, element) => this.set_binary_srcset('srcset', value, url, element) },
+				'srcset': { type: 'delete', wrap: (value, url, element) => this.set_binary_srcset('srcset', value, url, element) },
 			},
 		},
 		{
@@ -160,11 +160,11 @@ export class RewriteElements {
 			},
 			attributes: {
 				'href': {
-					type: 'custom-wrap-url-unwrap',
+					type: 'url',
 					service: 'binary',
 					wrap: (value, url, element) => {
 						const resolved = new URL(value, url).href;
-					
+						
 						switch(element.attributes.get('rel')){
 							case'preload':
 								switch(element.attributes.get('as')){
@@ -196,6 +196,7 @@ export class RewriteElements {
 								element.attributes.set('href', this.tomp.css.serve(resolved, url));
 								break;
 							default:
+								this.tomp.log.warn('unknown rel', element.attributes.get('rel'));
 								element.attributes.set('href', this.tomp.binary.serve(resolved, url));
 								break;
 						}
@@ -211,7 +212,7 @@ export class RewriteElements {
 			},
 			attributes: {
 				'content': {
-					type: 'custom-wrap-delete-unwrap',
+					type: 'delete',
 					service: 'binary',
 					wrap: (value, url, element) => {
 						switch(element.attributes.get('http-equiv')){
@@ -242,7 +243,15 @@ export class RewriteElements {
 	unwrap(element, url, persist){
 		return this.#wrap(element, url, persist, false);
 	}
-	abstract_type(value, url, data, wrap){
+	abstract_type(value, url, element, data, wrap){
+		if(typeof data.wrap == 'function' && wrap == true){
+			data.wrap(value, url, element);
+			return undefined;
+		}else if(typeof data.unwrap == 'function' && wrap == false){
+			data.unwrap(value, url, element);
+			return undefined;
+		}
+
 		switch(data.type){
 			case'css':
 				if(wrap){
@@ -344,7 +353,7 @@ export class RewriteElements {
 						}
 						
 						if(condition){
-							const changed = this.abstract_type(content, url, ab.content, wrap);
+							const changed = this.abstract_type(content, url, element, ab.content, wrap);
 
 							if(changed != undefined){
 								element.text = changed;
@@ -355,25 +364,7 @@ export class RewriteElements {
 
 				if('attributes' in ab)for(let attribute in ab.attributes){
 					const data = ab.attributes[attribute];
-					
-					let custom_wrap = false;
-					let custom_unwrap = false;
-
-					switch(data.type){
-					case'custom-wrap-custom-unwrap':
-						custom_wrap = true;
-						custom_unwrap = true;
-						break;
-					case'custom-wrap-url-unwrap':
-						custom_wrap = true;
-						data.type = 'url';
-						break;
-					case'custom-wrap-delete-unwrap':
-						custom_wrap = true;
-						data.type = 'delete';
-						break;
-					}
-					
+						
 					if(data.type == 'delete' && !wrap && element.attributes.has(`data-tomp-${attribute}`)){
 						element.attributes.set(attribute, element.attributes.get(`data-tomp-${attribute}`));
 						element.attributes.delete(`data-tomp-${attribute}`);
@@ -392,16 +383,10 @@ export class RewriteElements {
 						element.attributes.set(`data-tomp-${attribute}`, value);
 					}
 					
-					if(custom_wrap && wrap == true){
-						data.wrap(value, url, element);
-					}else if(custom_unwrap && wrap == false){
-						data.unwrap(value, url, element);
-					}else{
-						const changed = this.abstract_type(value, url, data, wrap);
-						
-						if(changed != undefined){
-							element.attributes.set(attribute, changed);
-						}
+					const changed = this.abstract_type(value, url, element, data, wrap);
+					
+					if(changed != undefined){
+						element.attributes.set(attribute, changed);
 					}
 				}
 			}
