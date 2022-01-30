@@ -139,7 +139,7 @@ export class HTMLRewrite extends Rewrite {
 							}) : undefined,
 							set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
 								value = String(value);
-								return Reflect.apply(target, that, [ this.process_get_attribute(that, data.name, value) ]);
+								return Reflect.apply(target, that, [ this.process_set_attribute(that, data.name, value) ]);
 							}) : undefined,
 						});
 					}
