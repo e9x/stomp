@@ -1,10 +1,12 @@
 import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
+import { global as g } from '../../Global.mjs';
+// https://github.com/webpack/webpack/issues/12960
+const global = g;
 import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { TOMPElement } from '../../RewriteElements.mjs';
 
-const { getAttribute, setAttribute, hasAttribute, removeAttribute, getAttributeNames } = Element.prototype;
-const { localName } = getOwnPropertyDescriptors(Element.prototype);
+const { getAttribute, setAttribute, hasAttribute, removeAttribute, getAttributeNames } = global?.Element?.prototype || {};
+const { localName } = getOwnPropertyDescriptors(global?.Element?.prototype || {});
 
 class TOMPElementDOMAttributes {
 	#node;

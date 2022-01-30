@@ -22,7 +22,10 @@ export class RewriteJS {
 		const cli = `${this.tomp.directory}client.js`;
 
 		return `void function ${global_client}_main(){`
-			+ `if(!(${JSON.stringify(global_client)} in this))importScripts(${JSON.stringify(cli)})`
+			+ `if(!(${JSON.stringify(global_client)} in this)){`
+				+ `importScripts(${JSON.stringify(cli)});`
+				+ `${global_client}(${JSON.stringify(this.tomp)});`
+			+ `}`
 		+ `}();`;
 	}
 	wrap(code, url, worker){

@@ -5,23 +5,9 @@ import { engine } from '../../UserAgent.mjs';
 
 export class RequestRewrite extends Rewrite {
 	work(){
-		const that = this;
-		const { original_request, Request } = this.get_request();
+		const Request = this.get_request();
 		
 		const desc_url = Reflect.getOwnPropertyDescriptor(Response.prototype, 'url');
-
-		Navigator.prototype.sendBeacon = wrap_function(Navigator.prototype.sendBeacon, (target, that, [url, data]) => {
-			if(that != navigator)throw new TypeError('Illegal invocation');	
-
-			url = this.client.tomp.binary.serve(new URL(url, this.client.location.proxy), this.client.location.proxy);
-			return Reflect.apply(target, that, [url, data]);
-		});
-
-		Object.defineProperty(Response.prototype, 'url', {
-			get(){
-				return that.response_url.has(this) ? that.response_url.get(this) : desc_url.get.call(this);
-			}
-		});
 
 		const legal_windows = [null,undefined,global];
 
@@ -48,40 +34,7 @@ export class RequestRewrite extends Rewrite {
 			this.response_url.set(response, this.client.tomp.url.unwrap_ez(desc_url.get.call(response)));
 			return response;
 		});
-
-		const xml_raw_names = new WeakMap();
-
-		XMLHttpRequest.prototype.open = wrap_function(XMLHttpRequest.prototype.open, (target, that, [method, url, async, username, password]) => {
-			if(!async && engine != 'gecko'){
-				this.tomp.log.warn('TOMP does not support synchronous XMLHTTPRequests. See https://bugs.chromium.org/p/chromium/issues/detail?id=602051');
-				async = true;
-			}
-
-			xml_raw_names.set(that, new Set());
-			url = this.client.tomp.binary.serve(new URL(url, this.client.location.proxy), this.client.location.proxy);
-			return Reflect.apply(target, that, [ method, url, async, username, password ]);
-		});
-
-		const { setRequestHeader } = XMLHttpRequest.prototype;
-
-		XMLHttpRequest.prototype.setRequestHeader = wrap_function(XMLHttpRequest.prototype.setRequestHeader, (target, that, [header, value]) => {
-			if(xml_raw_names.has(that)){
-				const raw = xml_raw_names.get(that);
-				// if raw is undefined, xmlhttprequest likely isnt open and therefore cant have any headers set
-				raw.add(header);
-			}
-			
-			return Reflect.apply(target, that, [header, value]);
-		});
-
-		XMLHttpRequest.prototype.send = wrap_function(XMLHttpRequest.prototype.send, (target, that, [body]) => {
-			if(xml_raw_names.has(that)){
-				const raw = xml_raw_names.get(that);
-				setRequestHeader.call(that, 'x-tomp-impl-names', JSON.stringify([...raw]));
-			}
-			return Reflect.apply(target, that, [body]);
-		});
-
+		
 		global.Request = Request;
 	}
 	response_url = new WeakMap();
@@ -176,6 +129,6 @@ export class RequestRewrite extends Rewrite {
 			}
 		};
 
-		return { original_request, Request };
+		return Request;
 	}
 };

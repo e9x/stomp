@@ -4,7 +4,6 @@ import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { undefinable, global_client } from '../../RewriteJS.mjs';
 
 export class AccessRewrite extends Rewrite {
-	unique_parent = parent !== global  && global_client in parent;
 	// unique_top = parent !== top && global_client in parent;
 	import(meta, url){
 		const resolved = new URL(url, meta.url);
@@ -12,6 +11,10 @@ export class AccessRewrite extends Rewrite {
 		return this.client.tomp.js.serve(resolved, this.client.location.proxy);
 	}
 	work(){
+		if(this.client.type == 'page'){
+			this.unique_parent = parent !== global  && global_client in parent;
+		}
+		
 		global.Reflect.get = wrap_function(global.Reflect.get, (target, that, args) => {
 			let result = Reflect.apply(target, that, args);
 			result = this.get(result);

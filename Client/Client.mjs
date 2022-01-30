@@ -6,7 +6,6 @@ import { RequestRewrite } from './Rewrites/Request.mjs';
 import { EvalRewrite } from './Rewrites/Eval.mjs';
 import { AccessRewrite } from './Rewrites/Access.mjs';
 import { IDBRewrite } from './Rewrites/IndexedDB.mjs';
-import { CookieRewrite } from './Rewrites/Cookie.mjs';
 import { WorkerRewrite } from './Rewrites/Worker.mjs';
 import { NativeHelper } from './NativeHelper.mjs';
 import { wrap_function, function_strings } from './RewriteUtil.mjs';
@@ -14,6 +13,7 @@ import { wrap_function, function_strings } from './RewriteUtil.mjs';
 export class Client {
 	static type = 'worker';
 	native = new NativeHelper();
+	type = this.constructor.type;
 	constructor(config){
 		this.tomp = new TOMP(config);
 		this.ready = this.work();
@@ -21,7 +21,6 @@ export class Client {
 		new WebSocketRewrite(this).work();
 		new RequestRewrite(this).work();
 		new IDBRewrite(this).work();
-		new CookieRewrite(this).work();
 		new WorkerRewrite(this).work();
 
 		this.access = new AccessRewrite(this);
