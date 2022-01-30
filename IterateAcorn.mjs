@@ -35,6 +35,22 @@ export class AcornContext {
 	get type(){
 		return this.node.type;
 	}
+	detach(){
+		if(this.root)throw new RangeError('Cannot detach the root.');
+		else if(!this.attached)throw new RangeError('Cannot detach a detached node.');
+		
+		if(this.parent_array){
+			let place = this.parent_object.indexOf(this.node);
+			if(place == -1) return false;
+			this.parent_object.splice(place, 1);
+		}else{
+			delete this.parent.node[this.parent_key];
+		}
+
+		this.attached = false;
+		
+		return true;
+	}
 	// success = new AcornContext, failure = false
 	replace_with(node){
 		if(this.root)throw new RangeError('Cannot replace the root.');

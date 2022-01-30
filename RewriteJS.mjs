@@ -18,7 +18,14 @@ export class RewriteJS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	wrap(code, url){
+	worker_main(url){
+		const cli = `${this.tomp.directory}client.js`;
+
+		return `void function ${global_client}_main(){`
+			+ `if(!(${JSON.stringify(global_client)} in this))importScripts(${JSON.stringify(cli)})`
+		+ `}();`;
+	}
+	wrap(code, url, worker){
 		if(this.tomp.noscript)return '';
 
 		try{
@@ -217,7 +224,13 @@ export class RewriteJS {
 			}
 		}
 
-		return generate(ast);
+		code = generate(ast);
+		
+		if(worker){
+			code = this.worker_main(url);
+		}
+
+		return code;
 	}
 	unwrap(code, url){
 		if(this.tomp.noscript)return '';
@@ -255,6 +268,18 @@ export class RewriteJS {
 					
 					break;
 				case'CallExpression':
+					
+					// void function tompc$_main(){if(!("tompc$" in this))importScripts("/client.js")}();
+					if(ctx.node.callee.type != 'FunctionExpression')continue;
+					if(ctx.node.callee.id.name != `${global_client}_main`)continue;
+
+					ctx.remove_descendants_from_stack();
+					ctx.parent.parent.detach();
+					
+					break;
+				case'CallExpression':
+					
+				console.log(ctx.node.callee);
 					
 					// console.log('call', code.slice(ctx.node.start, ctx.node.end));
 
@@ -330,13 +355,13 @@ export class RewriteJS {
 
 		return generate(ast);
 	}
-	serve(serve, url){
+	serve(serve, url, worker){
 		serve = serve.toString();
 		if(serve.startsWith('data:')){
 			const {mime,data} = ParseDataURI(serve);
 			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
 		}
-		return this.tomp.url.wrap(serve, 'worker:js');
+		return this.tomp.url.wrap(serve, worker ? 'worker:wjs' : 'worker:js');
 	}
 	unwrap_serving(serving, url){
 		serving = serving.toString();

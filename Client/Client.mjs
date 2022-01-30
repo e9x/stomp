@@ -7,7 +7,7 @@ import { EvalRewrite } from './Rewrites/Eval.mjs';
 import { AccessRewrite } from './Rewrites/Access.mjs';
 import { IDBRewrite } from './Rewrites/IndexedDB.mjs';
 import { CookieRewrite } from './Rewrites/Cookie.mjs';
-import { MediaRewrite } from './Rewrites/Media.mjs';
+import { WorkerRewrite } from './Rewrites/Worker.mjs';
 import { NativeHelper } from './NativeHelper.mjs';
 import { wrap_function, function_strings } from './RewriteUtil.mjs';
 
@@ -22,7 +22,7 @@ export class Client {
 		new RequestRewrite(this).work();
 		new IDBRewrite(this).work();
 		new CookieRewrite(this).work();
-		new MediaRewrite(this).work();
+		new WorkerRewrite(this).work();
 
 		this.access = new AccessRewrite(this);
 		this.eval = new EvalRewrite(this);
