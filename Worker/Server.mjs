@@ -5,8 +5,6 @@ import messages from '../Messages.mjs'
 import { openDB } from 'idb/with-async-ittr';
 import {create_db as create_cookie_db} from './Cookies.mjs';
 
-export const key_cookie = 'tomp$key';
-
 export class Server {
 	constructor(config){
 		this.tomp = new TOMP(config);
