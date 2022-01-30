@@ -61,6 +61,7 @@ export class RewriteElements {
 			},
 			attributes: [
 				{ name: 'style', type: 'css', context: 'declarationList' },
+				{ name: /on.*?/, class_name: /[]/, type: 'js' },
 			],
 		},
 		// see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/nonce
@@ -190,7 +191,7 @@ export class RewriteElements {
 			},
 			attributes: [
 				{ name: 'href', type: 'url', service: 'html' },
-				{ name: 'xlink:href', class_name: undefined, type: 'url', service: 'html' },
+				{ name: 'xlink:href', class_name: /[]/, type: 'url', service: 'html' },
 			],
 		},
 		{
@@ -445,10 +446,6 @@ export class RewriteElements {
 			}else{
 				element.attributes.set('method', this.tomp.form.serve(action_resolved, url));
 			}
-		}
-
-		for(let [ name, value ] of element.attributes)if(name.startsWith('on')){
-			element.attributes.set(name, this.tomp.js.wrap(value, url));
 		}
 	}
 	// todo: form action

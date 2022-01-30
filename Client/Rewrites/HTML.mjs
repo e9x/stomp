@@ -174,14 +174,23 @@ export class HTMLRewrite extends Rewrite {
 
 					if('attributes' in ab)for(let data of ab.attributes){
 						// html quirk attribute
-						if('class_name' in data && data.class_name == undefined)continue;
+						// if('class_name' in data && data.class_name == undefined)continue;
 						
-						const name = data.class_name || data.name;
+						let name;
 						
-						if(!(name in cls.prototype)){
+						for(let key in getOwnPropertyDescriptors(cls.prototype)){
+							if(this.client.tomp.elements.test_name(key, data.class_name || data.name)){
+								name = key;
+								break;
+							}
+						}
+						
+						if(!name)continue;
+
+						/*if(!(name in cls.prototype)){
 							this.client.tomp.log.warn('Attribute', name, 'was not in target prototype:', key);
 							continue;
-						}
+						}*/
 
 						const desc = Reflect.getOwnPropertyDescriptor(cls.prototype, name);
 
