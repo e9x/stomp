@@ -1,7 +1,7 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { wrap_function, Reflect } from '../RewriteUtil.mjs';
-import { engine } from '../UserAgent.mjs';
+import { engine } from '../../UserAgent.mjs';
 
 export class RequestRewrite extends Rewrite {
 	work(){

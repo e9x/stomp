@@ -16,8 +16,10 @@ export class NativeHelper {
 		for(let i = 0; i < string.length; i++){
 			if(i == 0 && !isIdentifierStart(string.charCodeAt(0), true))return false;
 			
-			if(!isIdentifierChar(string[i], true))return false;
+			if(!isIdentifierChar(string.charCodeAt(i), true))return false;
 		}
+
+		return true;
 	}
 	is_native(string){
 		const left = string.indexOf(this.left);

@@ -1,0 +1,23 @@
+import { Rewrite } from '../Rewrite.mjs';
+import { global } from '../../Global.mjs';
+import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../RewriteUtil.mjs';
+
+export class IDBRewrite extends Rewrite {
+	work(){
+		global.IDBFactory.prototype.open = wrap_function(global.IDBFactory.prototype.open, (target, that, [ name, version ]) => {
+			return Reflect.apply(target, that, [ `${name}@${this.client.location.proxy.origin}`])
+		});
+
+		const { name } = getOwnPropertyDescriptors(IDBDatabase.prototype);
+
+		Reflect.defineProperty(IDBDatabase.prototype, 'name', {
+			get: wrap_function(name.get, (target, that, args) => {
+				let name = Reflect.apply(target, that, args);
+
+				name = name.slice(0, name.lastIndexOf('@'));
+
+				return name;
+			})
+		})
+	}
+};

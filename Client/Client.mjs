@@ -5,6 +5,8 @@ import { WebSocketRewrite } from './Rewrites/WebSocket.mjs';
 import { RequestRewrite } from './Rewrites/Request.mjs';
 import { EvalRewrite } from './Rewrites/Eval.mjs';
 import { AccessRewrite } from './Rewrites/Access.mjs';
+import { IDBRewrite } from './Rewrites/IndexedDB.mjs';
+import { CookieRewrite } from './Rewrites/Cookie.mjs';
 import { NativeHelper } from './NativeHelper.mjs';
 import { wrap_function, function_strings } from './RewriteUtil.mjs';
 
@@ -17,6 +19,8 @@ export class Client {
 		
 		new WebSocketRewrite(this).work();
 		new RequestRewrite(this).work();
+		new IDBRewrite(this).work();
+		new CookieRewrite(this).work();
 		
 		this.access = new AccessRewrite(this);
 		this.eval = new EvalRewrite(this);
