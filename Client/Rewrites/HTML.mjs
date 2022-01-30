@@ -49,7 +49,7 @@ class TOMPElementDOM {
 		this.attributes = new TOMPElementDOMAttributes(this.#node);
 	}
 	get type(){
-		return this.#node.nodeName;
+		return this.#node.localName;
 	}
 	set type(value){
 		this.node.remove();
@@ -108,11 +108,11 @@ export class HTMLRewrite extends Rewrite {
 
 		this.get_attribute = Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute ]) => {
 			attribute = String(attribute).toLowerCase();
-			// let result = Reflect.apply(target, that, [ attribute ]);
+			let result = Reflect.apply(target, that, [ attribute ]);
 			
 			const element = new TOMPElementDOM(that);
 			
-			const result = this.client.tomp.elements.get_attribute(element, this.client.location.proxy, attribute);
+			result = this.client.tomp.elements.get_attribute(element, this.client.location.proxy, attribute, result);
 
 			element.sync();
 			
@@ -123,9 +123,13 @@ export class HTMLRewrite extends Rewrite {
 			attribute = String(attribute).toLowerCase();
 			value = String(value);
 
+			const element = new TOMPElementDOM(that);
 			
+			const result = this.client.tomp.elements.get_attribute(element, this.client.location.proxy, attribute, value);
+
+			element.sync();
 			
-			return Reflect.apply(target, that, [ attribute, value ]);
+			return result;
 		});
 	}
 	define_attrs(...attrs){
