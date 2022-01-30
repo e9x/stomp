@@ -203,8 +203,9 @@ export class HTMLRewrite extends Rewrite {
 			currentSrc: desc => ({
 				configurable: true,
 				enumerable: true,
-				get: wrap_function(desc.get, (target, that, args) => {
-					let result = Reflect.apply(target, that, args);
+				get: wrap_function(desc.get, (target, that) => {
+					let result = Reflect.apply(target, that, []);
+					if(!result)return result;
 					result = this.client.tomp.url.unwrap_ez(result);
 					return result;
 				}),
