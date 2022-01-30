@@ -1,6 +1,7 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { wrap_function, Reflect } from '../RewriteUtil.mjs';
+import { engine } from '../UserAgent.mjs';
 
 export class RequestRewrite extends Rewrite {
 	work(){
@@ -51,8 +52,7 @@ export class RequestRewrite extends Rewrite {
 		const xml_raw_names = new WeakMap();
 
 		XMLHttpRequest.prototype.open = wrap_function(XMLHttpRequest.prototype.open, (target, that, [method, url, async, username, password]) => {
-			if(!async){
-				// alternatively, make tompfetch compatible with xmlhttprequest..
+			if(!async && engine != 'gecko'){
 				this.tomp.log.warn('TOMP does not support synchronous XMLHTTPRequests. See https://bugs.chromium.org/p/chromium/issues/detail?id=602051');
 				async = true;
 			}

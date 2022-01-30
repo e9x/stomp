@@ -1,0 +1,1 @@
+export const engine = navigator.userAgent.includes('Firefox/') ? 'gecko' : 'webkit';
