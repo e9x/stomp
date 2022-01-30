@@ -1,6 +1,6 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { getOwnPropertyDescriptors, Proxy, Reflect, wrap_function } from '../RewriteUtil.mjs';
+import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { TOMPElement } from '../../RewriteElements.mjs';
 
 const { getAttribute, setAttribute, hasAttribute, removeAttribute, getAttributeNames } = Element.prototype;
@@ -87,16 +87,12 @@ class TOMPElementDOM extends TOMPElement {
 
 export class HTMLRewrite extends Rewrite {
 	style_proxy(style){
-		return new Proxy(style, {
+		const proxy = new Proxy(style, {
 			get: (target, prop, receiver) => {
 				let result = Reflect.get(target, prop, receiver);
 				
 				if(typeof result == 'string'){
-					if(prop == 'cssText'){
-						result = this.client.tomp.css.unwrap(result, this.client.location.proxy, 'declarationList');
-					}else{
-						result = this.client.tomp.css.unwrap(result, this.client.location.proxy, 'value');
-					}
+					result = this.client.tomp.css.unwrap(result, this.client.location.proxy, 'value');
 				}
 				
 				return result;
@@ -117,18 +113,37 @@ export class HTMLRewrite extends Rewrite {
 				const desc = Reflect.getOwnPropertyDescriptor(target, prop);
 
 				if(typeof desc.value == 'string'){
-					if(prop == 'cssText'){
-						desc.value = this.client.tomp.css.wrap(desc.value, this.client.location.proxy, 'declarationList');
-					}else{
-						desc.value = this.client.tomp.css.wrap(desc.value, this.client.location.proxy, 'value');
-					}
+					desc.value = this.client.tomp.css.wrap(desc.value, this.client.location.proxy, 'value');
 				}
 
 				return desc;
 			}
 		});
+
+		native_proxies.set(proxy, style);
+
+		return proxy;
 	}
-	work(){
+	style_work(){
+		const { cssText } = getOwnPropertyDescriptors(CSSStyleDeclaration.prototype);
+
+		bind_natives(CSSStyleDeclaration.prototype);
+
+		Reflect.defineProperty(CSSStyleDeclaration.prototype, 'cssText', {
+			get: wrap_function(cssText.get, (target, that, args) => {
+				let result = Reflect.apply(target, that, args);
+				result = this.client.tomp.css.unwrap(result, this.client.location.proxy, 'declarationList');
+				return result;
+			}),
+			set: wrap_function(cssText.set, (target, that, [ value ]) => {
+				value = this.client.tomp.css.wrap(value, this.client.location.proxy, 'declarationList');
+				const result = Reflect.apply(target, that, [ value ]);
+				return result;
+			}),
+			configurable: true,
+			enumerabe: true,
+		});
+		
 		CSSStyleDeclaration.prototype.getPropertyValue = wrap_function(CSSStyleDeclaration.prototype.getPropertyValue, (target, that, [ property ]) => {
 			let result = Reflect.apply(target, that, [ property ]);
 			result = this.client.tomp.css.unwrap(result, this.client.location.proxy, 'value');
@@ -140,7 +155,8 @@ export class HTMLRewrite extends Rewrite {
 			const result = Reflect.apply(target, that, [ property, value, priority ]);
 			return result;
 		});
-		
+	}
+	anchor_work(){
 		const { href } = getOwnPropertyDescriptors(HTMLAnchorElement.prototype);
 
 		for(let prop of ['port','host','hostname','pathname','origin','search','protocol','hash','username','password']){
@@ -161,6 +177,11 @@ export class HTMLRewrite extends Rewrite {
 				}) : undefined,
 			});
 		}
+	}
+	work(){
+		this.style_work();
+
+		this.anchor_work();
 		
 		for(let key of Object.getOwnPropertyNames(global)){
 			for(let ab of this.client.tomp.elements.abstract){
@@ -200,6 +221,7 @@ export class HTMLRewrite extends Rewrite {
 				}
 			}
 		}
+		
 		this.get_attribute = Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute ]) => {
 			attribute = String(attribute).toLowerCase();
 			let result = Reflect.apply(target, that, [ attribute ]);
