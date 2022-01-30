@@ -22,8 +22,7 @@ export class NativeHelper {
 		return true;
 	}
 	is_native(string){
-		const left = string.indexOf(this.left);
-		if(left != 0)return false;
+		if(!string.startsWith(this.left))return false;
 		const right = string.indexOf(this.right);
 		let name = string.slice(this.left.length, right);
 		if(name.startsWith('get ') || name.startsWith('set '))name = name.slice(4);

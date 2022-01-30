@@ -4,6 +4,8 @@ import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { undefinable, global_client } from '../../RewriteJS.mjs';
 
 export class AccessRewrite extends Rewrite {
+	unique_parent = parent !== global  && global_client in parent;
+	// unique_top = parent !== top && global_client in parent;
 	import(meta, url){
 		const resolved = new URL(url, meta.url);
 
@@ -61,40 +63,42 @@ export class AccessRewrite extends Rewrite {
 		});
 	}
 	get_desc(desc){
-		if(typeof desc != 'object' || desc == undefined)return desc;
+		if(!(desc instanceof Object))return desc;
 
-		if(typeof desc.get == 'function'){
-			if(desc.get == this.client.location.global_description.get){
+		if(typeof desc.get === 'function'){
+			if(desc.get === this.client.location.global_description.get){
 				return {...this.client.location.description};
-			}else if(desc.get == this.client.location.global_description_document.get){
+			}else if(desc.get === this.client.location.global_description_document.get){
 				return {...this.client.location.description_document};
 			}
-		}
-
-		if(typeof desc.value == 'function'){
-			if(desc.value == this.client.eval.global_description.value){
+		}else if(typeof desc.value === 'function'){
+			if(desc.value === this.client.eval.global_description.value){
 				return {...this.client.eval.description};
 			}
 		}
 
-		if(parent != global && global_client in parent)return parent[global_client].access.get_desc(desc);
+		if(this.unique_parent)return parent[global_client].access.get_desc(desc);
 		else return desc;
 	}
     get(obj){
-		if(obj == this.client.eval.global)return this.client.eval.eval_global_proxy;
-		if(obj == this.client.location.global)return this.client.location.proxy;
-		if(!this.client.service_worker && obj == global.top)return global.top;
-       
-		if(parent != global && global_client in parent)return parent[global_client].access.get(obj);
-		else return obj;
+		if(obj === this.client.eval.global){
+			return this.client.eval.eval_global_proxy;
+		}else if(obj === this.client.location.global){
+			return this.client.location.proxy;
+		}else if(this.unique_parent){
+			return parent[global_client].access.get(obj);
+		}else{
+			return obj;
+		}
     }
     set(target, value){
-		if(target == this.client.location.global){
-			value = this.client.tomp.html.serve(new URL(value, this.client.location.proxy), this.client.location.proxy);
+		if(target === this.client.location.global){
+			return this.client.tomp.html.serve(new URL(value, this.client.location.proxy), this.client.location.proxy);
+		}else if(this.unique_parent){
+			return parent[global_client].access.set(target, value);
+		}else{
+			return value;
 		}
-
-		if(parent != global && global_client in parent)return parent[global_client].access.set(target, value);
-		else return value;
 	}
 	pattern(obj){
 		const result = {...obj};
