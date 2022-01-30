@@ -8,6 +8,7 @@ export async function TOMPFetch(server, url, server_request, request_headers){
 	if(url.protocol == 'blob:'){
 		const response = await fetch(url.protocol + url.path);
 		response.json_headers = Object.fromEntries(response.headers.entries());
+		response.raw_header_names = [];
 		return response;
 	}
 
