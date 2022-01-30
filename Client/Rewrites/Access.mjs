@@ -4,6 +4,11 @@ import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { undefinable, global_client } from '../../RewriteJS.mjs';
 
 export class AccessRewrite extends Rewrite {
+	import(meta, url){
+		const resolved = new URL(url, meta.url);
+
+		return this.client.tomp.js.serve(resolved, this.client.location.proxy);
+	}
 	work(){
 		global.Reflect.get = wrap_function(global.Reflect.get, (target, that, args) => {
 			let result = Reflect.apply(target, that, args);
