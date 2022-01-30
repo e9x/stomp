@@ -1,8 +1,8 @@
 import messages from './Messages.mjs';
 
 // WIP
-export const protocols =     ['http:','https:'];
-export const default_ports = [80     ,443     ];
+export const protocols =     ['http:','https:', 'blob:'];
+export const default_ports = [80     ,443     , 0];
 
 export class ParsedRewrittenURL {
 	toString(){

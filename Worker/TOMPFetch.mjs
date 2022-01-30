@@ -5,6 +5,12 @@ import { TOMPError } from '../TOMPError.mjs';
 const forbids_body = ['GET','HEAD'];
 
 export async function TOMPFetch(server, url, server_request, request_headers){
+	if(url.protocol == 'blob:'){
+		const response = await fetch(url.protocol + url.path);
+		response.json_headers = Object.fromEntries(response.headers.entries());
+		return response;
+	}
+
 	const options = {
 		credentials: 'omit',
 		headers: {
