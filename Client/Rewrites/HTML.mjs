@@ -146,10 +146,10 @@ export class HTMLRewrite extends Rewrite {
 		for(let prop of ['port','host','hostname','pathname','origin','search','protocol','hash','username','password']){
 			const desc = Reflect.getOwnPropertyDescriptor(HTMLAnchorElement.prototype, prop);
 			
-			Reflect.defineProperty(desc, prop, {
+			Reflect.defineProperty(HTMLAnchorElement.prototype, prop, {
 				get: desc.get ? wrap_function(desc.get, (target, that, args) => {
 					const the_href = Reflect.apply(href.get, that, []);
-					const url = new URL(the_href, this.client.location.proxy);
+					const url = new URL(this.client.tomp.url.unwrap_ez(new URL(the_href, this.client.location.proxy), this.client.location.proxy));
 					return url[prop];
 				}) : undefined,
 				set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
