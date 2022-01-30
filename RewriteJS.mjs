@@ -227,7 +227,7 @@ export class RewriteJS {
 		code = generate(ast);
 		
 		if(worker){
-			code = this.worker_main(url);
+			code = this.worker_main(url) + code;
 		}
 
 		return code;
