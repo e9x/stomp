@@ -371,12 +371,6 @@ export class RewriteElements {
 		
 		for(let ab of this.abstract){
 			if(this.test_name(element.type, ab.name.tag)){
-				/*
-				// condition outside attributes and content doesnt make sense
-				if('condition' in ab){
-					if(!ab.condition(url, element))continue;
-				}*/
-
 				if(ab.type == 'delete'){
 					if(wrap){
 						element.type = 'tomp-' + element.type;
@@ -407,32 +401,38 @@ export class RewriteElements {
 				}
 
 				if('attributes' in ab)for(let data of ab.attributes){
-					if(data.type == 'delete' && !wrap && element.attributes.has(`data-tomp-${data.name}`)){
-						element.attributes.set(data.name, element.attributes.get(`data-tomp-${data.name}`));
-						element.attributes.delete(`data-tomp-${data.name}`);
-					}
-					
-					if(!element.attributes.has(data.name)){
-						continue;
-					}
-
-					let value = element.attributes.get(data.name);
-
-					if('condition' in data){
-						if(!data.condition(value, url, element)){
+					for(let name of element.attributes.keys()){
+						if(!this.test_name(name, data.name)){
 							continue;
 						}
-					}
-
-					if(data.type == 'delete' && wrap){
-						element.attributes.delete(data.name);
-						element.attributes.set(`data-tomp-${data.name}`, value);
-					}
-					
-					const changed = this.abstract_type(value, url, element, data, wrap);
-					
-					if(changed != undefined){
-						element.attributes.set(data.name, changed);
+						
+						if(data.type == 'delete' && !wrap && element.attributes.has(`data-tomp-${name}`)){
+							element.attributes.set(name, element.attributes.get(`data-tomp-${name}`));
+							element.attributes.delete(`data-tomp-${name}`);
+						}
+						
+						if(!element.attributes.has(name)){
+							continue;
+						}
+	
+						let value = element.attributes.get(name);
+	
+						if('condition' in data){
+							if(!data.condition(value, url, element)){
+								continue;
+							}
+						}
+	
+						if(data.type == 'delete' && wrap){
+							element.attributes.delete(name);
+							element.attributes.set(`data-tomp-${name}`, value);
+						}
+						
+						const changed = this.abstract_type(value, url, element, data, wrap);
+						
+						if(changed != undefined){
+							element.attributes.set(name, changed);
+						}
 					}
 				}
 			}
@@ -449,26 +449,28 @@ export class RewriteElements {
 		}
 	}
 	// todo: form action
-	get_attribute(element, url, name, value){
+	get_attribute(element, url, name, class_name, value){
 		for(let ab of this.abstract){
 			if(!this.test_name(element.type, ab.name.tag)){
 				continue;
 			}
 
 			if('condition' in ab){
-				if(!ab.condition(url, element))continue;
+				if(!ab.condition(url, element)){
+					continue;
+				}
 			}
 
 			if('attributes' in ab)for(let data of ab.attributes){
-				if(!this.test_name(name, data.name)){
+				if(!this.test_name(name, class_name && data.class_name ? data.class_name : data.name)){
 					continue;
 				}
 
-				if(data.type == 'delete' && element.attributes.has(`data-tomp-${data.name}`)){
-					return element.attributes.get(`data-tomp-${data.name}`);
+				if(data.type == 'delete' && element.attributes.has(`data-tomp-${name}`)){
+					return element.attributes.get(`data-tomp-${name}`);
 				}
 				
-				if(!element.attributes.has(data.name)){
+				if(!class_name && !element.attributes.has(name)){
 					continue;
 				}
 
@@ -492,7 +494,7 @@ export class RewriteElements {
 		
 		return value;
 	}
-	set_attribute(element, url, name, value){
+	set_attribute(element, url, name, class_name, value){
 		for(let ab of this.abstract){
 			if(!this.test_name(element.type, ab.name.tag)){
 				continue;
@@ -507,7 +509,7 @@ export class RewriteElements {
 			}
 
 			if('attributes' in ab)for(let data of ab.attributes){
-				if(!this.test_name(name, data.name)){
+				if(!this.test_name(name, class_name && data.class_name ? data.class_name : data.name)){
 					continue;
 				}
 
@@ -518,8 +520,8 @@ export class RewriteElements {
 				}
 				
 				if(data.type == 'delete'){
-					element.attributes.delete(data.name);
-					element.attributes.set(`data-tomp-${data.name}`, value);
+					element.attributes.delete(name);
+					element.attributes.set(`data-tomp-${name}`, value);
 				}
 				
 				if(data.unwrap){
@@ -529,7 +531,7 @@ export class RewriteElements {
 				const changed = this.abstract_type(value, url, element, data, true);
 				
 				if(changed != undefined){
-					element.attributes.set(data.name, changed);
+					element.attributes.set(name, changed);
 				}
 			}
 		}
