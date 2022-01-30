@@ -52,6 +52,9 @@ export class Server {
 				case 'worker:js':
 					return await SendJS(this, request, field);
 					break;
+				case 'worker:wjs':
+					return await SendJS(this, request, field, true);
+					break;
 				case 'worker:js:module':
 					return await SendJS(this, request, field, true);
 					break;

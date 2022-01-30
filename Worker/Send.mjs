@@ -81,7 +81,7 @@ async function handle_common_request(server, server_request, request_headers, ur
 	}
 }
 
-async function handle_common_response(rewriter, server, server_request, url, response){
+async function handle_common_response(rewriter, server, server_request, url, response, ...args){
 	const response_headers = new Headers(response.headers);
 	
 	// server.tomp.log.debug(url, response_headers);
@@ -108,7 +108,7 @@ async function handle_common_response(rewriter, server, server_request, url, res
 
 		try{
 			evaluated = new URL(location, url);
-			response_headers.set('location', rewriter.serve(evaluated.href, url));
+			response_headers.set('location', rewriter.serve(evaluated.href, url, ...args));
 		}catch(err){
 			console.error('failure', err);
 			response_headers.delete('location');
@@ -179,7 +179,8 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
 		else throw err;
 	}
-	const response_headers = await handle_common_response(rewriter, server, server_request, url, response);
+	
+	const response_headers = await handle_common_response(rewriter, server, server_request, url, response, ...args);
 	
 	var send = new Uint8Array();
 
@@ -200,8 +201,8 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	}
 }
 
-export async function SendJS(server, server_request, field){
-	return await SendRewrittenScript(server.tomp.js, server, server_request, field);
+export async function SendJS(server, server_request, field, worker){
+	return await SendRewrittenScript(server.tomp.js, server, server_request, field, worker);
 }
 
 export async function SendCSS(server, server_request, field){
