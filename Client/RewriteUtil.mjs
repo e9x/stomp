@@ -4,6 +4,8 @@ export const function_strings = new Map();
 
 export const getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors.bind(Object);
 
+export const Proxy = global.Proxy;
+
 // reflect functions may be updated during runtime
 export const Reflect = {
 	apply: global.Reflect.apply.bind(global.Reflect),

@@ -59,7 +59,7 @@ export class RewriteElements {
 				class: /HTMLElement/, // /HTML.*?Element/
 			},
 			attributes: [
-				{ name: 'style', type: 'css', inline: true },
+				{ name: 'style', type: 'css', context: 'declarationList' },
 			],
 		},
 		// see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/nonce
@@ -295,9 +295,9 @@ export class RewriteElements {
 		switch(data.type){
 			case'css':
 				if(wrap){
-					return this.tomp.css.wrap(value, url, data.inline);
+					return this.tomp.css.wrap(value, url, data.context);
 				}else{
-					return this.tomp.css.unwrap(value, url, data.inline);
+					return this.tomp.css.unwrap(value, url, data.context);
 				}
 			case'js':
 				if(wrap){

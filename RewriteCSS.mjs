@@ -6,9 +6,9 @@ export class RewriteCSS {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	wrap(code, url, inline){
+	wrap(code, url, context = 'stylesheet'){
 		try{
-			var ast = parse(code, { context: inline ? 'declarationList' : 'stylesheet' });
+			var ast = parse(code, { context });
 		}catch(err){
 			if(err instanceof SyntaxError){
 				return `/*${JSON.stringify(err.message)}*/`;
@@ -35,9 +35,9 @@ export class RewriteCSS {
 
 		return generate(ast);
 	}
-	unwrap(code, url, inline){
+	unwrap(code, url, context = 'stylesheet'){
 		try{
-			var ast = parse(code, { context: inline ? 'declarationList' : 'stylesheet' });
+			var ast = parse(code, { context });
 		}catch(err){
 			if(err instanceof SyntaxError){
 				return `/*${JSON.stringify(err.message)}*/`;

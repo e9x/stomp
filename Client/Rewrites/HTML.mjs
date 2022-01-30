@@ -1,6 +1,6 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../RewriteUtil.mjs';
+import { Proxy, Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { TOMPElement } from '../../RewriteElements.mjs';
 
 const { getAttribute, setAttribute, hasAttribute, removeAttribute, getAttributeNames } = Element.prototype;
@@ -42,9 +42,10 @@ class TOMPElementDOMAttributes {
 	}
 };
 
-class TOMPElementDOM {
+class TOMPElementDOM extends TOMPElement {
 	#node;
 	constructor(node){
+		super();
 		this.#node = node;
 		this.attributes = new TOMPElementDOMAttributes(this.#node);
 	}
@@ -84,7 +85,61 @@ class TOMPElementDOM {
 };
 
 export class HTMLRewrite extends Rewrite {
+	style_proxy(style){
+		return new Proxy(style, {
+			get: (target, prop, receiver) => {
+				let result = Reflect.get(target, prop, receiver);
+				
+				if(typeof result == 'string'){
+					if(prop == 'cssText'){
+						result = this.client.tomp.css.unwrap(result, this.client.location.proxy, 'declarationList');
+					}else{
+						result = this.client.tomp.css.unwrap(result, this.client.location.proxy, 'value');
+					}
+				}
+				
+				return result;
+			},
+			set: (target, prop, value) => {
+				if(typeof value == 'string'){
+					if(prop == 'cssText'){
+						value = this.client.tomp.css.wrap(value, this.client.location.proxy, 'declarationList');
+					}else{
+						value = this.client.tomp.css.wrap(value, this.client.location.proxy, 'value');
+					}
+				}
+				
+				const result = Reflect.set(target, prop, value);
+				return result;
+			},
+			getOwnPropertyDescriptor: (target, prop) => {
+				const desc = Reflect.getOwnPropertyDescriptor(target, prop);
+
+				if(typeof desc.value == 'string'){
+					if(prop == 'cssText'){
+						desc.value = this.client.tomp.css.wrap(desc.value, this.client.location.proxy, 'declarationList');
+					}else{
+						desc.value = this.client.tomp.css.wrap(desc.value, this.client.location.proxy, 'value');
+					}
+				}
+
+				return desc;
+			}
+		});
+	}
 	work(){
+		CSSStyleDeclaration.prototype.getPropertyValue = wrap_function(CSSStyleDeclaration.prototype.getPropertyValue, (target, that, [ property ]) => {
+			let result = Reflect.apply(target, that, [ property ]);
+			result = this.client.tomp.css.unwrap(result, this.client.location.proxy, 'value');
+			return result;
+		});
+		
+		CSSStyleDeclaration.prototype.setProperty = wrap_function(CSSStyleDeclaration.prototype.setProperty, (target, that, [ property, value, priority ]) => {
+			value = this.client.tomp.css.wrap(value, this.client.location.proxy, 'value');
+			const result = Reflect.apply(target, that, [ property, value, priority ]);
+			return result;
+		});
+		
 		for(let clname in this.router){
 			const cls = global[clname];
 
@@ -135,7 +190,10 @@ export class HTMLRewrite extends Rewrite {
 						
 						Reflect.defineProperty(cls.prototype, name, {
 							get: desc.get ? wrap_function(desc.get, (target, that, args) => {
-								return this.process_get_attribute(that, data.name, Reflect.apply(target, that, args));
+								let result = Reflect.apply(target, that, args);
+								if(result instanceof CSSStyleDeclaration)return this.style_proxy(result);
+								result = this.process_get_attribute(that, data.name, result);
+								return result;
 							}) : undefined,
 							set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
 								value = String(value);
@@ -148,13 +206,16 @@ export class HTMLRewrite extends Rewrite {
 		}
 		this.get_attribute = Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute ]) => {
 			attribute = String(attribute).toLowerCase();
-			return this.process_get_attribute(that, attribute, Reflect.apply(target, that, [ attribute ]));
+			let result = Reflect.apply(target, that, [ attribute ]);
+			result = this.process_get_attribute(that, attribute, result);
+			return result;
 		});
 
 		this.set_attribute = Element.prototype.setAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute, value ]) => {
 			attribute = String(attribute).toLowerCase();
 			value = String(value);
-			return Reflect.apply(target, that, [ this.process_get_attribute(that, attribute, value) ]);
+			value = this.process_set_attribute(that, attribute, value);
+			return Reflect.apply(target, that, [ value ]);
 		});
 	}
 	process_get_attribute(node, attribute, value){
