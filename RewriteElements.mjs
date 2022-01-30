@@ -49,7 +49,8 @@ export class RewriteElements {
 		element.attributes.set(attr, stringifySrcset(parsed));
 	};
 	test_name(name, match){
-		if(typeof match == 'string')return name == match;
+		if(name instanceof RegExp)return name === match;
+		else if(typeof match == 'string')return name == match;
 		else return name.match(match);
 	}
 	abstract = [
@@ -410,12 +411,16 @@ export class RewriteElements {
 						element.attributes.delete(`data-tomp-${data.name}`);
 					}
 					
-					if(!element.attributes.has(data.name))continue;
-					
+					if(!element.attributes.has(data.name)){
+						continue;
+					}
+
 					let value = element.attributes.get(data.name);
 
 					if('condition' in data){
-						if(!data.condition(value, url, element))continue;
+						if(!data.condition(value, url, element)){
+							continue;
+						}
 					}
 
 					if(data.type == 'delete' && wrap){
@@ -449,31 +454,41 @@ export class RewriteElements {
 	// todo: form action
 	get_attribute(element, url, name, value){
 		for(let ab of this.abstract){
-			if(this.test_name(element.type, ab.name.tag)){
-				if('condition' in ab){
-					if(!ab.condition(url, element))continue;
+			if(!this.test_name(element.type, ab.name.tag)){
+				continue;
+			}
+
+			if('condition' in ab){
+				if(!ab.condition(url, element))continue;
+			}
+
+			if('attributes' in ab)for(let data of ab.attributes){
+				if(!this.test_name(name, data.name)){
+					continue;
 				}
 
-				if('attributes' in ab)for(let data of ab.attributes){
-					if(data.name != name)continue;
+				if(data.type == 'delete' && element.attributes.has(`data-tomp-${data.name}`)){
+					return element.attributes.get(`data-tomp-${data.name}`);
+				}
+				
+				if(!element.attributes.has(data.name)){
+					continue;
+				}
 
-					if(data.type == 'delete' && element.attributes.has(`data-tomp-${data.name}`)){
-						return element.attributes.get(`data-tomp-${data.name}`);
+				if('condition' in data){
+					if(!data.condition(value, url, element)){
+						continue;
 					}
-					
-					if(!element.attributes.has(data.name))continue;
-					
-					if('condition' in data){
-						if(!data.condition(value, url, element))continue;
-					}
-					
-					if(data.wrap)continue;
-					
-					const changed = this.abstract_type(value, url, element, data, false);
-					
-					if(changed != undefined){
-						return changed;
-					}
+				}
+				
+				if(data.wrap){
+					continue;
+				}
+
+				const changed = this.abstract_type(value, url, element, data, false);
+				
+				if(changed != undefined){
+					return changed;
 				}
 			}
 		}
@@ -481,6 +496,47 @@ export class RewriteElements {
 		return value;
 	}
 	set_attribute(element, url, name, value){
+		for(let ab of this.abstract){
+			if(!this.test_name(element.type, ab.name.tag)){
+				continue;
+			}
+
+			// if(element.type == 'script')debugger;
+
+			if('condition' in ab){
+				if(!ab.condition(url, element)){
+					continue;
+				}
+			}
+
+			if('attributes' in ab)for(let data of ab.attributes){
+				if(!this.test_name(name, data.name)){
+					continue;
+				}
+
+				if('condition' in data){
+					if(!data.condition(value, url, element)){
+						continue;
+					}
+				}
+				
+				if(data.type == 'delete'){
+					element.attributes.delete(data.name);
+					element.attributes.set(`data-tomp-${data.name}`, value);
+				}
+				
+				if(data.unwrap){
+					continue;
+				}
+
+				const changed = this.abstract_type(value, url, element, data, true);
+				
+				if(changed != undefined){
+					element.attributes.set(data.name, changed);
+				}
+			}
+		}
+		
 		return value;
 	}
 };

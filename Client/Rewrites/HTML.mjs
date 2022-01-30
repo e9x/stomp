@@ -1,26 +1,27 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { Proxy, Reflect, wrap_function } from '../RewriteUtil.mjs';
+import { getOwnPropertyDescriptors, Proxy, Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { TOMPElement } from '../../RewriteElements.mjs';
 
 const { getAttribute, setAttribute, hasAttribute, removeAttribute, getAttributeNames } = Element.prototype;
+const { localName } = getOwnPropertyDescriptors(Element.prototype);
 
 class TOMPElementDOMAttributes {
 	#node;
 	constructor(node){
 		this.#node = node;
 	}
-	get(attribute){
-		return Reflect.apply(getAttribute, this.#node, [ attribute ]);
+	get(name){
+		return Reflect.apply(getAttribute, this.#node, [ name ]);
 	}
-	set(attribute, value){
-		return Reflect.apply(setAttribute, this.#node, [ attribute ]);
+	set(name, value){
+		return Reflect.apply(setAttribute, this.#node, [ name, value ]);
 	}
-	has(attribute){
-		return Reflect.apply(hasAttribute, this.#node, [ attribute ]);
+	has(name){
+		return Reflect.apply(hasAttribute, this.#node, [ name ]);
 	}
-	delete(attribute){
-		return Reflect.apply(removeAttribute, this.#node, [ attribute ]);
+	delete(name){
+		return Reflect.apply(removeAttribute, this.#node, [ name ]);
 	}
 	*keys(){
 		for(let name of Reflect.apply(getAttributeNames, this.#node, [])){
@@ -50,7 +51,7 @@ class TOMPElementDOM extends TOMPElement {
 		this.attributes = new TOMPElementDOMAttributes(this.#node);
 	}
 	get type(){
-		return this.#node.localName;
+		return Reflect.apply(localName.get, this.#node, []);
 	}
 	set type(value){
 		this.node.remove();
@@ -197,7 +198,8 @@ export class HTMLRewrite extends Rewrite {
 							}) : undefined,
 							set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
 								value = String(value);
-								return Reflect.apply(target, that, [ this.process_set_attribute(that, data.name, value) ]);
+								this.process_set_attribute(that, data.name, value);
+								return value;
 							}) : undefined,
 						});
 					}
@@ -214,28 +216,22 @@ export class HTMLRewrite extends Rewrite {
 		this.set_attribute = Element.prototype.setAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute, value ]) => {
 			attribute = String(attribute).toLowerCase();
 			value = String(value);
-			value = this.process_set_attribute(that, attribute, value);
-			return Reflect.apply(target, that, [ value ]);
+			this.process_set_attribute(that, attribute, value);
+			return undefined;
 		});
 	}
-	process_get_attribute(node, attribute, value){
+	process_get_attribute(node, name, value){
 		const element = new TOMPElementDOM(node);
-
-		const result = this.client.tomp.elements.get_attribute(element, this.client.location.proxy, attribute, value);
+		const result = this.client.tomp.elements.get_attribute(element, this.client.location.proxy, name, value);
 
 		element.sync();
 		
 		if(result == undefined)return null;
 		else return result;
 	}
-	process_set_attribute(node, attribute, value){
+	process_set_attribute(node, name, value){
 		const element = new TOMPElementDOM(node);
-		
-		const result = this.client.tomp.elements.set_attribute(element, this.client.location.proxy, attribute, value);
-
+		this.client.tomp.elements.set_attribute(element, this.client.location.proxy, name, value);
 		element.sync();
-		
-		if(result == undefined)return null;
-		else return result;
 	}
 };

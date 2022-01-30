@@ -53,7 +53,8 @@ export class RequestRewrite extends Rewrite {
 		XMLHttpRequest.prototype.open = wrap_function(XMLHttpRequest.prototype.open, (target, that, [method, url, async, username, password]) => {
 			if(!async){
 				// alternatively, make tompfetch compatible with xmlhttprequest..
-				throw new Error('TOMP does not support synchronous XMLHTTPRequests. See https://bugs.chromium.org/p/chromium/issues/detail?id=602051')
+				this.tomp.log.warn('TOMP does not support synchronous XMLHTTPRequests. See https://bugs.chromium.org/p/chromium/issues/detail?id=602051');
+				async = true;
 			}
 
 			xml_raw_names.set(that, new Set());
