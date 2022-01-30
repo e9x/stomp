@@ -141,12 +141,33 @@ export class HTMLRewrite extends Rewrite {
 			return result;
 		});
 		
+		const { href } = getOwnPropertyDescriptors(HTMLAnchorElement.prototype);
+
+		for(let prop of ['port','host','hostname','pathname','origin','search','protocol','hash','username','password']){
+			const desc = Reflect.getOwnPropertyDescriptor(HTMLAnchorElement.prototype, prop);
+			
+			Reflect.defineProperty(desc, prop, {
+				get: desc.get ? wrap_function(desc.get, (target, that, args) => {
+					const the_href = Reflect.apply(href.get, that, []);
+					const url = new URL(the_href, this.client.location.proxy);
+					return url[prop];
+				}) : undefined,
+				set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
+					const the_href = Reflect.apply(href.get, that, []);
+					const url = new URL(the_href, this.client.location.proxy);
+					url[prop] = value;
+					Reflect.apply(href.set, that, [ url.href ]);
+					return value;
+				}) : undefined,
+			});
+		}
+		
 		for(let key of Object.getOwnPropertyNames(global)){
 			for(let ab of this.client.tomp.elements.abstract){
 				if(!this.client.tomp.elements.test_name(key, ab.name.class)){
 					continue;
 				}
-				
+
 				const cls = global[key];
 
 				if(!cls.prototype){

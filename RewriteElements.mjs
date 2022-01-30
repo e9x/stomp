@@ -172,6 +172,7 @@ export class RewriteElements {
 				class: 'HTMLAnchorElement',
 			},
 			attributes: [
+				{ name: 'ping', type: 'url', service: 'html' },
 				{ name: 'href', type: 'url', service: 'html' },
 			],
 		},
