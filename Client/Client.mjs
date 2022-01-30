@@ -23,7 +23,7 @@ export class Client {
 		new IDBRewrite(this).work();
 		new CookieRewrite(this).work();
 		new MediaRewrite(this).work();
-		
+
 		this.access = new AccessRewrite(this);
 		this.eval = new EvalRewrite(this);
 		this.location = new LocationRewrite(this);
@@ -40,14 +40,15 @@ export class Client {
 				let string = Reflect.apply(target, that, args);
 
 				if(!this.native.is_native(string)){
-					let start = 0;
-					if(!string.startsWith('class ') && !string.startsWith('function ')){
-						start = 'function '.length;
-						string = 'function ' + string;
-					}
+					let left;
+					let right;
+					let part;
 
-					string = this.tomp.js.unwrap(string, this.location.proxy);
-					string = string.slice(start);
+					string = this.tomp.js.unwrap(`x = ${string}`, this.location.proxy);
+					
+					string = string.slice(string.indexOf('=') + 1);
+					if(string.startsWith(' '))string = string.slice(1);
+					string = string.slice(0, string.lastIndexOf('}') + 1);
 				}
 
 				return string;
