@@ -34,6 +34,8 @@ function report_error(err){
 }
 
 export function wrap_function(fn, wrap, construct){
+	if(typeof fn != 'function')throw new TypeError(`First argument to wrap_function(fn, wrap, construct) was not a function.`);
+
 	const wrapped = 'prototype' in fn ? function attach(...args){
 		if(!error_reporting){
 			return wrap(fn, this, args);

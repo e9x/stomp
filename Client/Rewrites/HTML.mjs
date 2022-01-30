@@ -106,6 +106,42 @@ export class HTMLRewrite extends Rewrite {
 			}
 		}
 
+		for(let key of Object.getOwnPropertyNames(global)){
+			for(let ab of this.client.tomp.elements.abstract){
+				if(key.match(ab.name.class)){
+					const cls = global[key];
+
+					if(!cls.prototype){
+						this.client.tomp.log.warn('Class', key, 'has no prototype.');
+						continue;
+					}
+
+					if('attributes' in ab)for(let attribute in ab.attributes){
+						const data = ab.attributes[attribute];
+						
+						if(!(attribute in cls.prototype)){
+							this.client.tomp.log.warn('Attribute', attribute, 'was not in target prototype:', key);
+							continue;
+						}
+
+						const desc = Reflect.getOwnPropertyDescriptor(cls.prototype, attribute);
+
+						if(!desc){
+							this.tomp.log.error('No attribute', attribute, 'in', key, cls.prototype);
+						}
+
+						Reflect.defineProperty(cls, attribute, {
+							get: desc.get ? wrap_function(desc.get, (target, that) => {
+								return Reflect.apply(this.get_attribute, that, [ attribute ]);
+							}) : undefined,
+							set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
+								return Reflect.apply(this.get_attribute, that, [ attribute ]);
+							}) : undefined,
+						});
+					}
+				}
+			}
+		}
 		this.get_attribute = Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute ]) => {
 			attribute = String(attribute).toLowerCase();
 			let result = Reflect.apply(target, that, [ attribute ]);

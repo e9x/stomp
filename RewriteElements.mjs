@@ -53,7 +53,7 @@ export class RewriteElements {
 		{
 			name: {
 				tag: /./,
-				name: /./,
+				class: /HTMLElement/, // /HTML.*?Element/
 			},
 			attributes: {
 				style: { type: 'css', inline: true },
@@ -80,25 +80,38 @@ export class RewriteElements {
 				tag: 'script',
 				class: 'HTMLScriptElement',
 			},
-			condition: (url, element) => js_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
 			attributes: {
 				'src': { type: 'url', service: 'js' },
 				'crossorigin': { type: 'delete' },
-				'nonce': { type: 'delete' },
 				'integrity': { type: 'delete' },
 			},
 			// condition could be in attribute or content
 			// for scripts, if the type isnt a valid js mime then its ignored
-			content: { type: 'js' },
+			content: {
+				type: 'js',
+				condition: (url, element) => js_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
+			},
+		},
+		// see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/nonce
+		{
+			name: {
+				tag: /[]/,
+				class: 'HTMLElement',
+			},
+			attributes: {
+				'nonce': { type: 'delete' },
+			},
 		},
 		{
 			name: {
 				tag: 'style',
 				class: 'HTMLStyleElement',
 			},
-			condition: (url, element) => css_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
 			// <style> is strictly content-only
-			content: { type: 'css' },
+			content: {
+				type: 'css',
+				condition: (url, element) => css_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
+			},
 		},
 		{
 			name: {
@@ -332,9 +345,11 @@ export class RewriteElements {
 		
 		for(let ab of this.abstract){
 			if(element.type.match(ab.name.tag)){
+				/*
+				// condition outside attributes and content doesnt make sense
 				if('condition' in ab){
 					if(!ab.condition(url, element))continue;
-				}
+				}*/
 
 				if(ab.type == 'delete'){
 					if(wrap){
