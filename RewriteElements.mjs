@@ -118,7 +118,7 @@ export class RewriteElements {
 				class: 'HTMLImageElement',
 			},
 			attributes: [
-				{ name: /[]/, class_name: 'currentSrc', type: 'url', service: 'binary', condition: (value, url, element) => value != '' },
+				{ name: /[]/, class_name: 'currentSrc', type: 'url', service: 'binary' },
 				{ name: 'lowsrc', type: 'url', service: 'binary' },
 			],
 		},
@@ -450,6 +450,10 @@ export class RewriteElements {
 	}
 	// todo: form action
 	get_attribute(element, url, name, class_name, value){
+		if(!value){
+			return '';
+		}
+		
 		for(let ab of this.abstract){
 			if(!this.test_name(element.type, ab.name.tag)){
 				continue;
@@ -495,6 +499,11 @@ export class RewriteElements {
 		return value;
 	}
 	set_attribute(element, url, name, class_name, value){
+		if(!value){
+			element.attributes.set(name, '');
+			return;
+		}
+
 		for(let ab of this.abstract){
 			if(!this.test_name(element.type, ab.name.tag)){
 				continue;
