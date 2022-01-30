@@ -116,26 +116,29 @@ export class HTMLRewrite extends Rewrite {
 						continue;
 					}
 
-					if('attributes' in ab)for(let attribute in ab.attributes){
-						const data = ab.attributes[attribute];
+					if('attributes' in ab)for(let data of ab.attributes){
+						// html quirk attribute
+						if('class_name' in data && data.class_name == undefined)continue;
 						
-						if(!(attribute in cls.prototype)){
-							this.client.tomp.log.warn('Attribute', attribute, 'was not in target prototype:', key);
+						const name = data.class_name || data.name;
+						
+						if(!(name in cls.prototype)){
+							this.client.tomp.log.warn('Attribute', name, 'was not in target prototype:', key);
 							continue;
 						}
 
-						const desc = Reflect.getOwnPropertyDescriptor(cls.prototype, attribute);
+						const desc = Reflect.getOwnPropertyDescriptor(cls.prototype, name);
 
 						if(!desc){
-							this.tomp.log.error('No attribute', attribute, 'in', key, cls.prototype);
+							this.tomp.log.error('No attribute', name, 'in', key, cls.prototype);
 						}
-
-						Reflect.defineProperty(cls, attribute, {
+						
+						Reflect.defineProperty(cls.prototype, name, {
 							get: desc.get ? wrap_function(desc.get, (target, that) => {
-								return Reflect.apply(this.get_attribute, that, [ attribute ]);
+								return Reflect.apply(this.get_attribute, that, [ data.name ]);
 							}) : undefined,
 							set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
-								return Reflect.apply(this.get_attribute, that, [ attribute ]);
+								return Reflect.apply(this.get_attribute, that, [ data.name ]);
 							}) : undefined,
 						});
 					}

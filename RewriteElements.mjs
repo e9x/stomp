@@ -55,42 +55,9 @@ export class RewriteElements {
 				tag: /./,
 				class: /HTMLElement/, // /HTML.*?Element/
 			},
-			attributes: {
-				style: { type: 'css', inline: true },
-			},
-		},
-		{
-			name: {
-				tag: 'img',
-				class: 'HTMLImageElement',
-			},
-			attributes: {
-				'src': { type: 'url', service: 'binary' },
-				'lowsrc': { type: 'url', service: 'binary' },
-				// delete as in move to data-tomp-srcset, create attribute named srcset and set value to result of wrap
-				'srcset': {
-					type: 'delete',
-					wrap: (value, url, element) => this.set_binary_srcset('srcset', value, url, element),
-				},
-				'crossorigin': { type: 'delete' },
-			},
-		},
-		{
-			name: {
-				tag: 'script',
-				class: 'HTMLScriptElement',
-			},
-			attributes: {
-				'src': { type: 'url', service: 'js' },
-				'crossorigin': { type: 'delete' },
-				'integrity': { type: 'delete' },
-			},
-			// condition could be in attribute or content
-			// for scripts, if the type isnt a valid js mime then its ignored
-			content: {
-				type: 'js',
-				condition: (url, element) => js_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
-			},
+			attributes: [
+				{ name: 'style', type: 'css', inline: true },
+			],
 		},
 		// see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/nonce
 		{
@@ -98,8 +65,79 @@ export class RewriteElements {
 				tag: /[]/,
 				class: 'HTMLElement',
 			},
-			attributes: {
-				'nonce': { type: 'delete' },
+			attributes: [
+				{ name: 'nonce', type: 'delete' },
+			],
+		},
+		{
+			name: {
+				tag: /^(img|script)$/,
+				class: /^(HTMLScriptElement|HTMLImageElement)$/,
+			},
+			attributes: [
+				{ name: 'crossorigin', class_name: 'crossOrigin', type: 'delete' },
+			],
+		},
+		{
+			name: {
+				tag: /^(link|script)$/,
+				class: /^(HTMLLinkElement|HTMLScriptElement)$/,
+			},
+			attributes: [
+				{ name: 'integrity', type: 'delete' },
+			],
+		},
+		{
+			name: {
+				tag: /^(img|source)$/,
+				class: /^(HTMLImageElement|HTMLSourceElement)$/,
+			},
+			attributes: [
+				// delete as in move to data-tomp-srcset, create attribute named srcset and set value to result of wrap
+				{ name: 'srcset', type: 'delete', wrap: (value, url, element) => this.set_binary_srcset('srcset', value, url, element) },
+				{ name: 'src', type: 'url', service: 'binary' },
+			],
+		},
+		{
+			name: {
+				tag: 'img',
+				class: 'HTMLImageElement',
+			},
+			attributes: [
+				{ name: 'lowsrc', type: 'url', service: 'binary' },
+			],
+		},
+		{
+			name: {
+				tag: /^(video|audio)$/,
+				class: 'HTMLMediaElement',
+			},
+			attributes: [
+				{ name: 'src', type: 'url', service: 'binary' },
+			],
+		},
+		{
+			name: {
+				tag: 'video',
+				class: 'HTMLVideoElement',
+			},
+			attributes: [
+				{ name: 'poster', type: 'url', service: 'binary' },
+			],
+		},
+		{
+			name: {
+				tag: 'script',
+				class: 'HTMLScriptElement',
+			},
+			attributes: [
+				{ name: 'src', type: 'url', service: 'js' },
+			],
+			// condition could be in attribute or content
+			// for scripts, if the type isnt a valid js mime then its ignored
+			content: {
+				type: 'js',
+				condition: (url, element) => js_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
 			},
 		},
 		{
@@ -118,64 +156,37 @@ export class RewriteElements {
 				tag: 'a',
 				class: 'HTMLAnchorElement',
 			},
-			attributes: {
-				'href': { type: 'url', service: 'html' },
-			},
+			attributes: [
+				{ name: 'href', type: 'url', service: 'html' },
+			],
 		},
 		{
 			name: {
 				tag: 'iframe',
 				class: 'HTMLIFrameElement',
 			},
-			attributes: {
-				'src': { type: 'url', service: 'html' },
-			},
+			attributes: [
+				{ name: 'src', type: 'url', service: 'html' },
+			],
 		},
 		{
 			name: {
 				tag: 'use',
 				class: 'SVGUseElement',
 			},
-			attributes: {
-				'xlink:href': { type: 'url', service: 'html' },
-				'href': { type: 'url', service: 'html' },
-			},
-		},
-		{
-			name: {
-				tag: 'source',
-				class: 'HTMLSourceElement'
-			},
-			attributes: {
-				'src': { type: 'url', service: 'binary' },
-				'srcset': { type: 'delete', wrap: (value, url, element) => this.set_binary_srcset('srcset', value, url, element) },
-			},
-		},
-		{
-			name: {
-				tag: /^(video|audio)$/,
-				class: 'HTMLMediaElement',
-			},
-			attributes: {
-				'src': { type: 'url', service: 'binary' },
-			},
-		},
-		{
-			name: {
-				tag: 'video',
-				class: 'HTMLVideoElement',
-			},
-			attributes: {
-				'poster': { type: 'url', service: 'binary' },
-			},
+			attributes: [
+				{ name: 'href', type: 'url', service: 'html' },
+				{ name: 'xlink:href', class_name: undefined, type: 'url', service: 'html' },
+			],
 		},
 		{
 			name: {
 				tag: 'link',
 				class: 'HTMLLinkElement',
 			},
-			attributes: {
-				'href': {
+			attributes: [
+				{
+					name: 'href',
 					type: 'url',
 					service: 'binary',
 					wrap: (value, url, element) => {
@@ -218,16 +229,16 @@ export class RewriteElements {
 						}
 					},
 				},
-				'integrity': { type: 'delete' },
-			},
+			],
 		},
 		{
 			name: {
 				tag: 'meta',
 				class: 'HTMLMetaElement',
 			},
-			attributes: {
-				'content': {
+			attributes: [
+				{
+					name: 'content',
 					type: 'delete',
 					service: 'binary',
 					wrap: (value, url, element) => {
@@ -237,8 +248,8 @@ export class RewriteElements {
 								break;
 						}
 					},
-				},
-			},
+				}
+			],
 		},
 	];
 	route_attributes(route, element, url){
@@ -380,31 +391,29 @@ export class RewriteElements {
 					}
 				}
 
-				if('attributes' in ab)for(let attribute in ab.attributes){
-					const data = ab.attributes[attribute];
-						
-					if(data.type == 'delete' && !wrap && element.attributes.has(`data-tomp-${attribute}`)){
-						element.attributes.set(attribute, element.attributes.get(`data-tomp-${attribute}`));
-						element.attributes.delete(`data-tomp-${attribute}`);
+				if('attributes' in ab)for(let data of ab.attributes){
+					if(data.type == 'delete' && !wrap && element.attributes.has(`data-tomp-${data.name}`)){
+						element.attributes.set(data.name, element.attributes.get(`data-tomp-${data.name}`));
+						element.attributes.delete(`data-tomp-${data.name}`);
 					}
 					
-					if(!element.attributes.has(attribute))continue;
+					if(!element.attributes.has(data.name))continue;
 					
-					let value = element.attributes.get(attribute);
+					let value = element.attributes.get(data.name);
 
 					if('condition' in data){
 						if(!data.condition(value, url, element))continue;
 					}
 
 					if(data.type == 'delete' && wrap){
-						element.attributes.delete(attribute);
-						element.attributes.set(`data-tomp-${attribute}`, value);
+						element.attributes.delete(data.name);
+						element.attributes.set(`data-tomp-${data.name}`, value);
 					}
 					
 					const changed = this.abstract_type(value, url, element, data, wrap);
 					
 					if(changed != undefined){
-						element.attributes.set(attribute, changed);
+						element.attributes.set(data.name, changed);
 					}
 				}
 			}
@@ -424,23 +433,21 @@ export class RewriteElements {
 			element.attributes.set(name, this.tomp.js.wrap(value, url));
 		}
 	}
-	get_attribute(element, url, get_attribute, value){
+	get_attribute(element, url, name, value){
 		for(let ab of this.abstract){
 			if(element.type.match(ab.name.tag)){
 				if('condition' in ab){
 					if(!ab.condition(url, element))continue;
 				}
 
-				if('attributes' in ab)for(let attribute in ab.attributes){
-					if(attribute != get_attribute)continue;
+				if('attributes' in ab)for(let data of ab.attributes){
+					if(data.name != name)continue;
 
-					const data = ab.attributes[attribute];
-						
-					if(data.type == 'delete' && element.attributes.has(`data-tomp-${attribute}`)){
-						return element.attributes.get(`data-tomp-${attribute}`);
+					if(data.type == 'delete' && element.attributes.has(`data-tomp-${data.name}`)){
+						return element.attributes.get(`data-tomp-${data.name}`);
 					}
 					
-					if(!element.attributes.has(attribute))continue;
+					if(!element.attributes.has(data.name))continue;
 					
 					if('condition' in data){
 						if(!data.condition(value, url, element))continue;
@@ -471,7 +478,7 @@ export class RewriteElements {
 			element.attributes.set(name, this.tomp.js.wrap(value, url));
 		}
 	}
-	set_attribute(element, url, set_attribute, value){
+	set_attribute(element, url, name, value){
 		
 	}
 };
