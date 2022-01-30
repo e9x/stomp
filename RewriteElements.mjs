@@ -48,7 +48,10 @@ export class RewriteElements {
 
 		element.attributes.set(attr, stringifySrcset(parsed));
 	};
-	
+	test_name(name, match){
+		if(typeof match == 'string')return name == match;
+		else return name.match(match);
+	}
 	abstract = [
 		{
 			name: {
@@ -67,6 +70,15 @@ export class RewriteElements {
 			},
 			attributes: [
 				{ name: 'nonce', type: 'delete' },
+			],
+		},
+		{
+			name: {
+				tag: /[]/,
+				class: 'Node',
+			},
+			attributes: [
+				{ name: 'baseURI', type: 'url', service: 'html' },
 			],
 		},
 		{
@@ -104,6 +116,7 @@ export class RewriteElements {
 				class: 'HTMLImageElement',
 			},
 			attributes: [
+				{ name: /[]/, class_name: 'currentSrc', type: 'url', service: 'binary', condition: (value, url, element) => value != '' },
 				{ name: 'lowsrc', type: 'url', service: 'binary' },
 			],
 		},
@@ -166,7 +179,7 @@ export class RewriteElements {
 				class: 'HTMLIFrameElement',
 			},
 			attributes: [
-				{ name: 'src', type: 'url', service: 'html' },
+				{ name: 'src', type: 'url', service: 'html', condition: (value, url, element) => value != '' },
 			],
 		},
 		{
@@ -355,7 +368,7 @@ export class RewriteElements {
 		}
 		
 		for(let ab of this.abstract){
-			if(element.type.match(ab.name.tag)){
+			if(this.test_name(element.type, ab.name.tag)){
 				/*
 				// condition outside attributes and content doesnt make sense
 				if('condition' in ab){
@@ -433,9 +446,10 @@ export class RewriteElements {
 			element.attributes.set(name, this.tomp.js.wrap(value, url));
 		}
 	}
+	// todo: form action
 	get_attribute(element, url, name, value){
 		for(let ab of this.abstract){
-			if(element.type.match(ab.name.tag)){
+			if(this.test_name(element.type, ab.name.tag)){
 				if('condition' in ab){
 					if(!ab.condition(url, element))continue;
 				}
@@ -464,21 +478,9 @@ export class RewriteElements {
 			}
 		}
 		
-		if(element.type == 'form'){
-			const action_resolved = new URL(element.attributes.get('action') || '', url).href;
-			
-			if(element.attributes.get('method')?.toUpperCase() == 'POST'){
-				element.attributes.set('method', this.tomp.html.serve(action_resolved, url));
-			}else{
-				element.attributes.set('method', this.tomp.form.serve(action_resolved, url));
-			}
-		}
-
-		for(let [ name, value ] of element.attributes)if(name.startsWith('on')){
-			element.attributes.set(name, this.tomp.js.wrap(value, url));
-		}
+		return value;
 	}
 	set_attribute(element, url, name, value){
-		
+		return value;
 	}
 };

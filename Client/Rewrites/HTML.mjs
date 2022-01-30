@@ -108,7 +108,7 @@ export class HTMLRewrite extends Rewrite {
 
 		for(let key of Object.getOwnPropertyNames(global)){
 			for(let ab of this.client.tomp.elements.abstract){
-				if(key.match(ab.name.class)){
+				if(this.client.tomp.elements.test_name(key, ab.name.class)){
 					const cls = global[key];
 
 					if(!cls.prototype){
@@ -134,11 +134,12 @@ export class HTMLRewrite extends Rewrite {
 						}
 						
 						Reflect.defineProperty(cls.prototype, name, {
-							get: desc.get ? wrap_function(desc.get, (target, that) => {
-								return Reflect.apply(this.get_attribute, that, [ data.name ]);
+							get: desc.get ? wrap_function(desc.get, (target, that, args) => {
+								return this.process_get_attribute(that, data.name, Reflect.apply(target, that, args));
 							}) : undefined,
 							set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
-								return Reflect.apply(this.get_attribute, that, [ data.name ]);
+								value = String(value);
+								return Reflect.apply(target, that, [ this.process_get_attribute(that, data.name, value) ]);
 							}) : undefined,
 						});
 					}
@@ -147,69 +148,33 @@ export class HTMLRewrite extends Rewrite {
 		}
 		this.get_attribute = Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute ]) => {
 			attribute = String(attribute).toLowerCase();
-			let result = Reflect.apply(target, that, [ attribute ]);
-			
-			const element = new TOMPElementDOM(that);
-			
-			result = this.client.tomp.elements.get_attribute(element, this.client.location.proxy, attribute, result);
-
-			element.sync();
-			
-			return result;
+			return this.process_get_attribute(that, attribute, Reflect.apply(target, that, [ attribute ]));
 		});
 
 		this.set_attribute = Element.prototype.setAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute, value ]) => {
 			attribute = String(attribute).toLowerCase();
 			value = String(value);
-
-			const element = new TOMPElementDOM(that);
-			
-			const result = this.client.tomp.elements.get_attribute(element, this.client.location.proxy, attribute, value);
-
-			element.sync();
-			
-			return result;
+			return Reflect.apply(target, that, [ this.process_get_attribute(that, attribute, value) ]);
 		});
 	}
-	define_attrs(...attrs){
-		const result = {};
+	process_get_attribute(node, attribute, value){
+		const element = new TOMPElementDOM(node);
 
-		for(let attr of attrs){
-			result[attr] = desc => ({
-				configurable: true,
-				enumerable: true,
-				get: wrap_function(desc.get, (target, that) => {
-					return Reflect.apply(this.get_attribute, that, [ attr ]);
-				}),
-				set: wrap_function(desc.set, (target, that, [ value ]) => {
-					return Reflect.apply(this.get_attribute, that, [ attr ]);
-				}),
-			});
-		}
+		const result = this.client.tomp.elements.get_attribute(element, this.client.location.proxy, attribute, value);
 
-		return result;
+		element.sync();
+		
+		if(result == undefined)return null;
+		else return result;
 	}
-	router = {
-		Node: {
-			baseURI: desc => ({
-				get: wrap_function(desc.get, (target, that, args) => {
-					let result = Reflect.apply(target, that, args);
-					result = this.client.tomp.url.wrap(result, this.client.location.proxy);
-					return result;
-				}),
-			}),
-		},
-		HTMLImageElement: {
-			currentSrc: desc => ({
-				configurable: true,
-				enumerable: true,
-				get: wrap_function(desc.get, (target, that) => {
-					let result = Reflect.apply(target, that, []);
-					if(!result)return result;
-					result = this.client.tomp.url.unwrap_ez(result);
-					return result;
-				}),
-			}),
-		},
-	};
+	process_set_attribute(node, attribute, value){
+		const element = new TOMPElementDOM(node);
+		
+		const result = this.client.tomp.elements.set_attribute(element, this.client.location.proxy, attribute, value);
+
+		element.sync();
+		
+		if(result == undefined)return null;
+		else return result;
+	}
 };
