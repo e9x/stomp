@@ -87,7 +87,7 @@ class TOMPElementDOM extends TOMPElement {
 	}
 };
 
-export class HTMLRewrite extends Rewrite {
+export class DOMRewrite extends Rewrite {
 	style_proxy(style){
 		const proxy = new Proxy(style, {
 			get: (target, prop, receiver) => {

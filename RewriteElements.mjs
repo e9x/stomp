@@ -80,7 +80,17 @@ export class RewriteElements {
 				class: 'Node',
 			},
 			attributes: [
-				{ name: 'baseURI', type: 'url', service: 'html' },
+				{ name: /[]/, class_name: 'baseURI', type: 'url', service: 'html' },
+			],
+		},
+		{
+			name: {
+				tag: /[]/,
+				class: 'Element',
+			},
+			attributes: [
+				{ name: /[]/, class_name: 'innerHTML', type: 'html', fragment: true },
+				{ name: /[]/, class_name: 'outerHTML', type: 'html', fragment: true },
 			],
 		},
 		{
@@ -192,7 +202,8 @@ export class RewriteElements {
 				class: 'HTMLIFrameElement',
 			},
 			attributes: [
-				{ name: 'src', type: 'url', service: 'html', condition: (value, url, element) => value != '' },
+				{ name: 'src', type: 'url', service: 'html' },
+				{ name: 'srcdoc', type: 'html' },
 			],
 		},
 		{
@@ -305,6 +316,12 @@ export class RewriteElements {
 					return this.tomp.js.wrap(value, url);
 				}else{
 					return this.tomp.js.unwrap(value, url);
+				}
+			case'html':
+				if(wrap){
+					return this.tomp.html.wrap(value, url, data.fragment);
+				}else{
+					return this.tomp.html.unwrap(value, url, data.fragment);
 				}
 			case'url':
 				switch(data.service){
