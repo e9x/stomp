@@ -152,7 +152,7 @@ export class RewriteElements {
 			// for scripts, if the type isnt a valid js mime then its ignored
 			content: {
 				type: 'js',
-				condition: (url, element) => js_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
+				condition: (value, url, element) => js_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
 			},
 		},
 		{
@@ -163,7 +163,7 @@ export class RewriteElements {
 			// <style> is strictly content-only
 			content: {
 				type: 'css',
-				condition: (url, element) => css_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
+				condition: (value, url, element) => css_types.includes(get_mime(element.attributes.get('type') || '').toLowerCase()),
 			},
 		},
 		{
@@ -174,6 +174,16 @@ export class RewriteElements {
 			attributes: [
 				{ name: 'ping', type: 'url', service: 'html' },
 				{ name: 'href', type: 'url', service: 'html' },
+			],
+		},
+		{
+			name: {
+				tag: 'form',
+				class: 'HTMLFormElement',
+			},
+			attributes: [
+				// name must be a string for allow_notexist to work
+				{ name: 'action', type: 'url', service: 'form', allow_notexist: true, allow_empty: true },
 			],
 		},
 		{
@@ -268,18 +278,6 @@ export class RewriteElements {
 			],
 		},
 	];
-	route_attributes(route, element, url){
-		for(let name in route)if(element.attributes.has(name)){
-			try{
-				const result = route[name](element.attributes.get(name), url, element);
-			}catch(err){
-				this.tomp.log.error(err);
-				element.attributes.delete(name);
-			}
-		}
-
-		return true;
-	}
 	wrap(element, url, persist){
 		return this.#wrap(element, url, persist, true);
 	}
@@ -402,7 +400,11 @@ export class RewriteElements {
 				}
 
 				if('attributes' in ab)for(let data of ab.attributes){
-					for(let name of element.attributes.keys()){
+					if(data.allow_notexist && !element.attributes.has(data.name)){
+						element.attributes.set(data.name, '');
+					}
+					
+					for(let name of [...element.attributes.keys()]){
 						if(!this.test_name(name, data.name)){
 							continue;
 						}
@@ -418,6 +420,10 @@ export class RewriteElements {
 	
 						let value = element.attributes.get(name);
 	
+						if(!value && !data.allow_empty){
+							return '';
+						}
+
 						if('condition' in data){
 							if(!data.condition(value, url, element)){
 								continue;
@@ -438,23 +444,11 @@ export class RewriteElements {
 				}
 			}
 		}
-		
-		if(element.type == 'form'){
-			const action_resolved = new URL(element.attributes.get('action') || '', url).href;
-			
-			if(element.attributes.get('method')?.toUpperCase() == 'POST'){
-				element.attributes.set('method', this.tomp.html.serve(action_resolved, url));
-			}else{
-				element.attributes.set('method', this.tomp.form.serve(action_resolved, url));
-			}
-		}
 	}
 	// todo: form action
 	get_attribute(element, url, name, class_name, value){
-		if(!value){
-			return '';
-		}
-		
+		if(value == undefined)return undefined;
+
 		for(let ab of this.abstract){
 			if(!this.test_name(element.type, ab.name.tag)){
 				continue;
@@ -470,13 +464,21 @@ export class RewriteElements {
 				if(!this.test_name(name, class_name && data.class_name ? data.class_name : data.name)){
 					continue;
 				}
-
+				
+				if(!value && !data.allow_empty){
+					return '';
+				}
+				
 				if(data.type == 'delete' && element.attributes.has(`data-tomp-${name}`)){
 					return element.attributes.get(`data-tomp-${name}`);
 				}
 				
-				if(!class_name && !element.attributes.has(name)){
+				if(!class_name && !element.attributes.has(name) && !data.allow_notexist){
 					continue;
+				}
+
+				if(!value && !data.allow_empty){
+					return '';
 				}
 
 				if('condition' in data){

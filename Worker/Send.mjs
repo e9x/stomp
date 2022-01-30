@@ -250,6 +250,18 @@ export async function SendHTML(server, server_request, field){
 export async function SendForm(server, server_request, field){
 	const headers = new Headers();
 
+	if(server_request.method == 'GET'){
+		const {gd_error,url} = await get_data(server, server_request, field);
+		if(gd_error)return gd_error;
+		
+		headers.set('location', server.tomp.html.serve(url, url));
+		
+		return new Response(new Uint8Array(), {
+			headers,
+			status: 302,
+		});
+	}
+
 	const search_ind = field.indexOf('?');
 	if(search_ind == -1)return void server.send_json(400, { message: messages['error.badform.get'] });
 	const search = field.slice(search_ind);
@@ -261,7 +273,7 @@ export async function SendForm(server, server_request, field){
 	const orig_search_ind = url.path.indexOf('?');
 	
 	url.path = url.path.slice(0, orig_search_ind == -1 ? url.length : orig_search_ind) + search;
-	headers.set('location', server.tomp.html.serve(url.toString()));
+	headers.set('location', server.tomp.html.serve(url, url));
 	// server.tomp.html.serve(updated, updated);
 
 	return new Response(new Uint8Array(), {
