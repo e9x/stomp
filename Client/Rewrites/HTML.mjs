@@ -154,9 +154,9 @@ export class HTMLRewrite extends Rewrite {
 				}) : undefined,
 				set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
 					const the_href = Reflect.apply(href.get, that, []);
-					const url = new URL(the_href, this.client.location.proxy);
+					const url = new URL(this.client.tomp.url.unwrap_ez(new URL(the_href, this.client.location.proxy), this.client.location.proxy));
 					url[prop] = value;
-					Reflect.apply(href.set, that, [ url.href ]);
+					Reflect.apply(href.set, that, [ this.client.tomp.url.wrap(url.href, this.client.location.priority) ]);
 					return value;
 				}) : undefined,
 			});
