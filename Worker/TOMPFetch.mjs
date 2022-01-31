@@ -15,12 +15,12 @@ export async function TOMPFetch(server, url, server_request, request_headers){
 	const options = {
 		credentials: 'omit',
 		headers: {
-			'x-tomp-protocol': url.protocol,
-			'x-tomp-host': url.host,
-			'x-tomp-path': url.path,
-			'x-tomp-port': url.port,
-			'x-tomp-headers': JSON.stringify(request_headers instanceof Headers ? Object.fromEntries([...request_headers.entries()]) : request_headers),
-			'x-tomp-forward-headers': JSON.stringify(['accept-encoding', 'accept-language']),
+			'x-bare-protocol': url.protocol,
+			'x-bare-host': url.host,
+			'x-bare-path': url.path,
+			'x-bare-port': url.port,
+			'x-bare-headers': JSON.stringify(request_headers instanceof Headers ? Object.fromEntries([...request_headers.entries()]) : request_headers),
+			'x-bare-forward-headers': JSON.stringify(['accept-encoding', 'accept-language']),
 		},
 		method: server_request.method,
 	};
@@ -32,7 +32,7 @@ export async function TOMPFetch(server, url, server_request, request_headers){
 	
 	
 	// bare can be an absolute path containing no origin, it becomes relative to the script	
-	const request = new Request(new URL(server.tomp.bare, location), options);
+	const request = new Request(new URL(server.tomp.bare + 'v1/', location), options);
 	
 	const response = await fetch(request);
 
@@ -46,10 +46,9 @@ export async function TOMPFetch(server, url, server_request, request_headers){
 		});
 	}
 
-	const status = response.headers.get('x-tomp-status');
-	const statusText = response.headers.get('x-tomp-status-text');
-	// may be bloat if x-tomp-headers can just contain the raw capitalization
-	const raw_headers = JSON.parse(response.headers.get('x-tomp-headers'));
+	const status = response.headers.get('x-bare-status');
+	const statusText = response.headers.get('x-bare-status-text');
+	const raw_headers = JSON.parse(response.headers.get('x-bare-headers'));
 	const headers = new Headers();
 	const json_headers = {};
 	const raw_header_names = [];

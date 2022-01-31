@@ -42,10 +42,6 @@ export class Client {
 				let string = Reflect.apply(target, that, args);
 
 				if(!this.native.is_native(string)){
-					let left;
-					let right;
-					let part;
-
 					string = this.tomp.js.unwrap(`x = ${string}`, this.location.proxy);
 					
 					string = string.slice(string.indexOf('=') + 1);
