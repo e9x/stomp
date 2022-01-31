@@ -4,12 +4,16 @@ import { SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendManifest } from '.
 import messages from '../Messages.mjs'
 import { openDB } from 'idb/with-async-ittr';
 import {create_db as create_cookie_db} from './Cookies.mjs';
+import { SyncRequest } from './SyncRequest.mjs';
 
 export class Server {
 	constructor(config){
 		this.tomp = new TOMP(config);
 		this.request = this.request.bind(this);
 		this.ready = this.work();
+
+		this.sync_request = new SyncRequest(this);
+		this.sync_request.work();
 	}
 	async work(){
 		this.db = await openDB('tomp', 1, {
@@ -37,6 +41,9 @@ export class Server {
 	async send(request, service, field){
 		try{
 			switch(service){
+				case'worker:sync-request':
+					return await this.sync_request.process(request, field);
+					break;
 				case 'worker:process':
 					return await Process(this, request, field);
 					break;

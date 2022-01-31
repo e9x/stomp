@@ -4,6 +4,8 @@ import { wrap_function, Reflect } from '../RewriteUtil.mjs';
 import { engine } from '../../UserAgent.mjs';
 
 export class RequestRewrite extends Rewrite {
+	response_url = new WeakMap();
+	raw_requests = new WeakMap();
 	work(){
 		const Request = this.get_request();
 		
@@ -37,15 +39,13 @@ export class RequestRewrite extends Rewrite {
 		
 		global.Request = Request;
 	}
-	response_url = new WeakMap();
-	raw_requests = new WeakMap();
 	get_request(){
 		const that = this;
 
 		const didnt_specify = Symbol();
-		const original_request = global.Request;
+		this.global = global.Request;
 
-		const { bodyUsed, cache, credentials, destination, headers, integrity, isHistoryNavigation, keepalive, method, mode, redirect, referrer, referrerPolicy, signal, url} = Object.getOwnPropertyDescriptors(original_request.prototype);
+		const { bodyUsed, cache, credentials, destination, headers, integrity, isHistoryNavigation, keepalive, method, mode, redirect, referrer, referrerPolicy, signal, url} = Object.getOwnPropertyDescriptors(this.global.prototype);
 		
 		class Request {
 			#request
@@ -61,26 +61,26 @@ export class RequestRewrite extends Rewrite {
 
 				url = new URL(url, that.client.location.proxy);
 
-				this.#request = new original_request(that.client.tomp.binary.serve(url, that.client.location.proxy), init);
+				this.#request = new this.global(that.client.tomp.binary.serve(url, that.client.location.proxy), init);
 				that.raw_requests.set(this, this.#request);
 			}
 			arrayBuffer(){
-				return original_request.prototype.arrayBuffer.call(Request.#invoke(this));
+				return this.global.prototype.arrayBuffer.call(Request.#invoke(this));
 			}
 			blob(){
-				return original_request.prototype.blob.call(Request.#invoke(this));
+				return this.global.prototype.blob.call(Request.#invoke(this));
 			}
 			clone(){
-				return original_request.prototype.clone.call(Request.#invoke(this));
+				return this.global.prototype.clone.call(Request.#invoke(this));
 			}
 			formData(){
-				return original_request.prototype.formData.call(Request.#invoke(this));
+				return this.global.prototype.formData.call(Request.#invoke(this));
 			}
 			json(){
-				return original_request.prototype.json.call(Request.#invoke(this));
+				return this.global.prototype.json.call(Request.#invoke(this));
 			}
 			text(){
-				return original_request.prototype.text.call(Request.#invoke(this));
+				return this.global.prototype.text.call(Request.#invoke(this));
 			}
 			get bodyUsed(){
 				return bodyUsed.get.call(Request.#invoke(this));
