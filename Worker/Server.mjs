@@ -31,7 +31,7 @@ export class Server {
 	send_json(status, json){
 		this.tomp.log.trace(json);
 		
-		return new Response(JSON.stringify(json), {
+		return new Response(JSON.stringify(json, null, '\t'), {
 			status,
 			headers: {
 				'content-type': 'application/json',
