@@ -1,29 +1,23 @@
 # TooManyProxies (Tomp)
 
+## [Specifications](https://github.com/tomphttp/specifications)
+
 [Demo](https://tomp.sys32.dev/)
 
 [Frontend](https://github.com/waterswat/toomanyproxies-frontend)
 
-## Design
+## History
 
-[History](./History.md)
+## Emscripten
 
-TOMP has 3 components: The server, client, and ServiceWorker (referred to as worker).
+TOMP was originally going to be written in C++, using emscripten for the client script.
 
-### The client's job:
+Due to the lack of advanced HTTP libraries, the idea of being written in C++ was abandoned.
 
-Hook JavaScript functions that will create a request.
+NodeJS is tried and true, especially when writing proxies.
 
-Such as `fetch(url, opts)`, `XMLHTTPRequest.prototype.open(method, url, ...etc)`.
+## Only 2 modules
 
-Each request from the client will have a service: `worker:js`, `worker:html`, `worker:css`, `worker:binary`
+Prior to the idea of moving all the load from the server onto a ServiceWorker, TOMP was going to be a plain client and server proxy.
 
-### The server's job:
-
-Provide an endpoint (`server:bare`) that will accept headers and a destination URL. This endpoint will return the raw binary data with no modification. The server will use minimal resources.
-
-Currently, the server needs to serve `/prefix/worker.js`, `/prefix/client.js`, and `/prefix/bootstrapper.js`. This is due to implementation. In the future, the server will be swappable in the future and be independent of configurations.
-
-### The worker (ServiceWorker)'s job:
-
-Serve responses to the client. Create `server:bare` requests to the server to receive raw binary data. Depending on the service (`worker:js`, `worker:html`, `worker:css`, `worker:binary`), the data will be ran through the appropriate rewriting process then served to the client.
+Only 2 days prior to writing this (1/18/2022), TOMP had no business with ServiceWorkers. The goal was to perfect current proxies such as [Corrosion](https://github.com/titaniumnetwork-dev/corrosion), [Alloy](https://github.com/titaniumnetwork-dev/alloy), and [SystemYA proxy](https://github.com/sysce/proxy).
