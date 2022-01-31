@@ -2,9 +2,18 @@ import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { wrap_function, Reflect } from '../RewriteUtil.mjs';
 import { engine } from '../../UserAgent.mjs';
+import { Type } from 'ast-types';
 
 export class PageRequestRewrite extends Rewrite {
 	xml_data = new WeakMap();
+	handle_xml_request(xml, data, body){
+		if(data.async){
+			
+		}
+	}
+	xml_on_response(response){
+
+	}
 	work(){
 		URL.createObjectURL = wrap_function(URL.createObjectURL, (target, that, args) => {
 			let result = Reflect.apply(target, that, args);
@@ -30,7 +39,7 @@ export class PageRequestRewrite extends Rewrite {
 		
 		XMLHttpRequest.prototype.open = wrap_function(XMLHttpRequest.prototype.open, (target, that, [method, url, async, username, password]) => {
 			this.xml_data.set(that, {
-				headers: Reflect.setPrototypeOf({}, null),
+				headers: Object.setPrototypeOf({}, null),
 				url,
 				method,
 				async,
@@ -41,11 +50,13 @@ export class PageRequestRewrite extends Rewrite {
 			return Reflect.apply(target, that, [ method, url, async, username, password ]);
 		});
 
-		const { setRequestHeader } = XMLHttpRequest.prototype;
-
 		XMLHttpRequest.prototype.setRequestHeader = wrap_function(XMLHttpRequest.prototype.setRequestHeader, (target, that, [header, value]) => {
 			value = String(value);
 			
+			if(!that instanceof XMLHttpRequest){
+				throw new TypeError('Illegal Invocation');
+			}
+
 			if(this.xml_data.has(that)){
 				const data = this.xml_data.get(that);
 				data.headers[header] = value;
@@ -62,7 +73,9 @@ export class PageRequestRewrite extends Rewrite {
 
 				data.headers['x-tomp-impl-names'] = JSON.stringify(Object.keys(data.headers));
 
-				handle_xml_request
+				data.body = body;
+
+				this.handle_xml_request(that, data);
 			}else{
 				Reflect.apply(target, that, [body]);
 				throw new Error('An unknown error occured');
