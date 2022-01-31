@@ -51,7 +51,7 @@ export class RewriteElements {
 			},
 			attributes: [
 				{ name: 'style', type: 'css', context: 'declarationList' },
-				{ name: /on.*?/, class_name: /[]/, type: 'js' },
+				{ name: /^on.*?/, class_name: /[]/, type: 'js' },
 			],
 		},
 		// see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/nonce
@@ -379,77 +379,77 @@ export class RewriteElements {
 		}
 		
 		for(let ab of this.abstract){
-			if(this.test_name(element.type, ab.name.tag)){
-				if(ab.type == 'delete'){
-					if(wrap){
-						element.type = 'tomp-' + element.type;
-					}else if(element.type.startsWith('tomp-')){
-						element.type = element.type.slice('tomp-'.length);
-					}
-					continue;
+			if(!this.test_name(element.type, ab.name.tag))continue;
+
+			if(ab.type == 'delete'){
+				if(wrap){
+					element.type = 'tomp-' + element.type;
+				}else if(element.type.startsWith('tomp-')){
+					element.type = element.type.slice('tomp-'.length);
 				}
+				continue;
+			}
 
-				if('content' in ab){
-					const content = element.text;
+			if('content' in ab){
+				const content = element.text;
 
-					if(content?.match(/\S/)){
-						let condition = true;
+				if(content?.match(/\S/)){
+					let condition = true;
 
-						if('condition' in ab.content){
-							condition = ab.content.condition(content, url, element);
-						}
-						
-						if(condition){
-							const changed = this.abstract_type(content, url, element, ab.content, wrap);
-
-							if(changed != undefined){
-								element.text = changed;
-							}
-						}
-					}
-				}
-
-				if('attributes' in ab)for(let data of ab.attributes){
-					if(data.allow_notexist && !element.attributes.has(data.name)){
-						element.attributes.set(data.name, '');
+					if('condition' in ab.content){
+						condition = ab.content.condition(content, url, element);
 					}
 					
-					for(let name of [...element.attributes.keys()]){
-						if(!this.test_name(name, data.name)){
-							continue;
-						}
-						
-						if(data.type == 'delete' && !wrap && element.attributes.has(`data-tomp-${name}`)){
-							element.attributes.set(name, element.attributes.get(`data-tomp-${name}`));
-							element.attributes.delete(`data-tomp-${name}`);
-						}
-						
-						if(!element.attributes.has(name)){
-							continue;
-						}
-	
-						let value = element.attributes.get(name);
-	
-						if(!value && !data.allow_empty){
-							return '';
-						}
+					if(condition){
+						const changed = this.abstract_type(content, url, element, ab.content, wrap);
 
-						if('condition' in data){
-							if(!data.condition(value, url, element)){
-								continue;
-							}
-						}
-	
-						if(data.type == 'delete' && wrap){
-							element.attributes.delete(name);
-							element.attributes.set(`data-tomp-${name}`, value);
-						}
-						
-						const changed = this.abstract_type(value, url, element, data, wrap);
-						
 						if(changed != undefined){
-							element.attributes.set(name, changed);
+							element.text = changed;
 						}
+					}
+				}
+			}
+
+			if('attributes' in ab)for(let data of ab.attributes){
+				if(data.allow_notexist && !element.attributes.has(data.name)){
+					element.attributes.set(data.name, '');
+				}
+				
+				for(let name of [...element.attributes.keys()]){
+					if(!this.test_name(name, data.name)){
+						continue;
+					}
+					
+					if(data.type == 'delete' && !wrap && element.attributes.has(`data-tomp-${name}`)){
+						element.attributes.set(name, element.attributes.get(`data-tomp-${name}`));
+						element.attributes.delete(`data-tomp-${name}`);
+					}
+					
+					if(!element.attributes.has(name)){
+						continue;
+					}
+
+					let value = element.attributes.get(name);
+
+					if(!value && !data.allow_empty){
+						return '';
+					}
+
+					if('condition' in data){
+						if(!data.condition(value, url, element)){
+							continue;
+						}
+					}
+
+					if(data.type == 'delete' && wrap){
+						element.attributes.delete(name);
+						element.attributes.set(`data-tomp-${name}`, value);
+					}
+					
+					const changed = this.abstract_type(value, url, element, data, wrap);
+					
+					if(changed != undefined){
+						element.attributes.set(name, changed);
 					}
 				}
 			}
@@ -540,7 +540,7 @@ export class RewriteElements {
 				if(!value && !data.allow_empty){
 					return '';
 				}
-				
+
 				const changed = this.abstract_type(value, url, element, data, true);
 				return changed;
 			}
