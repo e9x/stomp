@@ -60,7 +60,7 @@ export class RewriteURL {
 		if(isNaN(port))throw new URIError(`Unknown default port for protocol: '${url.protocol}'`);
 
 		const field = ((port << 4) + protoi).toString(16) + '/' + encodeURIComponent(url.pathname + url.search) + url.hash;
-		return this.tomp.directory + service + '/' + url.host + '/' + field;
+		return this.tomp.directory + service + '/' + url.hostname + '/' + field;
 	}
 	// only called in send.js get_data
 	unwrap(field){

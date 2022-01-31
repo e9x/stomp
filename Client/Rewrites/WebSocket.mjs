@@ -49,33 +49,46 @@ export class WebSocketRewrite extends Rewrite {
 				return this.#onclose;
 			}
 			set onclose(value){
-				if(typeof value == 'function')this.#onclose = value;
+				if(typeof value == 'function'){
+					if(typeof this.#onclose == 'function'){
+						this.removeEventListener('close', this.#onclose);
+					}
+
+					this.#onclose = value;
+					this.addEventListener('close', value);
+				}
+
 				return value;
 			}
 			get onopen(){
 				return this.#onopen;
 			}
 			set onopen(value){
-				if(typeof value == 'function')this.#onopen = value;
+				if(typeof value == 'function'){
+					if(typeof this.#onopen == 'function'){
+						this.removeEventListener('open', this.#onopen);
+					}
+
+					this.#onopen = value;
+					this.addEventListener('open', value);
+				}
+
 				return value;
 			}
 			get onerror(){
 				return this.#onerror;
 			}
 			set onerror(value){
-				if(typeof value == 'function')this.#onerror = value;
+				if(typeof value == 'function'){
+					if(typeof this.#onerror == 'function'){
+						this.removeEventListener('error', this.#onerror);
+					}
+
+					this.#onerror = value;
+					this.addEventListener('error', value);
+				}
+
 				return value;
-			}
-			#dispatch(event, onlistener){
-				var stopped = false;
-				
-				event.stopImmediatePropagation = () => {
-					stopped = true;
-					MessageEvent.prototype.stopImmediatePropagation.call(event);
-				};
-		
-				this.dispatchEvent(event);
-				if(!stopped && typeof onlistener == 'function')onlistener.call(this, event);
 			}
 			async #open(parsed, protocol){
 				const request_headers = Object.setPrototypeOf({}, null);
@@ -109,19 +122,19 @@ export class WebSocketRewrite extends Rewrite {
 				this.#socket = new _WebSocket(bare_ws, protos);
 
 				this.#socket.addEventListener('message', event => {
-					this.#dispatch(new MessageEvent('message', event), this.#onmessage);
+					this.dispatchEvent(new MessageEvent('message', event), this.#onmessage);
 				});
 
 				this.#socket.addEventListener('open', event => {
-					this.#dispatch(new Event('open', event), this.#onopen);
+					this.dispatchEvent(new Event('open', event), this.#onopen);
 				});
 
 				this.#socket.addEventListener('error', event => {
-					this.#dispatch(new ErrorEvent('error', event), this.#onerror);
+					this.dispatchEvent(new ErrorEvent('error', event), this.#onerror);
 				});
 
 				this.#socket.addEventListener('close', event => {
-					this.#dispatch(new Event('close', event), this.#onclose);
+					this.dispatchEvent(new Event('close', event), this.#onclose);
 				});
 			}
 			constructor(url = didnt_specify, protocol = []){

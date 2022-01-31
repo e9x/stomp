@@ -6,9 +6,7 @@ export class SyncRequest {
 	constructor(client){
 		this.client = client;
 	}
-	work(){
-		console.log('Response:', this.request(new this.client.request.global(`http://[::1]`)));
-	}
+	work(){}
 	create_response(data){
 		console.log('Received:', data);
 		const response = new Response(data[0], data[1]);

@@ -24,11 +24,11 @@ export class WorkerRewrite extends Rewrite {
 				this.#worker = new _Worker(that.client.tomp.js.serve(url, that.client.location.proxy, true), options);
 				
 				this.#worker.addEventListener('message', event => {
-					this.#dispatch(new MessageEvent('message', event), this.#onmessage);
+					this.dispatchEvent(new MessageEvent('message', event));
 				});
 				
 				this.#worker.addEventListener('error', event => {
-					this.#dispatch(new ErrorEvent('error', event), this.#onerror);
+					this.dispatchEvent(new ErrorEvent('error', event));
 				});
 			}
 			terminate(){
@@ -37,29 +37,34 @@ export class WorkerRewrite extends Rewrite {
 			postMessage(message, options){
 				return this.#worker.postMessage(message, options);
 			}
-			#dispatch(event, onlistener){
-				var stopped = false;
-				
-				event.stopImmediatePropagation = () => {
-					stopped = true;
-					MessageEvent.prototype.stopImmediatePropagation.call(event);
-				};
-		
-				this.dispatchEvent(event);
-				if(!stopped && typeof onlistener == 'function')onlistener.call(this, event);
-			}
 			get onmessage(){
 				return this.#onmessage;
 			}
 			set onmessage(value){
-				if(typeof value == 'function')this.#onmessage = value;
+				if(typeof value == 'function'){
+					if(typeof this.#onmessage == 'function'){
+						this.removeEventListener('message', this.#onmessage);
+					}
+
+					this.#onmessage = value;
+					this.addEventListener('message', value);
+				}
+
 				return value;
 			}
 			get onerror(){
 				return this.#onerror;
 			}
 			set onerror(value){
-				if(typeof value == 'function')this.#onerror = value;
+				if(typeof value == 'function'){
+					if(typeof this.#onerror == 'function'){
+						this.removeEventListener('error', this.#onerror);
+					}
+
+					this.#onerror = value;
+					this.addEventListener('error', value);
+				}
+				
 				return value;
 			}
 		};

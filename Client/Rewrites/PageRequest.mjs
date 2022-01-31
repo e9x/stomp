@@ -4,7 +4,7 @@ import { wrap_function, Reflect } from '../RewriteUtil.mjs';
 import { engine } from '../../UserAgent.mjs';
 
 export class PageRequestRewrite extends Rewrite {
-	xml_raw_names = new WeakMap();
+	xml_data = new WeakMap();
 	work(){
 		URL.createObjectURL = wrap_function(URL.createObjectURL, (target, that, args) => {
 			let result = Reflect.apply(target, that, args);
@@ -29,12 +29,14 @@ export class PageRequestRewrite extends Rewrite {
 		});
 		
 		XMLHttpRequest.prototype.open = wrap_function(XMLHttpRequest.prototype.open, (target, that, [method, url, async, username, password]) => {
-			if(!async && engine != 'gecko'){
-				this.tomp.log.warn('TOMP does not support synchronous XMLHTTPRequests. See https://bugs.chromium.org/p/chromium/issues/detail?id=602051');
-				async = true;
-			}
-
-			this.xml_raw_names.set(that, new Set());
+			this.xml_data.set(that, {
+				headers: Reflect.setPrototypeOf({}, null),
+				url,
+				method,
+				async,
+				username,
+				password,
+			});
 			url = this.client.tomp.binary.serve(new URL(url, this.client.location.proxy), this.client.location.proxy);
 			return Reflect.apply(target, that, [ method, url, async, username, password ]);
 		});
@@ -42,21 +44,29 @@ export class PageRequestRewrite extends Rewrite {
 		const { setRequestHeader } = XMLHttpRequest.prototype;
 
 		XMLHttpRequest.prototype.setRequestHeader = wrap_function(XMLHttpRequest.prototype.setRequestHeader, (target, that, [header, value]) => {
-			if(this.xml_raw_names.has(that)){
-				const raw = this.xml_raw_names.get(that);
-				// if raw is undefined, xmlhttprequest likely isnt open and therefore cant have any headers set
-				raw.add(header);
-			}
+			value = String(value);
 			
-			return Reflect.apply(target, that, [header, value]);
+			if(this.xml_data.has(that)){
+				const data = this.xml_data.get(that);
+				data.headers[header] = value;
+				// if data is undefined, xmlhttprequest likely isnt open and therefore cant have any headers set
+			}else{
+				Reflect.apply(target, that, [header, value]);
+				throw new Error('An unknown error occured');
+			}
 		});
 
 		XMLHttpRequest.prototype.send = wrap_function(XMLHttpRequest.prototype.send, (target, that, [body]) => {
-			if(this.xml_raw_names.has(that)){
-				const raw = this.xml_raw_names.get(that);
-				setRequestHeader.call(that, 'x-tomp-impl-names', JSON.stringify([...raw]));
+			if(this.xml_data.has(that)){
+				const data = this.xml_data.get(that);
+
+				data.headers['x-tomp-impl-names'] = JSON.stringify(Object.keys(data.headers));
+
+				handle_xml_request
+			}else{
+				Reflect.apply(target, that, [body]);
+				throw new Error('An unknown error occured');
 			}
-			return Reflect.apply(target, that, [body]);
 		});
 	}
 };
