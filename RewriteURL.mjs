@@ -1,17 +1,19 @@
 import messages from './Messages.mjs';
 
 // WIP
-export const protocols =     ['http:','https:', 'blob:http:', 'blob:https:'];
-export const default_ports = [80     ,443     , 80,         , 443];
+export const protocols =     ['http:','https:','blob:http:','blob:https:'];
+export const default_ports = [80     ,443     ,80          ,443          ];
 
 export class ParsedRewrittenURL {
-	toString(){
-		let port = '';
-		if(!default_ports.includes(this.port)){
-			port = `:${this.port}`;
+	get port_string(){
+		if(default_ports.includes(this.port)){
+			return '';
+		}else{
+			return `:${this.port}`;
 		}
-		
-		return `${this.protocol}//${this.host}${port}${this.path}`;
+	}
+	toString(){
+		return `${this.protocol}//${this.host}${this.port_string}${this.path}`;
 	}
 };
 
@@ -50,7 +52,7 @@ export class RewriteURL {
 		url = this.parse_url(url);
 		
 		const protoi = protocols.indexOf(url.protocol);
-		var port = parseInt(url.port);
+		let port = parseInt(url.port);
 		if(isNaN(port))port = default_ports[protoi];
 		
 		// android-app, ios-app, mailto, many other non-browser protocols
