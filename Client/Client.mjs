@@ -42,11 +42,41 @@ export class Client {
 				let string = Reflect.apply(target, that, args);
 
 				if(!this.native.is_native(string)){
-					string = this.tomp.js.unwrap(`x = ${string}`, this.location.proxy);
+					if(/^class[{ ]/.test(string)){
+						string = this.tomp.js.unwrap(`x = ${string}`, this.location.proxy);
+						string = string.slice(string.indexOf('=') + 1);
+						if(string.startsWith(' ')){
+							string = string.slice(1);
+						}
+
+						if(string.endsWith(';')){
+							string = string.slice(0, -1);
+						}
+					}else{
+						let left = 0;
+						let right;
+
+						if(!(/^((async\s+)?(\(|function[( ]))/).test(string)){
+							// (){kind of function}
+							left = 1;
+							right = -1;
+							string = `{${string}}`
+						}
+
+						string = this.tomp.js.unwrap(`x = ${string}`, this.location.proxy);
+
+						string = string.slice(string.indexOf('=') + 1);
+						
+						if(string.startsWith(' ')){
+							string = string.slice(1);
+						}
 					
-					string = string.slice(string.indexOf('=') + 1);
-					if(string.startsWith(' '))string = string.slice(1);
-					string = string.slice(0, string.lastIndexOf('}') + 1);
+						if(string.endsWith(';')){
+							string = string.slice(0, -1);
+						}
+
+						string = string.slice(left, right);
+					}
 				}
 
 				return string;
