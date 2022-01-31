@@ -6,6 +6,12 @@ import { engine } from '../../UserAgent.mjs';
 export class PageRequestRewrite extends Rewrite {
 	xml_raw_names = new WeakMap();
 	work(){
+		URL.createObjectURL = wrap_function(URL.createObjectURL, (target, that, args) => {
+			let result = Reflect.apply(target, that, args);
+			result = result.replace(this.client.location.global.origin, this.client.location.proxy.origin);
+			return result;
+		});
+
 		AudioWorklet.prototype.addModule = wrap_function(AudioWorklet.prototype.addModule, (target, that, [ url, options ]) => {
 			url = new URL(url, this.client.location.page_url);
 			url = this.client.tomp.js.serve(url, this.client.location.page_url);

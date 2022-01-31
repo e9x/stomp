@@ -215,8 +215,8 @@ export class DOMRewrite extends Rewrite {
 							}) : undefined,
 							set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
 								value = String(value);
-								this.process_set_attribute(that, name, true, value);
-								return value;
+								value = this.process_set_attribute(that, name, true, value);
+								return Reflect.apply(target, that, [ value ]);
 							}) : undefined,
 						});
 					}
@@ -249,7 +249,8 @@ export class DOMRewrite extends Rewrite {
 	}
 	process_set_attribute(node, name, class_name, value){
 		const element = new TOMPElementDOM(node);
-		this.client.tomp.elements.set_attribute(element, this.client.location.proxy, name, class_name, value);
+		const result = this.client.tomp.elements.set_attribute(element, this.client.location.proxy, name, class_name, value);
 		element.sync();
+		return result;
 	}
 };

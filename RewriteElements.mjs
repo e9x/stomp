@@ -560,7 +560,11 @@ export class RewriteElements {
 				const changed = this.abstract_type(value, url, element, data, true);
 				
 				if(changed != undefined){
-					element.attributes.set(name, changed);
+					if(class_name){
+						return changed;
+					}else{
+						element.attributes.set(name, changed);
+					}
 				}
 			}
 		}
