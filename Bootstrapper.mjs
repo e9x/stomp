@@ -3,7 +3,6 @@ const { src } = document.currentScript;
 import { LOG_DEBUG } from './Logger.mjs';
 
 class Bootstrapper {
-	pending_messages = {};
 	constructor(config){
 		this.config = config;
 

@@ -5,7 +5,6 @@ import { AcornIterator } from './IterateAcorn.mjs';
 import { builders as b } from 'ast-types';
 
 export const global_client = 'tompc$';
-const top_level_variables = ['const','let'];
 
 const global_access = b.memberExpression(b.identifier(global_client), b.identifier('access'));
 

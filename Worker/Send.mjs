@@ -3,7 +3,6 @@ import { html_types, get_mime } from '../RewriteElements.mjs';
 import { TOMPError } from '../TOMPError.mjs';
 import { TOMPFetch } from './TOMPFetch.mjs';
 import { load_setcookies, get_cookies } from './Cookies.mjs';
-import messages from '../Messages.mjs';
 
 const remove_general_headers = [
 	'alt-svc',
@@ -264,7 +263,13 @@ export async function SendForm(server, server_request, field){
 	}
 
 	const search_ind = field.indexOf('?');
-	if(search_ind == -1)return void server.send_json(400, { message: messages['error.badform.get'] });
+	
+	if(search_ind == -1){
+		return void server.send_json(400, {
+			message: `Invalid form GET`,
+		});
+	}
+	
 	const search = field.slice(search_ind);
 	field = field.slice(0, search_ind);
 	

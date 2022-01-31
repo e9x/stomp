@@ -1,5 +1,3 @@
-import messages from './Messages.mjs';
-
 // WIP
 export const protocols =     ['http:','https:','blob:http:','blob:https:'];
 export const default_ports = [80     ,443     ,80          ,443          ];

@@ -1,7 +1,6 @@
 import { TOMP } from '../TOMP.mjs';
 import { Process } from './Process.mjs';
 import { SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendManifest } from './Send.mjs';
-import messages from '../Messages.mjs'
 import { openDB } from 'idb/with-async-ittr';
 import {create_db as create_cookie_db} from './Cookies.mjs';
 import { SyncRequest } from './SyncRequest.mjs';
@@ -74,7 +73,9 @@ export class Server {
 			}
 		}catch(err){
 			this.tomp.log.error(err);
-			return this.send_json(500, { message: messages['generic.exception.request'] });
+			return this.send_json(500, {
+				message: `TOMPServer encountered an exception while handling your request. Contact this server's administrator.`,
+			});
 		}
 	}
 	request(event){
