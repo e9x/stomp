@@ -234,8 +234,8 @@ export class DOMRewrite extends Rewrite {
 		this.set_attribute = Element.prototype.setAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute, value ]) => {
 			attribute = String(attribute).toLowerCase();
 			value = String(value);
-			this.process_set_attribute(that, attribute, false, value);
-			return undefined;
+			const result = Reflect.apply(target, that, [ attribute, this.process_set_attribute(that, attribute, false, value) ]);
+			return result;
 		});
 	}
 	process_get_attribute(node, name, class_name, value){

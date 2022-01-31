@@ -38,16 +38,6 @@ export class RewriteElements {
 	constructor(tomp){
 		this.tomp = tomp;
 	}
-	set_binary_srcset = (attr, value, url, element) => {
-		const parsed = parseSrcset(value);
-
-		for(let src of parsed){
-			const resolved = new URL(src.url, url).href;
-			src.url = this.tomp.binary.serve(resolved, url);
-		}
-
-		element.attributes.set(attr, stringifySrcset(parsed));
-	};
 	test_name(name, match){
 		if(name instanceof RegExp)return name === match;
 		else if(typeof match == 'string')return name == match;
@@ -118,7 +108,20 @@ export class RewriteElements {
 			},
 			attributes: [
 				// delete as in move to data-tomp-srcset, create attribute named srcset and set value to result of wrap
-				{ name: 'srcset', type: 'delete', wrap: (value, url, element) => this.set_binary_srcset('srcset', value, url, element) },
+				{
+					name: 'srcset',
+					type: 'delete',
+					wrap: (value, url, element) => {
+						const parsed = parseSrcset(value);
+						
+						for(let src of parsed){
+							const resolved = new URL(src.url, url).href;
+							src.url = this.tomp.binary.serve(resolved, url);
+						}
+
+						return stringifySrcset(parsed);
+					},
+				},
 				{ name: 'src', type: 'url', service: 'binary' },
 			],
 		},
@@ -233,36 +236,28 @@ export class RewriteElements {
 							case'preload':
 								switch(element.attributes.get('as')){
 									case'style':
-										element.attributes.set('href', this.tomp.css.serve(resolved, url));
-										break;
+										return this.tomp.css.serve(resolved, url);
 									case'worker':
 									case'script':
-										element.attributes.set('href', this.tomp.js.serve(resolved, url));
-										break;
+										return this.tomp.js.serve(resolved, url);
 									case'object':
 									case'document':
-										element.attributes.set('href', this.tomp.html.serve(resolved, url));
-										break;
+										return this.tomp.html.serve(resolved, url);
 									default:
-										element.attributes.set('href', this.tomp.binary.serve(resolved, url));
-										break;
+										return this.tomp.binary.serve(resolved, url);
 								}
 								break;
 							case'manifest':
-								element.attributes.set('href', this.tomp.manifest.serve(resolved, url));
-								break;
+								return this.tomp.manifest.serve(resolved, url);
 							case'alternate':
 							case'amphtml':
 							// case'profile':
-								element.attributes.set('href', this.tomp.html.serve(resolved, url));
-								break;
+								return this.tomp.html.serve(resolved, url);
 							case'stylesheet':
-								element.attributes.set('href', this.tomp.css.serve(resolved, url));
-								break;
+								return this.tomp.css.serve(resolved, url);
 							default:
 								// this.tomp.log.warn('unknown rel', element.attributes.get('rel'));
-								element.attributes.set('href', this.tomp.binary.serve(resolved, url));
-								break;
+								return this.tomp.binary.serve(resolved, url);
 						}
 					},
 				},
@@ -281,7 +276,7 @@ export class RewriteElements {
 					wrap: (value, url, element) => {
 						switch(element.attributes.get('http-equiv')){
 							case'refresh':
-								element.attributes.set('content', this.tomp.html.wrap_http_refresh(value, url));
+								return this.tomp.html.wrap_http_refresh(value, url);
 								break;
 						}
 					},
@@ -297,11 +292,9 @@ export class RewriteElements {
 	}
 	abstract_type(value, url, element, data, wrap){
 		if(typeof data.wrap == 'function' && wrap == true){
-			data.wrap(value, url, element);
-			return undefined;
+			return data.wrap(value, url, element);
 		}else if(typeof data.unwrap == 'function' && wrap == false){
-			data.unwrap(value, url, element);
-			return undefined;
+			return data.unwrap(value, url, element);
 		}
 
 		switch(data.type){
@@ -504,15 +497,8 @@ export class RewriteElements {
 					}
 				}
 				
-				if(data.wrap){
-					continue;
-				}
-
 				const changed = this.abstract_type(value, url, element, data, false);
-				
-				if(changed != undefined){
-					return changed;
-				}
+				return changed;
 			}
 		}
 		
@@ -554,20 +540,9 @@ export class RewriteElements {
 				if(!value && !data.allow_empty){
 					return '';
 				}
-
-				if(data.unwrap){
-					continue;
-				}
-
-				const changed = this.abstract_type(value, url, element, data, true);
 				
-				if(changed != undefined){
-					if(class_name){
-						return changed;
-					}else{
-						element.attributes.set(name, changed);
-					}
-				}
+				const changed = this.abstract_type(value, url, element, data, true);
+				return changed;
 			}
 		}
 		
