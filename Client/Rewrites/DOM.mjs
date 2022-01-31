@@ -210,12 +210,12 @@ export class DOMRewrite extends Rewrite {
 							get: desc.get ? wrap_function(desc.get, (target, that, args) => {
 								let result = Reflect.apply(target, that, args);
 								if(result instanceof CSSStyleDeclaration)return this.style_proxy(result);
-								result = this.process_get_attribute(that, name, true, result);
+								result = this.process_get_attribute(that, name, true, result, key);
 								return result;
 							}) : undefined,
 							set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
 								value = String(value);
-								value = this.process_set_attribute(that, name, true, value);
+								value = this.process_set_attribute(that, name, true, value, key);
 								return Reflect.apply(target, that, [ value ]);
 							}) : undefined,
 						});
@@ -227,29 +227,29 @@ export class DOMRewrite extends Rewrite {
 		this.get_attribute = Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute ]) => {
 			attribute = String(attribute).toLowerCase();
 			let result = Reflect.apply(target, that, [ attribute ]);
-			result = this.process_get_attribute(that, attribute, false, result);
+			result = this.process_get_attribute(that, attribute, false, result, Object.getPrototypeOf(that)[Symbol.toStringTag]);
 			return result;
 		});
 
 		this.set_attribute = Element.prototype.setAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute, value ]) => {
 			attribute = String(attribute).toLowerCase();
 			value = String(value);
-			const result = Reflect.apply(target, that, [ attribute, this.process_set_attribute(that, attribute, false, value) ]);
+			const result = Reflect.apply(target, that, [ attribute, this.process_set_attribute(that, attribute, false, value, Object.getPrototypeOf(that)[Symbol.toStringTag]) ]);
 			return result;
 		});
 	}
-	process_get_attribute(node, name, class_name, value){
+	process_get_attribute(node, name, use_class, value, class_name){
 		const element = new TOMPElementDOM(node);
-		const result = this.client.tomp.elements.get_attribute(element, this.client.location.proxy, name, class_name, value);
+		const result = this.client.tomp.elements.get_attribute(element, this.client.location.proxy, name, use_class, value, class_name);
 
 		element.sync();
 		
 		if(result == undefined)return null;
 		else return result;
 	}
-	process_set_attribute(node, name, class_name, value){
+	process_set_attribute(node, name, use_class, value, class_name){
 		const element = new TOMPElementDOM(node);
-		const result = this.client.tomp.elements.set_attribute(element, this.client.location.proxy, name, class_name, value);
+		const result = this.client.tomp.elements.set_attribute(element, this.client.location.proxy, name, use_class, value, class_name);
 		element.sync();
 		return result;
 	}

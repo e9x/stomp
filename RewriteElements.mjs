@@ -330,7 +330,7 @@ export class RewriteElements {
 							return this.tomp[data.service].unwrap_serving(value, url);
 						}
 					default:
-						console.warn('unknown service:', data.service);
+						this.tomp.log.warn('unknown service:', data.service);
 						if(wrap){
 							return this.tomp.url.wrap(new URL(value, url), data.service);
 						}else{
@@ -456,12 +456,18 @@ export class RewriteElements {
 		}
 	}
 	// todo: form action
-	get_attribute(element, url, name, class_name, value){
+	get_attribute(element, url, name, use_class, value, class_name){
 		if(value == undefined)return undefined;
 
 		for(let ab of this.abstract){
-			if(!class_name && !this.test_name(element.type, ab.name.tag)){
-				continue;
+			if(use_class){
+				if(!this.test_name(class_name, ab.name.class)){
+					continue;
+				}
+			}else{
+				if(!this.test_name(element.type, ab.name.tag)){
+					continue;
+				}
 			}
 
 			if('condition' in ab){
@@ -471,7 +477,7 @@ export class RewriteElements {
 			}
 
 			if('attributes' in ab)for(let data of ab.attributes){
-				if(!this.test_name(name, class_name && data.class_name ? data.class_name : data.name)){
+				if(!this.test_name(name, use_class && data.class_name ? data.class_name : data.name)){
 					continue;
 				}
 				
@@ -483,14 +489,10 @@ export class RewriteElements {
 					return element.attributes.get(`data-tomp-${name}`);
 				}
 				
-				if(!class_name && !element.attributes.has(name) && !data.allow_notexist){
+				if(!use_class && !element.attributes.has(name) && !data.allow_notexist){
 					continue;
 				}
-
-				if(!value && !data.allow_empty){
-					return '';
-				}
-
+				
 				if('condition' in data){
 					if(!data.condition(value, url, element)){
 						continue;
@@ -504,15 +506,21 @@ export class RewriteElements {
 		
 		return value;
 	}
-	set_attribute(element, url, name, class_name, value){
+	set_attribute(element, url, name, use_class, value, class_name){
 		if(!value){
 			element.attributes.set(name, '');
 			return;
 		}
 
 		for(let ab of this.abstract){
-			if(!class_name && !this.test_name(element.type, ab.name.tag)){
-				continue;
+			if(use_class){
+				if(!this.test_name(class_name, ab.name.class)){
+					continue;
+				}
+			}else{
+				if(!this.test_name(element.type, ab.name.tag)){
+					continue;
+				}
 			}
 
 			if('condition' in ab){
@@ -522,7 +530,7 @@ export class RewriteElements {
 			}
 
 			if('attributes' in ab)for(let data of ab.attributes){
-				if(!this.test_name(name, class_name && data.class_name ? data.class_name : data.name)){
+				if(!this.test_name(name, use_class && data.class_name ? data.class_name : data.name)){
 					continue;
 				}
 				
