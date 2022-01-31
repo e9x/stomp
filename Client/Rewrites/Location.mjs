@@ -168,7 +168,7 @@ export class LocationRewrite extends Rewrite {
 			}),
 		});
 		
-		Object.defineProperty(this.proxy, 'ancestorOrigins', {
+		if(ancestorOrigins)Object.defineProperty(this.proxy, 'ancestorOrigins', {
 			configurable: false,
 			enumerable: true,
 			get: wrap_function(ancestorOrigins.get, (target, that, args) => {

@@ -42,7 +42,7 @@ export class Server {
 		try{
 			switch(service){
 				case'worker:sync-request':
-					return await this.sync_request.process(request, field);
+					return await this.sync_request.route(request);
 					break;
 				case 'worker:process':
 					return await Process(this, request, field);

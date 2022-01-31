@@ -30,7 +30,7 @@ export class SyncRequest {
 		if(engine == 'gecko'){
 			const http = new XMLHttpRequest();
 
-			Reflect.apply(SyncRequest.xml_open, http, [ request.method, `${this.client.tomp.directory}worker:sync-request/`, false ]);
+			Reflect.apply(SyncRequest.xml_open, http, [ 'POST', `${this.client.tomp.directory}worker:sync-request/`, false ]);
 			http.send(JSON.stringify(args));
 			
 			return this.create_response(JSON.parse(http.responseText));
