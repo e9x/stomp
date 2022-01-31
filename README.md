@@ -2,11 +2,11 @@
 
 ## [Specifications](https://github.com/tomphttp/specifications)
 
-[Demo](https://tomp.sys32.dev/)
+## [Demo](https://tomp.sys32.dev/)
 
-[Frontend](https://github.com/waterswat/toomanyproxies-frontend)
+## [Frontend](https://github.com/waterswat/toomanyproxies-frontend)
 
-## History
+# History
 
 ## Emscripten
 
