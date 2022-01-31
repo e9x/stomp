@@ -467,7 +467,7 @@ export class RewriteElements {
 		if(value == undefined)return undefined;
 
 		for(let ab of this.abstract){
-			if(!this.test_name(element.type, ab.name.tag)){
+			if(!class_name && !this.test_name(element.type, ab.name.tag)){
 				continue;
 			}
 
@@ -525,11 +525,9 @@ export class RewriteElements {
 		}
 
 		for(let ab of this.abstract){
-			if(!this.test_name(element.type, ab.name.tag)){
+			if(!class_name && !this.test_name(element.type, ab.name.tag)){
 				continue;
 			}
-
-			// if(element.type == 'script')debugger;
 
 			if('condition' in ab){
 				if(!ab.condition(url, element)){
@@ -541,7 +539,7 @@ export class RewriteElements {
 				if(!this.test_name(name, class_name && data.class_name ? data.class_name : data.name)){
 					continue;
 				}
-
+				
 				if('condition' in data){
 					if(!data.condition(value, url, element)){
 						continue;
@@ -553,6 +551,10 @@ export class RewriteElements {
 					element.attributes.set(`data-tomp-${name}`, value);
 				}
 				
+				if(!value && !data.allow_empty){
+					return '';
+				}
+
 				if(data.unwrap){
 					continue;
 				}

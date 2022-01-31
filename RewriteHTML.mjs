@@ -125,7 +125,7 @@ export class RewriteHTML {
 			
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)
 			// on the first non-essential node (not html,head,or body), insert the client script before it
-			if(wrap && !element.detached && !inserted_script && !essential_nodes.includes(ctx.node.nodeName)){
+			if(!fragment && wrap && !element.detached && !inserted_script && !essential_nodes.includes(ctx.node.nodeName)){
 				inserted_script = ctx.insert_before(...this.get_head(url));
 			}
 
