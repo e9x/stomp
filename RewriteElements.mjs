@@ -43,6 +43,33 @@ export class RewriteElements {
 		else if(typeof match == 'string')return name == match;
 		else return name.match(match);
 	}
+	wrap_innerHTML(value, url, element, wrap){
+		for(let ab of this.abstract){
+			if(!this.test_name(element.type, ab.name.tag))continue;
+			
+			if('content' in ab){
+				let condition = true;
+
+				if('condition' in ab.content){
+					condition = ab.content.condition(value, url, element);
+				}
+				
+				if(condition){
+					const changed = this.abstract_type(value, url, element, ab.content, wrap);
+
+					if(changed != undefined){
+						return changed;
+					}
+				}
+			}
+		}
+
+		if(wrap){
+			return this.tomp.html.wrap(value, url, true);
+		}else{
+			return this.tomp.html.unwrap(value, url, true);
+		}
+	}
 	abstract = [
 		{
 			name: {
@@ -79,7 +106,13 @@ export class RewriteElements {
 				class: 'Element',
 			},
 			attributes: [
-				{ name: /[]/, class_name: 'innerHTML', type: 'html', fragment: true },
+				{
+					name: /[]/,
+					class_name: 'innerHTML',
+					type: 'custom',
+					wrap: (value, url, element) => this.wrap_innerHTML(value, url, element, true),
+					unwrap: (value, url, element) => this.wrap_innerHTML(value, url, element, false),
+				},
 				{ name: /[]/, class_name: 'outerHTML', type: 'html', fragment: true },
 			],
 		},
