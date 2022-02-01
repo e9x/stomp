@@ -90,36 +90,44 @@ export class WebSocketRewrite extends Rewrite {
 
 				return value;
 			}
-			async #open(parsed, protocol){
+			async #open(remote, remote_protocol, protocol){
 				const request_headers = Object.setPrototypeOf({}, null);
-				request_headers['host'] = parsed.hostname;
-				request_headers['origin'] = that.client.location.proxy.origin;
-				request_headers['pragma'] = 'no-cache';
-				request_headers['cache-control'] = 'no-cache';
-				request_headers['upgrade'] = 'websocket';
-				request_headers['user-agent'] = navigator.userAgent;
-				request_headers['connection'] = 'Upgrade';
-				
-				let cookies = await get_cookies(that.client, parsed);
-				if(cookies)request_headers['cookie'] = cookies;
-				
-				const protos = [
-					encode_protocol(JSON.stringify(request_headers)),
-					encode_protocol(parsed.protocol),
-					encode_protocol(parsed.host),
-					encode_protocol(parsed.port),
-					encode_protocol(parsed.path),
-				];
+				request_headers['Host'] = remote.hostname;
+				request_headers['Origin'] = that.client.location.proxy.origin;
+				request_headers['Pragma'] = 'no-cache';
+				request_headers['Cache-Control'] = 'no-cache';
+				request_headers['Upgrade'] = 'websocket';
+				request_headers['User-Agent'] = navigator.userAgent;
+				request_headers['Connection'] = 'Upgrade';
 				
 				for(let proto of [].concat(protocol)){
 					if(!valid_protocol(proto)){
 						throw new DOMException(`Failed to construct 'WebSocket': The subprotocol '${proto}' is invalid.`);
-					}else{
-						protos.push(proto);
 					}
 				}
 
-				this.#socket = new _WebSocket(bare_ws, protos);
+				if(protocol.length){
+					request_headers['Sec-Websocket-Protocol'] = protocol.join(', ');
+				}
+				
+				let cookies = await get_cookies(that.client, remote);
+				if(cookies)request_headers['Cookie'] = cookies;
+				
+				this.#socket = new _WebSocket(bare_ws, [
+					'bare',
+					encode_protocol(JSON.stringify({
+						remote,
+						protocol: remote_protocol,
+						headers: request_headers,
+						forward_headers: [
+							'accept-encoding',
+							'accept-language',
+							'sec-websocket-extensions',
+							'sec-websocket-key',
+							'sec-websocket-version',
+						],
+					})),
+				]);
 
 				this.#socket.addEventListener('message', event => {
 					this.dispatchEvent(new MessageEvent('message', event), this.#onmessage);
@@ -164,8 +172,7 @@ export class WebSocketRewrite extends Rewrite {
 					host: parsed.host,
 					path: parsed.pathname + parsed.search,
 					port,
-					protocol: parsed.protocol,
-				}, protocol);
+				}, parsed.protocol, protocol);
 			}
 			get readyState(){
 				return this.socket ? this.socket.readyState : _WebSocket.CONNECTING;
