@@ -93,19 +93,15 @@ export class DOMRewrite extends Rewrite {
 			get: (target, prop, receiver) => {
 				let result = Reflect.get(target, prop, receiver);
 				
-				if(typeof result == 'string'){
+				if(typeof result == 'string' && prop != 'cssText'){
 					result = this.client.tomp.css.unwrap(result, this.client.location.proxy, 'value');
 				}
 				
 				return result;
 			},
 			set: (target, prop, value) => {
-				if(typeof value == 'string'){
-					if(prop == 'cssText'){
-						value = this.client.tomp.css.wrap(value, this.client.location.proxy, 'declarationList');
-					}else{
-						value = this.client.tomp.css.wrap(value, this.client.location.proxy, 'value');
-					}
+				if(typeof value == 'string' && prop != 'cssText'){
+					value = this.client.tomp.css.wrap(value, this.client.location.proxy, 'value');
 				}
 				
 				const result = Reflect.set(target, prop, value);
