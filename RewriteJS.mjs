@@ -368,17 +368,3 @@ export class RewriteJS {
 		return this.tomp.url.unwrap_ez(serving);
 	}
 };
-
-
-/*
-** determine if the code is within a scope
-** if its top level, make all let call x.define.let()
-** example
-with(x.ctx){
-	// let variable = false;
-	window.variable = false;
-
-	// let win = this;
-	window.win = x.window
-}
-*/
