@@ -28,7 +28,7 @@ export class Builder {
 			devtool: 'source-map',
 			entry: {
 				client: path.join(__dirname, 'Client', 'Entry.mjs'),
-				entry: path.join(__dirname, 'Worker', 'Entry.mjs'),
+				worker: path.join(__dirname, 'Worker', 'Entry.mjs'),
 				bootstrapper: path.join(__dirname, 'Bootstrapper.mjs'),
 			},
 			context: __dirname,
@@ -59,8 +59,8 @@ export class Builder {
 	watch(){
 		const emitter = new Events();
 		
-		setTimeout(() => {
-			this.webpack.watch({}, (error, stats) => {
+		const watch = new Promise(resolve => setTimeout(() => {
+			resolve(this.webpack.watch({}, (error, stats) => {
 				const errors = this.get_errors(error, stats);
 	
 				if(errors.length){
@@ -68,8 +68,12 @@ export class Builder {
 				}else{
 					emitter.emit('bulit');
 				}
-			});
-		});
+			}));
+		}));
+
+		emitter.stop = async () => {
+			(await watch).close();
+		};
 
 		return emitter;
 	}
