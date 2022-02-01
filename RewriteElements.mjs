@@ -70,15 +70,53 @@ export class RewriteElements {
 			return this.tomp.html.unwrap(value, url, true);
 		}
 	}
+	wrap_textContent(value, url, element, wrap){
+		for(let ab of this.abstract){
+			if(!this.test_name(element.type, ab.name.tag))continue;
+			
+			if('content' in ab){
+				let condition = true;
+
+				if('condition' in ab.content){
+					condition = ab.content.condition(value, url, element);
+				}
+				
+				if(condition){
+					const changed = this.abstract_type(value, url, element, ab.content, wrap);
+
+					if(changed != undefined){
+						return changed;
+					}
+				}
+			}
+		}
+
+		return value;
+	}
 	abstract = [
 		{
 			name: {
 				tag: /./,
-				class: /HTMLElement/, // /HTML.*?Element/
+				class: 'HTMLElement', // /HTML.*?Element/
 			},
 			attributes: [
 				{ name: 'style', type: 'css', context: 'declarationList' },
 				{ name: /^on.*?/, class_name: /[]/, type: 'js' },
+			],
+		},
+		{
+			name: {
+				tag: /[]/,
+				class: /^HTML.*?Element$/
+			},
+			attributes: [
+				{
+					name: /[]/,
+					class_name: 'text',
+					type: 'custom',
+					wrap: (value, url, element) => this.wrap_textContent(value, url, element, true),
+					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
+				},
 			],
 		},
 		// see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/nonce
@@ -98,6 +136,13 @@ export class RewriteElements {
 			},
 			attributes: [
 				{ name: /[]/, class_name: 'baseURI', type: 'url', service: 'html' },
+				{
+					name: /[]/,
+					class_name: 'textContent',
+					type: 'custom',
+					wrap: (value, url, element) => this.wrap_textContent(value, url, element, true),
+					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
+				},
 			],
 		},
 		{
