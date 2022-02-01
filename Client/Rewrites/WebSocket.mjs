@@ -17,7 +17,7 @@ export class WebSocketRewrite extends Rewrite {
 
 		const _WebSocket = global.WebSocket;
 
-		const bare_ws = new URL(this.client.tomp.bare, location);
+		const bare_ws = new URL(this.client.tomp.bare + 'v1/', location);
 		bare_ws.protocol = bare_ws.protocol == 'https:' ? 'wss:' : 'ws:';
 		
 		const didnt_specify = Symbol();
