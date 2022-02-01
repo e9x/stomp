@@ -176,9 +176,29 @@ export class DOMRewrite extends Rewrite {
 			});
 		}
 	}
+	attr_work(){
+		const { value } = getOwnPropertyDescriptors(Attr.prototype);
+
+		Reflect.defineProperty(Attr.prototype, 'value', {
+			get: wrap_function(value.get, (target, that, args) => {
+				const node = that.ownerElement;
+				const name = that.name;
+				let result = Reflect.apply(target, that, args);
+				result = this.process_get_attribute(that.ownerElement, name, false, result);
+				return result;
+			}),
+			set: wrap_function(value.set, (target, that, [ value ]) => {
+				const node = that.ownerElement;
+				const name = that.name;
+				value = String(value);
+				value = this.process_set_attribute(node, name, false, value);
+				return Reflect.apply(target, that, [ value ]);
+			}),
+		});
+	}
 	work(){
 		this.style_work();
-
+		this.attr_work();
 		this.anchor_work();
 		
 		for(let key of Object.getOwnPropertyNames(global)){
