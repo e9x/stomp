@@ -29,6 +29,7 @@
 		"acorn": "^8.7.0",
 		"ast-types": "^0.14.2",
 		"buffer": "^6.0.3",
+		"commander": "^9.0.0",
 		"css-tree": "^2.0.4",
 		"escodegen": "^2.0.0",
 		"idb": "^7.0.0",

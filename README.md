@@ -1,23 +1,34 @@
-# TooManyProxies (Tomp)
+# TooManyProxies
 
-## [Specifications](https://github.com/tomphttp/specifications)
+This repository implements the proxy model found [here](https://github.com/tomphttp/specifications/blob/master/ProxyModel.md).
 
-## [Demo](https://tomp.sys32.dev/)
+- [Demo](https://tomp.sys32.dev/)
+- [Frontend](https://github.com/waterswat/toomanyproxies-frontend)
 
-## [Frontend](https://github.com/waterswat/toomanyproxies-frontend)
+## Usage
 
-# History
+We provide a command-line interface for compiling the code.
 
-## Emscripten
+For more features, specify the `--help` option when running the CLI.
 
-TOMP was originally going to be written in C++, using emscripten for the client script.
+### Quickstart
 
-Due to the lack of advanced HTTP libraries, the idea of being written in C++ was abandoned.
+1. Clone the repository locally
+```sh
+git clone https:/github.com/tomphttp/toomanyproxies.git
+```
 
-NodeJS is tried and true, especially when writing proxies.
+2. Enter the folder
+```sh
+cd toomanyproxies
+```
 
-## Only 2 modules
+3. Install dependencies
+```sh
+npm install
+```
 
-Prior to the idea of moving all the load from the server onto a ServiceWorker, TOMP was going to be a plain client and server proxy.
-
-Only 2 days prior to writing this (1/18/2022), TOMP had no business with ServiceWorkers. The goal was to perfect current proxies such as [Corrosion](https://github.com/titaniumnetwork-dev/corrosion), [Alloy](https://github.com/titaniumnetwork-dev/alloy), and [SystemYA proxy](https://github.com/sysce/proxy).
+3. Build to the `tompbuild` folder
+```sh
+node ./Standalone.mjs --folder tompbuild
+```
