@@ -102,6 +102,19 @@ export class RewriteElements {
 			attributes: [
 				{ name: 'style', type: 'css', context: 'declarationList' },
 				{ name: /^on.*?/, class_name: /[]/, type: 'js' },
+				{
+					name: /[]/,
+					class_name: 'innerText',
+					type: 'custom',
+					wrap: (value, url, element) => this.wrap_textContent(value, url, element, true),
+					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
+				},
+				{
+					name: /[]/,
+					class_name: 'outerText',
+					type: 'custom',
+					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
+				},
 			],
 		},
 		{
@@ -416,6 +429,8 @@ export class RewriteElements {
 						}
 				}
 		}
+
+		return value;
 	}
 	// persist is an object containing data usually stored once per page rewrite
 	#wrap(element, url, persist, wrap){
