@@ -1,4 +1,3 @@
-// run the builder on cli
 import { Builder } from './Builder.mjs';
 import { program, Option } from 'commander';
 import { resolve } from 'node:path';
