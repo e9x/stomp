@@ -90,7 +90,7 @@ export class WebSocketRewrite extends Rewrite {
 
 				return value;
 			}
-			async #open(remote, remote_protocol, protocol){
+			async #open(remote, protocol){
 				const request_headers = Object.setPrototypeOf({}, null);
 				request_headers['Host'] = remote.hostname;
 				request_headers['Origin'] = that.client.location.proxy.origin;
@@ -117,7 +117,6 @@ export class WebSocketRewrite extends Rewrite {
 					'bare',
 					encode_protocol(JSON.stringify({
 						remote,
-						protocol: remote_protocol,
 						headers: request_headers,
 						forward_headers: [
 							'accept-encoding',
@@ -171,8 +170,9 @@ export class WebSocketRewrite extends Rewrite {
 				this.#ready = this.#open({
 					host: parsed.host,
 					path: parsed.pathname + parsed.search,
+					protocol: parsed.protocol,
 					port,
-				}, parsed.protocol, protocol);
+				}, protocol);
 			}
 			get readyState(){
 				return this.socket ? this.socket.readyState : _WebSocket.CONNECTING;

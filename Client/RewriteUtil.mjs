@@ -34,20 +34,32 @@ const error_reporting = false;
 export function wrap_function(fn, wrap, construct){
 	if(typeof fn != 'function')throw new TypeError(`First argument to wrap_function(fn, wrap, construct) was not a function.`);
 
+	const name = fn.name;
+
 	const wrapped = 'prototype' in fn ? function attach(...args){
+		if(construct && new.target === undefined){
+			// should throw an error if fn was a class
+			fn();
+		}
+		
 		return wrap(fn, this, args);
 	} : {
 		attach(...args) {
+			if(construct && new.target === undefined){
+				// should throw an error if fn was a class
+				fn();
+			}
+
 			return wrap(fn, this, args);
 		},
 	}['attach'];
 	
 	mirror_attributes(fn, wrapped);
 	
-	if (!!construct) {
+	if(construct){
 		wrapped.prototype = fn.prototype;
 		wrapped.prototype.constructor = wrapped; 
-	};
+	}
 
 	return wrapped
 };
