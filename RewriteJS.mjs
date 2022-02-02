@@ -87,7 +87,7 @@ export class RewriteJS {
 					if(ctx.parent.type == 'AssignmentPattern' && ctx.parent_key == 'left') break;
 					if(!undefinable.includes(ctx.node.name))break;
 					
-					/*if(ctx.parent.type == 'UpdateExpression' || ctx.parent.type == 'AssignmentExpression'){
+					if(ctx.parent.type == 'UpdateExpression' || ctx.parent.type == 'AssignmentExpression'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get1')), [
 							ctx.node,
 							b.literal(ctx.node.name),
@@ -108,7 +108,7 @@ export class RewriteJS {
 							ctx.node,
 							b.literal(ctx.node.name),
 						]));
-					}*/
+					}
 					
 					break;
 				case'MemberExpression':
