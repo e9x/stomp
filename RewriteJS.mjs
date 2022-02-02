@@ -87,47 +87,28 @@ export class RewriteJS {
 					if(ctx.parent.type == 'AssignmentPattern' && ctx.parent_key == 'left') break;
 					if(!undefinable.includes(ctx.node.name))break;
 					
-					if(ctx.parent.type == 'UpdateExpression'){
-						ctx.parent.replace_with(b.assignmentExpression(
-							'=',
+					/*if(ctx.parent.type == 'UpdateExpression' || ctx.parent.type == 'AssignmentExpression'){
+						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get1')), [
 							ctx.node,
-							b.callExpression(b.memberExpression(global_access, b.identifier('set')), [
-								ctx.node,
-								b.binaryExpression(
-									ctx.parent.node.operator.slice(0, -1),
-									// convert to number
-									b.unaryExpression('+', b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
-										ctx.node,
-									])),
-									b.literal(1),
-								),
-								b.literal(generate(ctx.parent.node)),
-							]),
-						));
-					}else if(ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
-						ctx.parent.replace_with(b.assignmentExpression(
-							'=',
-							ctx.node,
-							b.callExpression(b.memberExpression(global_access, b.identifier('set')), [
-								ctx.node,
-								ctx.parent.node.operator == '='
-									? ctx.parent.node.right
-									: b.binaryExpression(
-										ctx.parent.node.operator.slice(0, -1),
-										b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
-											ctx.node,
-										]),
-										ctx.parent.node.right,
-										b.literal(generate(ctx.parent.node)),
-									),
-								b.literal(generate(ctx.parent.node)),
-							]),
-						));
+							b.literal(ctx.node.name),
+							b.arrowFunctionExpression([
+								b.identifier('tomp$target'),
+							], ctx.parent.type == 'UpdateExpression' ? b.updateExpression(
+								ctx.parent.node.operator,
+								b.identifier('tomp$target'),
+								ctx.parent.node.prefix,
+							) : b.assignmentExpression(
+								ctx.parent.node.operator,
+								b.identifier('tomp$target'),
+								ctx.parent.node.right,
+							)),
+						]));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
 							ctx.node,
+							b.literal(ctx.node.name),
 						]));
-					}
+					}*/
 					
 					break;
 				case'MemberExpression':
@@ -159,41 +140,27 @@ export class RewriteJS {
 					};
 
 					if(!rewrite)break;
-					
-					if (ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left') {
-						ctx.parent.replace_with(b.assignmentExpression(
-							'=',
-							ctx.node,
-							b.callExpression(b.memberExpression(global_access, b.identifier('set')), [
-								ctx.node,
-								ctx.parent.node.operator == '='
-									? ctx.parent.node.right
-									: b.binaryExpression(ctx.parent.node.operator.slice(0, -1), b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
-										ctx.node,
-									]), ctx.parent.node.right),
-								b.literal(generate(ctx.parent.node)),
-							]),
-						));
-					}else if (ctx.parent.type == 'UpdateExpression') {
-						ctx.parent.replace_with(b.assignmentExpression(
-							'=',
-							ctx.node,
-							b.callExpression(b.memberExpression(global_access, b.identifier('set')), [
-								ctx.node,
-								b.binaryExpression(
-									ctx.parent.node.operator.slice(0, -1),
-									// convert to number
-									b.unaryExpression('+', b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
-										ctx.node,
-									])),
-									b.literal(1),
-								),
-								b.literal(generate(ctx.parent.node)),
-							]),
-						));
+
+					if(ctx.parent.type == 'UpdateExpression' || ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
+						// console.log(ctx.parent.node);
+						
+						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set1')), [
+							ctx.node.object,
+							ctx.node.property,
+							ctx.parent.type == 'UpdateExpression' ? b.updateExpression(
+								ctx.parent.node.operator,
+								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop')),
+								ctx.parent.node.prefix,
+							) : b.assignmentExpression(
+								ctx.parent.node.operator,
+								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop')),
+								ctx.parent.node.right,
+							),
+						]));
 					}else{
-						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
-							ctx.node,
+						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get1')), [
+							ctx.node.object,
+							ctx.node.property,
 						]));
 					}
 

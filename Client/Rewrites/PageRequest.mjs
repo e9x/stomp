@@ -50,7 +50,7 @@ export class PageRequestRewrite extends Rewrite {
 			return Reflect.apply(target, that, [ method, url, async, username, password ]);
 		});
 
-		XMLHttpRequest.prototype.setRequestHeader = wrap_function(XMLHttpRequest.prototype.setRequestHeader, (target, that, [header, value]) => {
+		/*XMLHttpRequest.prototype.setRequestHeader = wrap_function(XMLHttpRequest.prototype.setRequestHeader, (target, that, [header, value]) => {
 			value = String(value);
 			
 			if(!that instanceof XMLHttpRequest){
@@ -80,6 +80,6 @@ export class PageRequestRewrite extends Rewrite {
 				Reflect.apply(target, that, [body]);
 				throw new Error('An unknown error occured');
 			}
-		});
+		});*/
 	}
 };
