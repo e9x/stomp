@@ -71,6 +71,29 @@ export class RewriteJS {
 					]);
 					
 					break;
+				case'CallExpression':
+					
+					const {callee} = ctx.node;
+
+					if(callee.type === 'Identifier' && callee.name === 'eval' && ctx.node.arguments.length){
+						/* May be a JS eval function!
+						eval will only inherit the scope if the following is met:
+						the keyword (not property or function) eval is called
+						the keyword doesnt reference a variable named eval
+						*/
+						
+						// transform eval(...) into eval(...tompc$.eval.eval_scope(eval, ...['code',{note:"eval is possibly a var"}]))
+						ctx.replace_with(b.callExpression(b.identifier('eval'), [
+							b.spreadElement(
+								b.callExpression(b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('eval')), b.identifier('eval_scope')), [
+									b.identifier('eval'),
+									...ctx.node.arguments,
+								])
+							),
+						]));
+					}
+
+					break;
 				case'Identifier':
 
 					if(ctx.parent.type == 'MemberExpression' && ctx.parent_key == 'property')break; // window.location;
@@ -88,21 +111,26 @@ export class RewriteJS {
 					if(!undefinable.includes(ctx.node.name))break;
 					
 					if(ctx.parent.type == 'UpdateExpression' || ctx.parent.type == 'AssignmentExpression'){
-						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get1')), [
+						ctx.parent.replace_with(b.assignmentExpression(
+							'=',
 							ctx.node,
-							b.literal(ctx.node.name),
-							b.arrowFunctionExpression([
-								b.identifier('tomp$target'),
-							], ctx.parent.type == 'UpdateExpression' ? b.updateExpression(
-								ctx.parent.node.operator,
-								b.identifier('tomp$target'),
-								ctx.parent.node.prefix,
-							) : b.assignmentExpression(
-								ctx.parent.node.operator,
-								b.identifier('tomp$target'),
-								ctx.parent.node.right,
-							)),
-						]));
+							b.callExpression(b.memberExpression(global_access, b.identifier('set1')), [
+								ctx.node,
+								b.literal(ctx.node.name),
+								b.arrowFunctionExpression([
+									b.identifier('tomp$target'),
+								], ctx.parent.type == 'UpdateExpression' ? b.updateExpression(
+									ctx.parent.node.operator,
+									b.identifier('tomp$target'),
+									ctx.parent.node.prefix,
+								) : b.assignmentExpression(
+									ctx.parent.node.operator,
+									b.identifier('tomp$target'),
+									ctx.parent.node.right,
+								)),
+								b.literal(generate(ctx.parent.node)),
+							]),
+						));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
 							ctx.node,
@@ -141,53 +169,36 @@ export class RewriteJS {
 
 					if(!rewrite)break;
 
+					// if not computed (object.property), make property a string
+					// computed is object[property]
+					
+					const property_argument = !ctx.node.computed && ctx.node.property.type == 'Identifier' ? b.literal(ctx.node.property.name) : ctx.node.property;
+
 					if(ctx.parent.type == 'UpdateExpression' || ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
-						// console.log(ctx.parent.node);
-						
-						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set1')), [
+						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set2')), [
 							ctx.node.object,
-							ctx.node.property,
-							ctx.parent.type == 'UpdateExpression' ? b.updateExpression(
+							property_argument,
+							b.arrowFunctionExpression([
+								b.identifier('tomp$target'),
+								b.identifier('tomp$prop'),
+							], ctx.parent.type == 'UpdateExpression' ? b.updateExpression(
 								ctx.parent.node.operator,
-								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop')),
+								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop'), true),
 								ctx.parent.node.prefix,
 							) : b.assignmentExpression(
 								ctx.parent.node.operator,
-								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop')),
+								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop'), true),
 								ctx.parent.node.right,
-							),
+							)),
+							b.literal(generate(ctx.parent.node)),
 						]));
 					}else{
-						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get1')), [
+						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get2')), [
 							ctx.node.object,
-							ctx.node.property,
+							property_argument,
+							b.literal(generate(ctx.node)),
 						]));
 					}
-
-					break;
-				case'CallExpression':
-					
-					const {callee} = ctx.node;
-
-					if(callee.type != 'Identifier' || callee.name != 'eval')break;
-
-					if(!ctx.node.arguments.length)break;
-
-					/* May be a JS eval function!
-					eval will only inherit the scope if the following is met:
-					the keyword (not property or function) eval is called
-					the keyword doesnt reference a variable named eval
-					*/
-					
-					// transform eval(...) into eval(...tompc$.eval.eval_scope(eval, ...['code',{note:"eval is possibly a var"}]))
-					ctx.replace_with(b.callExpression(b.identifier('eval'), [
-						b.spreadElement(
-							b.callExpression(b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('eval')), b.identifier('eval_scope')), [
-								b.identifier('eval'),
-								...ctx.node.arguments,
-							])
-						),
-					]));
 
 					break;
 			}
@@ -259,9 +270,14 @@ export class RewriteJS {
 								case'get':
 									ctx.replace_with(ctx.node.arguments[0]);
 									break;
-								case'set':
+								case'get2':
+								case'set2':
 									ctx.parent.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
 									ctx.parent.remove_descendants_from_stack();
+									break;
+								case'set1':
+									ctx.parent.parent.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
+									ctx.parent.parent.remove_descendants_from_stack();
 									break;
 								case'pattern':
 									ctx.replace_with(ctx.node.arguments[0]);
@@ -286,32 +302,6 @@ export class RewriteJS {
 							break;
 					}
 					
-					break;
-				case'CallExpression':
-					break;
-						
-					const {callee} = ctx.node;
-
-					if(callee.type != 'Identifier' || callee.name != 'eval')break;
-
-					if(!ctx.node.arguments.length)break;
-					
-					/* May be a JS eval function!
-					eval will only inherit the scope if the following is met:
-					the keyword (not property or function) eval is called
-					the keyword doesnt reference a variable named eval
-					*/
-					
-					// transform eval(...) into eval(...tompc$.eval.eval_scope(eval, ...['code',{note:"eval is possibly a var"}]))
-					ctx.replace_with(b.callExpression(b.identifier('eval'), [
-						b.spreadElement(
-							b.callExpression(b.memberExpression(b.memberExpression(b.identifier(global_client), b.identifier('eval')), b.identifier('eval_scope')), [
-								b.identifier('eval'),
-								...ctx.node.arguments,
-							])
-						),
-					]));
-
 					break;
 			}
 		}

@@ -24,9 +24,9 @@ export class Client {
 		
 		this.request = new RequestRewrite(this);
 		this.sync_request = new SyncRequest(this);
-		this.access = new AccessRewrite(this);
 		this.eval = new EvalRewrite(this);
 		this.location = new LocationRewrite(this);
+		this.access = new AccessRewrite(this);
 
 		this.request.work();
 		this.sync_request.work();

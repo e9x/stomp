@@ -68,7 +68,10 @@ async function handle_common_request(server, server_request, request_headers, ur
 			break;
 	}
 
-	if(url.protocol == 'http:')request_headers.set('upgrade-insecure-requests', '1');
+	if(url.protocol == 'http:'){
+		request_headers.set('upgrade-insecure-requests', '1');
+	}
+	
 	request_headers.set('host', url.host);
 	
 	if(send_cookies){

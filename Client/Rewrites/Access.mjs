@@ -3,6 +3,8 @@ import { global } from '../../Global.mjs';
 import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { undefinable, global_client } from '../../RewriteJS.mjs';
 
+export const global_proxy = 'tompcgp$';
+
 export class AccessRewrite extends Rewrite {
 	// unique_top = parent !== top && global_client in parent;
 	import(meta, url){
@@ -11,23 +13,20 @@ export class AccessRewrite extends Rewrite {
 		return this.client.tomp.js.serve(resolved, this.client.location.proxy);
 	}
 	unique_parent = false;
-	window_length = false;
 	work(){
-		if(this.client.type == 'page'){
+		this.client.location.global[global_proxy] = this.client.location.proxy;
+		this.client.eval.global[global_proxy] = this.client.eval.eval_global_proxy;
+		
+		if(this.client.type === 'page'){
 			this.unique_parent = parent !== global  && global_client in parent;
-			this.window_length = Reflect.getOwnPropertyDescriptor(window, 'length');
 		}
 		
-		global.Reflect.get = wrap_function(global.Reflect.get, (target, that, args) => {
-			let result = Reflect.apply(target, that, args);
-			result = this.get(result, prop);
-			return result;
+		global.Reflect.get = wrap_function(global.Reflect.get, (target, that, [ obj, prop, rece ]) => {
+			return this.get2(target, prop);
 		});
 		
 		global.Reflect.set = wrap_function(global.Reflect.set, (target, that, [ obj, prop, value ]) => {
-			let result = Reflect.apply(target, that, [ obj, prop, this.set(Reflect.get(obj, prop), prop, value) ]);
-			result = this.get(result, prop);
-			return result;
+			return this.set2(obj, prop, (obj, prop) => obj[prop] = value);
 		});
 		
 		const get_desc = (target, that, [ obj, prop ]) => {
@@ -86,84 +85,41 @@ export class AccessRewrite extends Rewrite {
 		if(this.unique_parent)return parent[global_client].access.get_desc(desc);
 		else return desc;
 	}
-	run_all_contexts(test, func){
-		if(this.window_length !== false){
-			const length = Reflect.apply(this.window_length.get, global, []);
-			
-			for(let i = 0; i < length; i++){
-				const result = func(global[i]);
-
-				if(result !== test){
-					console.log('NEW', result, test);
-
-					return result;
+	set2(target, prop, operate){
+		// possibly a context
+		
+		if(this.client.type === 'page'){
+			if(target === global){
+				if(prop == 'location'){
+					target = this.client.location.proxy;
+					prop = 'href';
 				}
+			}else if(typeof target === 'object' && target !== null && global_client in target){
+				return target[global_client].access.set2(target, prop, operate);
 			}
 		}
 		
-		if(this.unique_parent){
-			return func(parent);
-		}
-
-		return test;
-	}
-	x(){
-		this.seti(location, x => x + '?query=1');
-		this.set(x, 'location', x => x + '?query=1');
-	}
-	set1(target, prop, operate){
-		const value = target[prop];
-		const proxy = this.get(value, prop);
-
-		return operate(proxy, prop);
+		return operate(this.get(target, prop), prop);
 	}
 	// identifier = value; identifier += value; identifier++;
 	// location = set2(location, 'location', proxy => proxy += 'test')
-    set2(value, name, operate){
+    set1(value, name, operate){
 		const proxy = this.get(value, name);
 
 		return operate(proxy);
 	}
-	get1(target, prop){
-		const value = target[prop];
-		const proxy = this.get(value, prop);
-
-		return proxy;
+	get2(target, prop){
+		return this.get(target[prop], prop);
 	}
-	get(obj, prop){
-		if(prop === undefined){
-			throw new TypeError(`Prop was undefined.`);
-		}
-		
-		// obj is target[prop]
-
-		if(undefinable.includes(prop)){
-			if(obj === this.client.eval.global){
-				return this.client.eval.eval_global_proxy;
-			}else if(obj === this.client.location.global){
-				return this.client.location.proxy;
-			}else{
-				return this.run_all_contexts(obj, ctx => ctx[global_client].access.get(obj, prop));
+	get(obj, prop, check_parent = true /* only specified by and in this function */){
+		if(undefinable.includes(prop) && (typeof obj === 'function' || typeof obj =='object') && obj !== null){
+			if(global_proxy in obj){
+				return obj[global_proxy];
 			}
 		}
 		
 		return obj;
     }
-    set(obj, prop, value){
-		if(prop === undefined){
-			throw new TypeError(`Prop was undefined.`);
-		}
-		
-		if(undefinable.includes(prop)){
-			if(obj === this.client.location.global){
-				return this.client.tomp.html.serve(new URL(value, this.client.location.proxy), this.client.location.proxy);
-			}else if(this.unique_parent){
-				return parent[global_client].access.set(obj, value);
-			}
-		}
-		
-		return value;
-	}
 	pattern(obj){
 		const result = {...obj};
 
