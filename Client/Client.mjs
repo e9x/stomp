@@ -9,7 +9,6 @@ import { IDBRewrite } from './Rewrites/IndexedDB.mjs';
 import { WorkerRewrite } from './Rewrites/Worker.mjs';
 import { NativeHelper } from './NativeHelper.mjs';
 import { wrap_function, function_strings } from './RewriteUtil.mjs';
-import { SyncRequest } from './SyncRequest.mjs';
 
 export class Client {
 	native = new NativeHelper();
@@ -18,18 +17,19 @@ export class Client {
 		this.tomp = new TOMP(config);
 		this.ready = this.work();
 		
-		new WebSocketRewrite(this).work();
-		new IDBRewrite(this).work();
-		new WorkerRewrite(this).work();
-		
+		this.websocket = new WebSocketRewrite(this);
+		this.idb = new IDBRewrite(this);
+		this.worker = new WorkerRewrite(this);
 		this.request = new RequestRewrite(this);
-		this.sync_request = new SyncRequest(this);
 		this.eval = new EvalRewrite(this);
 		this.location = new LocationRewrite(this);
 		this.access = new AccessRewrite(this);
 
+		this.websocket.work();
+		this.idb.work();
+		this.worker.work();
+		
 		this.request.work();
-		this.sync_request.work();
 		this.eval.work();
 		this.location.work();
 	

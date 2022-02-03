@@ -5,10 +5,9 @@ import { engine } from '../../UserAgent.mjs';
 
 export class RequestRewrite extends Rewrite {
 	response_url = new WeakMap();
-	raw_requests = new WeakMap();
+	request_urls = new WeakMap();
+	global = global.Request;
 	work(){
-		const Request = this.get_request();
-		
 		const desc_url = Reflect.getOwnPropertyDescriptor(Response.prototype, 'url');
 
 		const legal_windows = [null,undefined,global];
@@ -16,9 +15,10 @@ export class RequestRewrite extends Rewrite {
 		global.fetch = wrap_function(global.fetch, async (target, that, [input, init]) => {
 			if(!legal_windows.includes(that))throw new TypeError('Illegal invocation');
 			
-			if(input instanceof Request){
-				const raw = this.raw_requests.get(input);
-				input = raw;
+			if(this.request_urls.has(input)){
+				// already handled
+				// input.url on v8 side is rewritten
+				// input = new this.global(this.request_urls.get(input), input);
 			}else{
 				input = this.client.tomp.binary.serve(new URL(input, this.client.location.proxy), this.client.location.proxy);
 				
@@ -36,98 +36,38 @@ export class RequestRewrite extends Rewrite {
 			this.response_url.set(response, this.client.tomp.url.unwrap_ez(desc_url.get.call(response)));
 			return response;
 		});
-		
-		global.Request = Request;
-	}
-	get_request(){
-		const that = this;
 
-		const didnt_specify = Symbol();
 		this.global = global.Request;
 
-		const { bodyUsed, cache, credentials, destination, headers, integrity, isHistoryNavigation, keepalive, method, mode, redirect, referrer, referrerPolicy, signal, url} = Object.getOwnPropertyDescriptors(this.global.prototype);
+		global.Request = wrap_function(global.Request, (target, that, args) => {
+			if(args.length === 0){
+				throw new DOMException(`Failed to construct 'Request': 1 argument required, but only 0 present.`);
+			}
+
+			let [ url, init ] = args;
+
+			url = new URL(url, this.client.location.proxy);
+			
+			const result = Reflect.construct(target, [ url, init ]);
+
+			this.request_urls.set(result, url.toString())
+			
+			return result;
+		}, true);
 		
-		class Request {
-			#request
-			static #invoke(that){
-				if(!(that instanceof Request))throw new TypeError('Invalid invocation');
-				return that.#request;
-			}
-			[Symbol.toStringTag] = 'Request';
-			constructor(url = didnt_specify, init){
-				if(url == didnt_specify){
-					throw new DOMException(`Failed to construct 'Request': 1 argument required, but only 0 present.`);
-				}
+		const url = Reflect.getOwnPropertyDescriptor(this.global.prototype, 'url');
 
-				url = new URL(url, that.client.location.proxy);
-
-				this.#request = new this.global(that.client.tomp.binary.serve(url, that.client.location.proxy), init);
-				that.raw_requests.set(this, this.#request);
-			}
-			arrayBuffer(){
-				return this.global.prototype.arrayBuffer.call(Request.#invoke(this));
-			}
-			blob(){
-				return this.global.prototype.blob.call(Request.#invoke(this));
-			}
-			clone(){
-				return this.global.prototype.clone.call(Request.#invoke(this));
-			}
-			formData(){
-				return this.global.prototype.formData.call(Request.#invoke(this));
-			}
-			json(){
-				return this.global.prototype.json.call(Request.#invoke(this));
-			}
-			text(){
-				return this.global.prototype.text.call(Request.#invoke(this));
-			}
-			get bodyUsed(){
-				return bodyUsed.get.call(Request.#invoke(this));
-			}
-			get cache(){
-				return cache.get.call(Request.#invoke(this));
-			}
-			get credentials(){
-				return credentials.get.call(Request.#invoke(this));
-			}
-			get destination(){
-				return destination.get.call(Request.#invoke(this));
-			}
-			get headers(){
-				return headers.get.call(Request.#invoke(this));
-			}
-			get integrity(){
-				return integrity.get.call(Request.#invoke(this));
-			}
-			get isHistoryNavigation(){
-				return isHistoryNavigation.get.call(Request.#invoke(this));
-			}
-			get keepalive(){
-				return keepalive.get.call(Request.#invoke(this));
-			}
-			get method(){
-				return method.get.call(Request.#invoke(this));
-			}
-			get mode(){
-				return mode.get.call(Request.#invoke(this));
-			}
-			get redirect(){
-				return redirect.get.call(Request.#invoke(this));
-			}
-			get referrer(){
-				return referrer.get.call(Request.#invoke(this));
-			}
-			get referrerPolicy(){
-				return referrerPolicy.get.call(Request.#invoke(this));
-			}
-			get signal(){
-				return signal.get.call(Request.#invoke(this));
-			}
-			get url(){
-				return that.client.tomp.url.unwrap_ez(url.get.call(Request.#invoke(this)));
-			}
-		};
+		Reflect.defineProperty(this.global.prototype, 'url', {
+			configurable: true,
+			enumerable: true,
+			get: wrap_function(url.get, (target, that, args) => {
+				/*let result = Reflect.apply(target, that, args);
+				result = this.client.tomp.url.unwrap_ez(result);
+				return result;*/
+				return this.request_urls.get(that);
+			}),
+			set: undefined,
+		});
 
 		return Request;
 	}

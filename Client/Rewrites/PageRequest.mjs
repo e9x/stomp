@@ -1,8 +1,6 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { wrap_function, Reflect } from '../RewriteUtil.mjs';
-import { engine } from '../../UserAgent.mjs';
-import { Type } from 'ast-types';
 
 export class PageRequestRewrite extends Rewrite {
 	xml_data = new WeakMap();
@@ -15,7 +13,13 @@ export class PageRequestRewrite extends Rewrite {
 
 	}
 	work(){
-		URL.createObjectURL = wrap_function(URL.createObjectURL, (target, that, args) => {
+		global.open = wrap_function(global.open, (target, that, [ url, tar, features ]) => {
+			url = new URL(url, this.location.proxy);
+			url = this.client.tomp.html.serve(url, this.client.location.proxy);
+			return Reflect.apply(target, that, [ url, tar, features ]);
+		});
+
+		global.URL.createObjectURL = wrap_function(global.URL.createObjectURL, (target, that, args) => {
 			let result = Reflect.apply(target, that, args);
 			result = result.replace(this.client.location.global.origin, this.client.location.proxy.origin);
 			return result;

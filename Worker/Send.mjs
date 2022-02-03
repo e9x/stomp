@@ -75,9 +75,13 @@ async function handle_common_request(server, server_request, request_headers, ur
 	request_headers.set('host', url.host);
 	
 	if(send_cookies){
-		let cookies = await get_cookies(server, url);
-		if(cookies)request_headers.set('cookie', cookies);
-		else request_headers.delete('cookie');
+		const cookies = await get_cookies(server, url);
+
+		if(cookies){
+			request_headers.set('cookie', cookies);
+		}else{
+			request_headers.delete('cookie');
+		}
 	}else{
 		request_headers.delete('cookie');
 	}

@@ -1,7 +1,10 @@
+import { global } from '../Global.mjs';
 import { engine } from '../UserAgent.mjs';
 import { Reflect } from './RewriteUtil.mjs';
 
-export class SyncRequest {
+const { Request } = global;
+
+export class SyncClient {
 	static xml_open = XMLHttpRequest.prototype.open;
 	constructor(client){
 		this.client = client;
@@ -13,11 +16,13 @@ export class SyncRequest {
 		response.responseText = data[2];
 		return response;
 	}
-	request(request){
+	fetch(url, init){
+		const request = new Request(url, init);
+
 		const args = [
 			request.url,
 			{
-				headers: request.headers,
+				headers: Object.fromEntries(request.headers),
 				method: request.method,
 				body: request.body,
 				cache: request.cache,

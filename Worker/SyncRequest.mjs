@@ -24,6 +24,7 @@ export class SyncRequest {
 				status: response.status,
 				statusText: response.statusText,
 				headers: Object.fromEntries(response.headers.entries()),
+				url: response.url,
 			},
 			await response.text(),
 		];
