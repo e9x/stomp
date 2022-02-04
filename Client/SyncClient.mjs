@@ -50,7 +50,7 @@ export class SyncClient {
 		let data;
 		
 		while(true){
-			const value = this.client.cookie.value.match(regex)[1];
+			const [,value] = this.client.cookie.value.match(regex);
 			
 			if(!value)continue;
 			
@@ -59,7 +59,7 @@ export class SyncClient {
 			if(name == 'incoming')break;
 		}
 		
-		this.client.cookie.value = `${id}=${cookieopt}`;
+		this.client.cookie.value = `${id}=${cookieopt}; expires=` + new Date(0);
 
 		return this.create_response(data);
 	}
