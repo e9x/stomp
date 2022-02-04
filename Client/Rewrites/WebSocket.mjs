@@ -22,8 +22,8 @@ function EventTarget_on(target, original, event, instances){
 				throw new TypeError('Illegal Invocation');
 			}
 
-			if(listeners.has(this)){
-				return listeners.get(this);
+			if(listeners.has(that)){
+				return listeners.get(that);
 			}else{
 				return null;
 			}
@@ -34,11 +34,11 @@ function EventTarget_on(target, original, event, instances){
 			}
 
 			if(typeof value == 'function'){
-				if(listeners.has(this)){
-					that.removeEventListener('error', listeners.get(this));
+				if(listeners.has(that)){
+					that.removeEventListener('error', listeners.get(that));
 				}
 
-				listeners.set(this, value);
+				listeners.set(that, value);
 				that.addEventListener('error', value);
 			}
 
@@ -226,12 +226,14 @@ export class WebSocketRewrite extends Rewrite {
 				this.#socket.send(data);
 			}
 			close(code, reason){
-				if(typeof code != 'string')code = 0;
-				
-				if(code != 1000 && (code < 3000 || code > 4999)){
-					throw new DOMException(`Failed to execute 'close' on 'WebSocket': The code must be either 1000, or between 3000 and 4999. 0 is neither.`);
+				if(typeof code !== 'undefined'){
+					if(typeof code != 'string')code = 0;
+					
+					if(code != 1000 && (code < 3000 || code > 4999)){
+						throw new DOMException(`Failed to execute 'close' on 'WebSocket': The code must be either 1000, or between 3000 and 4999. 0 is neither.`);
+					}
 				}
-				
+
 				this.#ready.then(() => this.#socket.close(code, reason));
 			}
 		};
