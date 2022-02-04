@@ -3,6 +3,12 @@ import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 
 export class DOMCookieRewrite extends Rewrite {
 	global_descriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+	get value(){
+		return Reflect.apply(this.global_descriptor.get, document, []);
+	}
+	set value(value){
+		return Reflect.apply(this.global_descriptor.set, document, [ value ]);
+	}
 	work(){
 		const legal_documents = [ document ];
 		Reflect.defineProperty(Document.prototype, 'cookie', {

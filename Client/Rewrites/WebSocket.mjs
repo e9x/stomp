@@ -92,7 +92,7 @@ export class WebSocketRewrite extends Rewrite {
 			}
 			async #open(remote, protocol){
 				const request_headers = Object.setPrototypeOf({}, null);
-				request_headers['Host'] = remote.hostname;
+				request_headers['Host'] = remote.host;
 				request_headers['Origin'] = that.client.location.proxy.origin;
 				request_headers['Pragma'] = 'no-cache';
 				request_headers['Cache-Control'] = 'no-cache';
@@ -167,10 +167,8 @@ export class WebSocketRewrite extends Rewrite {
 				
 				if(isNaN(port))port = default_ports[parsed.protocol];
 				
-				// if(isNaN(port))throw...
-				
 				this.#ready = this.#open({
-					host: parsed.host,
+					host: parsed.hostname,
 					path: parsed.pathname + parsed.search,
 					protocol: parsed.protocol,
 					port,

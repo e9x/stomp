@@ -5,17 +5,10 @@ import { Reflect } from './RewriteUtil.mjs';
 const { Request } = global;
 
 const xml_open = XMLHttpRequest.prototype.open;
-const cookie = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
 
 export class SyncClient {
 	constructor(client){
 		this.client = client;
-	}
-	get cookie(){
-		return Reflect.apply(cookie.get, document, []);
-	}
-	set cookie(value){
-		return Reflect.apply(cookie.set, document, [ value ]);
 	}
 	work(){}
 	create_response(data){
@@ -51,13 +44,13 @@ export class SyncClient {
 		const id = 'sync-request-' + Math.random().toString(16).slice(2);
 		const regex = new RegExp(`${id}=(.*?)(;|$)`);
 		
-		this.cookie = `${id}=${encodeURIComponent(JSON.stringify([ 'outgoing', args ]))}${cookieopt}`;
+		this.client.cookie.value = `${id}=${encodeURIComponent(JSON.stringify([ 'outgoing', args ]))}${cookieopt}`;
 		
 		let name;
 		let data;
 		
 		while(true){
-			const value = this.cookie.match(regex)[1];
+			const value = this.client.cookie.value.match(regex)[1];
 			
 			if(!value)continue;
 			
@@ -66,7 +59,7 @@ export class SyncClient {
 			if(name == 'incoming')break;
 		}
 		
-		this.cookie = `${id}=${cookieopt}`;
+		this.client.cookie.value = `${id}=${cookieopt}`;
 
 		return this.create_response(data);
 	}
