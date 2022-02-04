@@ -17,8 +17,8 @@ function EventTarget_on(target, original, event, instances){
 	const listeners = new WeakMap();
 
 	Object.defineProperty(target, property, {
-		get: wrap_function(desc.get, () => { 
-			if(!instances.has(this)){
+		get: wrap_function(desc.get, (target, that, args) => { 
+			if(!instances.has(that)){
 				throw new TypeError('Illegal Invocation');
 			}
 
