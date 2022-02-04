@@ -1,7 +1,6 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { encode_protocol, valid_protocol } from '../EncodeProtocol.mjs';
-import { wrap_function } from '../RewriteUtil.mjs';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.mjs';
 
 const default_ports = {
@@ -10,42 +9,6 @@ const default_ports = {
 };
 
 const ws_protocols = ['wss:','ws:'];
-
-function EventTarget_on(target, original, event, instances){
-	const property = `on${event}`;
-	const desc = Object.getOwnPropertyDescriptor(original, property);
-	const listeners = new WeakMap();
-
-	Object.defineProperty(target, property, {
-		get: wrap_function(desc.get, () => { 
-			if(!instances.has(this)){
-				throw new TypeError('Illegal Invocation');
-			}
-
-			if(listeners.has(this)){
-				return listeners.get(this);
-			}else{
-				return null;
-			}
-		}),
-		set: wrap_function(desc.set, (target, that, [ value ]) => {
-			if(!instances.has(that)){
-				throw new TypeError('Illegal Invocation');
-			}
-
-			if(typeof value == 'function'){
-				if(listeners.has(this)){
-					that.removeEventListener('error', listeners.get(this));
-				}
-
-				listeners.set(this, value);
-				that.addEventListener('error', value);
-			}
-
-			return value;
-		}),
-	});
-}
 
 export class WebSocketRewrite extends Rewrite {
 	#socket
@@ -59,48 +22,77 @@ export class WebSocketRewrite extends Rewrite {
 		
 		const didnt_specify = Symbol();
 
-		const utf8 = new TextDecoder('utf-8');
-
-		const instances = new WeakSet();
-
 		class WebSocket extends EventTarget {
 			static CONNECTING = 0;
-			static OPEN = 1;
-			static CLOSING = 2;
-			static CLOSED = 3;
 			CONNECTING = 0;
+			static OPEN = 1;
 			OPEN = 1;
+			static CLOSING = 2;
 			CLOSING = 2;
+			static CLOSED = 3;
 			CLOSED = 3;
+			#onmessage = null;
+			#onclose = null;
+			#onopen = null;
+			#onerror = null;
 			#socket;
 			#ready;
-			#binaryType = 'blob';
-			#remote;
-			#protocol = '';
-			#extensions = '';
-			async #read_meta({ protocol, extensions, headers }){
-				this.#protocol = protocol;
-				this.#extensions = extensions;
-
-				const lower_headers = {};
-				
-				for(let header in headers){
-					const lower = header.toLowerCase();
-					lower_headers[lower] = headers[header];
-				}
-				
-				if('set-cookie' in lower_headers){
-					load_setcookies(that.client, this.#remote, lower_headers['set-cookie'])
-				}
+			#binary_type;
+			get onmessage(){
+				return this.#onmessage;
 			}
-			get protocol(){
-				return this.#protocol;
+			set onmessage(value){
+				if(typeof value == 'function')this.#onmessage = value;
+				return value;
 			}
-			async #open(remote, protocols){
-				this.#remote = remote;
+			get onclose(){
+				return this.#onclose;
+			}
+			set onclose(value){
+				if(typeof value == 'function'){
+					if(typeof this.#onclose == 'function'){
+						this.removeEventListener('close', this.#onclose);
+					}
 
+					this.#onclose = value;
+					this.addEventListener('close', value);
+				}
+
+				return value;
+			}
+			get onopen(){
+				return this.#onopen;
+			}
+			set onopen(value){
+				if(typeof value == 'function'){
+					if(typeof this.#onopen == 'function'){
+						this.removeEventListener('open', this.#onopen);
+					}
+
+					this.#onopen = value;
+					this.addEventListener('open', value);
+				}
+
+				return value;
+			}
+			get onerror(){
+				return this.#onerror;
+			}
+			set onerror(value){
+				if(typeof value == 'function'){
+					if(typeof this.#onerror == 'function'){
+						this.removeEventListener('error', this.#onerror);
+					}
+
+					this.#onerror = value;
+					this.addEventListener('error', value);
+				}
+
+				return value;
+			}
+			async #open(remote, protocol){
 				const request_headers = Object.setPrototypeOf({}, null);
-				request_headers['Host'] = remote.host;
+				request_headers['Host'] = remote.hostname;
 				request_headers['Origin'] = that.client.location.proxy.origin;
 				request_headers['Pragma'] = 'no-cache';
 				request_headers['Cache-Control'] = 'no-cache';
@@ -108,10 +100,14 @@ export class WebSocketRewrite extends Rewrite {
 				request_headers['User-Agent'] = navigator.userAgent;
 				request_headers['Connection'] = 'Upgrade';
 				
-				for(let proto of protocols){
+				for(let proto of [].concat(protocol)){
 					if(!valid_protocol(proto)){
 						throw new DOMException(`Failed to construct 'WebSocket': The subprotocol '${proto}' is invalid.`);
 					}
+				}
+
+				if(protocol.length){
+					request_headers['Sec-Websocket-Protocol'] = protocol.join(', ');
 				}
 				
 				let cookies = await get_cookies(that.client, remote);
@@ -119,40 +115,35 @@ export class WebSocketRewrite extends Rewrite {
 					request_headers['Cookie'] = cookies.toString();
 				}
 				
-				this.#socket = new _WebSocket(bare_ws);
-
-				let negoitate_open = false;
-
-				this.#socket.addEventListener('message', event => {
-					if(!negoitate_open){
-						negoitate_open = true;
-						// data is a string regardless of binaryType
-						this.#read_meta(JSON.parse(event.data));
-						this.#socket.binaryType = this.#binaryType;
-						this.dispatchEvent(new Event('open', event));
-					}else{
-						this.dispatchEvent(new MessageEvent('message', event));
-					}
-				});
-
-				this.#socket.addEventListener('open', event => {
-					this.#socket.send(JSON.stringify({ 
+				this.#socket = new _WebSocket(bare_ws, [
+					'bare',
+					encode_protocol(JSON.stringify({
 						remote,
-						protocols,
 						headers: request_headers,
 						forward_headers: [
 							'accept-encoding',
 							'accept-language',
+							'sec-websocket-extensions',
+							'sec-websocket-key',
+							'sec-websocket-version',
 						],
-					}));
+					})),
+				]);
+
+				this.#socket.addEventListener('message', event => {
+					this.dispatchEvent(new MessageEvent('message', event), this.#onmessage);
+				});
+
+				this.#socket.addEventListener('open', event => {
+					this.dispatchEvent(new Event('open', event), this.#onopen);
 				});
 
 				this.#socket.addEventListener('error', event => {
-					this.dispatchEvent(new ErrorEvent('error', event));
+					this.dispatchEvent(new ErrorEvent('error', event), this.#onerror);
 				});
 
 				this.#socket.addEventListener('close', event => {
-					this.dispatchEvent(new Event('close', event));
+					this.dispatchEvent(new Event('close', event), this.#onclose);
 				});
 			}
 			constructor(url = didnt_specify, protocol = []){
@@ -162,10 +153,8 @@ export class WebSocketRewrite extends Rewrite {
 					throw new DOMException(`Failed to construct 'WebSocket': 1 argument required, but only 0 present.`);
 				}
 
-				let parsed;
-
 				try{
-					parsed = new URL(url);
+					var parsed = new URL(url);
 				}catch(err){
 					throw new DOMException(`Faiiled to construct 'WebSocket': The URL '${url}' is invalid.`);
 				}
@@ -177,30 +166,26 @@ export class WebSocketRewrite extends Rewrite {
 				let port = parseInt(parsed.port);
 				
 				if(isNaN(port))port = default_ports[parsed.protocol];
-
-				instances.add(this);
+				
+				// if(isNaN(port))throw...
 				
 				this.#ready = this.#open({
-					host: parsed.hostname,
+					host: parsed.host,
 					path: parsed.pathname + parsed.search,
 					protocol: parsed.protocol,
 					port,
-				}, [].concat(protocol));
+				}, protocol);
 			}
 			get readyState(){
 				return this.socket ? this.socket.readyState : _WebSocket.CONNECTING;
 			}
 			get binaryType(){
-				return this.#binaryType;
+				return this.#binary_type;
 			}
 			set binaryType(value){
-				if(binaryTypes.includes(value)){
-					this.#binaryType = value;
-				}
+				this.#binary_type = value;
 
-				if(this.#socket){
-					this.#socket.binaryType = value;
-				}
+				this.#ready.then(() => this.#socket.binaryType = value);
 
 				return value;
 			}
@@ -220,12 +205,6 @@ export class WebSocketRewrite extends Rewrite {
 				this.#ready.then(() => this.#socket.close(code, reason));
 			}
 		};
-
-		EventTarget_on(WebSocket.prototype, _WebSocket.prototype, 'close', instances);
-		EventTarget_on(WebSocket.prototype, _WebSocket.prototype, 'open', instances);
-		EventTarget_on(WebSocket.prototype, _WebSocket.prototype, 'message', instances);
-		EventTarget_on(WebSocket.prototype, _WebSocket.prototype, 'error', instances);
-		
 
 		WebSocket.CLOSED = 3;
 		WebSocket.CLOSING = 2;
