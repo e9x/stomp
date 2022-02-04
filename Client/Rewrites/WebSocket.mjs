@@ -206,6 +206,11 @@ export class WebSocketRewrite extends Rewrite {
 			}
 		};
 
+		WebSocket.CLOSED = 3;
+		WebSocket.CLOSING = 2;
+		WebSocket.CONNECTING = 0;
+		WebSocket.OPEN = 1;
+
 		global.WebSocket = WebSocket;
 	}
 };
