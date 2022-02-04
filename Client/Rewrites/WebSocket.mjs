@@ -35,11 +35,11 @@ function EventTarget_on(target, original, event, instances){
 
 			if(typeof value == 'function'){
 				if(listeners.has(that)){
-					that.removeEventListener('error', listeners.get(that));
+					that.removeEventListener(event, listeners.get(that));
 				}
 
 				listeners.set(that, value);
-				that.addEventListener('error', value);
+				that.addEventListener(event, value);
 			}
 
 			return value;
