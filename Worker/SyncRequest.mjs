@@ -16,7 +16,16 @@ export class SyncRequest {
 
 		const request = new Request(data[0], data[1]);
 		
-		const response = await fetch(request);
+		const response = await new Promise((resolve, reject) => {
+			const event = {
+				async respondWith(response){
+					resolve(await response);
+				},
+				request,
+			};
+
+			if(!this.server.request(event))return reject('Declined');
+		});
 
 		return [
 			response.url,

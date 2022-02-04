@@ -28,8 +28,11 @@ export class RewriteCSS {
 					return;
 				}
 				
-				if(this.atrule?.name == 'import')node.value = that.tomp.css.serve(resolved, url);
-				else node.value = that.tomp.binary.serve(resolved, url);
+				if(this.atrule?.name == 'import'){
+					node.value = that.tomp.css.serve(resolved, url);
+				}else{
+					node.value = that.tomp.binary.serve(resolved, url);
+				}
 			}
 		});
 
@@ -48,8 +51,11 @@ export class RewriteCSS {
 
 		walk(ast, function(node, item, list){
 			if(node.type === 'Url'){
-				if(this.atrule?.name == 'import')node.value = that.tomp.css.unwrap_serving(node.value, url);
-				else node.value = that.tomp.binary.unwrap_serving(node.value, url);
+				if(this.atrule?.name == 'import'){
+					node.value = that.tomp.css.unwrap_serving(node.value, url).toString();
+				}else{
+					node.value = that.tomp.binary.unwrap_serving(node.value, url).toString();
+				}
 			}
 		});
 

@@ -235,7 +235,7 @@ export class RewriteJS {
 			switch(ctx.type){
 				case'ImportDeclaration':
 					
-					ctx.node.source.value = this.unwrap_serving(ctx.node.source.value, url);
+					ctx.node.source.value = this.unwrap_serving(ctx.node.source.value, url).toString();
 					
 					break;
 				case 'VariableDeclarator':

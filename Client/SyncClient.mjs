@@ -4,10 +4,18 @@ import { Reflect } from './RewriteUtil.mjs';
 
 const { Request } = global;
 
+const xml_open = XMLHttpRequest.prototype.open;
+const cookie = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+
 export class SyncClient {
-	static xml_open = XMLHttpRequest.prototype.open;
 	constructor(client){
 		this.client = client;
+	}
+	get cookie(){
+		return Reflect.apply(cookie.get, document, []);
+	}
+	set cookie(value){
+		return Reflect.apply(cookie.set, document, [ value ]);
 	}
 	work(){}
 	create_response(data){
@@ -18,7 +26,7 @@ export class SyncClient {
 	}
 	fetch(url, init){
 		const request = new Request(url, init);
-
+		
 		const args = [
 			request.url,
 			{
@@ -33,7 +41,7 @@ export class SyncClient {
 		if(engine == 'gecko'){
 			const http = new XMLHttpRequest();
 
-			Reflect.apply(SyncRequest.xml_open, http, [ 'POST', `${this.client.tomp.directory}worker:sync-request/`, false ]);
+			Reflect.apply(xml_open, http, [ 'POST', `${this.client.tomp.directory}worker:sync-request/`, false ]);
 			http.send(JSON.stringify(args));
 			
 			return this.create_response(JSON.parse(http.responseText));
@@ -43,13 +51,13 @@ export class SyncClient {
 		const id = 'sync-request-' + Math.random().toString(16).slice(2);
 		const regex = new RegExp(`${id}=(.*?)(;|$)`);
 		
-		document.cookie = `${id}=${encodeURIComponent(JSON.stringify([ 'outgoing', args ]))}${cookieopt}`;
+		this.cookie = `${id}=${encodeURIComponent(JSON.stringify([ 'outgoing', args ]))}${cookieopt}`;
 		
 		let name;
 		let data;
 		
 		while(true){
-			const value = document.cookie.match(regex)[1];
+			const value = this.cookie.match(regex)[1];
 			
 			if(!value)continue;
 			
@@ -58,7 +66,7 @@ export class SyncClient {
 			if(name == 'incoming')break;
 		}
 		
-		document.cookie = `${id}=${cookieopt}`;
+		this.cookie = `${id}=${cookieopt}`;
 
 		return this.create_response(data);
 	}

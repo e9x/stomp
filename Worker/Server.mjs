@@ -1,11 +1,12 @@
 import { TOMP } from '../TOMP.mjs';
 import { Process } from './Process.mjs';
-import { SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendManifest } from './Send.mjs';
+import { SendGetCookies, SendSetCookies, SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendManifest } from './Send.mjs';
 import { openDB } from 'idb/with-async-ittr';
 import {create_db as create_cookie_db} from './Cookies.mjs';
 import { SyncRequest } from './SyncRequest.mjs';
 
 export class Server {
+	session = Math.random();
 	constructor(config){
 		this.tomp = new TOMP(config);
 		this.request = this.request.bind(this);
@@ -40,6 +41,12 @@ export class Server {
 	async send(request, service, field){
 		try{
 			switch(service){
+				case'worker:get-cookies':
+					return await SendGetCookies(this, request, field)
+					break;
+				case'worker:set-cookies':
+					return await SendSetCookies(this, request, field)
+					break;
 				case'worker:sync-request':
 					return await this.sync_request.route(request);
 					break;
@@ -79,7 +86,7 @@ export class Server {
 		}
 	}
 	request(event){
-		const request = event.request;
+		const { request} = event;
 		let url = request.url.slice(request.url.indexOf(this.tomp.directory));
 		
 		const hash = url.indexOf('#');

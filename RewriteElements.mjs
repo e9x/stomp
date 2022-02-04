@@ -418,14 +418,14 @@ export class RewriteElements {
 						if(wrap){
 							return this.tomp[data.service].serve(new URL(value, url), url);
 						}else{
-							return this.tomp[data.service].unwrap_serving(value, url);
+							return this.tomp[data.service].unwrap_serving(value, url).toString();
 						}
 					default:
 						this.tomp.log.warn('unknown service:', data.service);
 						if(wrap){
 							return this.tomp.url.wrap(new URL(value, url), data.service);
 						}else{
-							return this.tomp.url.unwrap_ez(value, url);
+							return this.tomp.url.unwrap_ez(value, url).toString();
 						}
 				}
 		}

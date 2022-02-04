@@ -77,14 +77,49 @@ async function handle_common_request(server, server_request, request_headers, ur
 	if(send_cookies){
 		const cookies = await get_cookies(server, url);
 
-		if(cookies){
-			request_headers.set('cookie', cookies);
+		if(cookies.length > 0){
+			request_headers.set('cookie', cookies.toString());
 		}else{
 			request_headers.delete('cookie');
 		}
 	}else{
 		request_headers.delete('cookie');
 	}
+}
+
+export async function SendGetCookies(server, server_request){
+	const url = new URL(server_request.url);
+	const remote = JSON.parse(url.searchParams.get('remote'));
+	const json = url.searchParams.has('json');
+	const cookies = await get_cookies(server, remote);
+	
+	console.log(cookies, remote);
+
+	if(json){
+		return new Response(JSON.stringify(cookies), {
+			headers: {
+				'content-type': 'application/json',
+			},
+		});
+	}else{
+		return new Response(cookies.toString(), {
+			headers: {
+				'content-type': 'text/plain',
+			},
+		})
+	}
+}
+
+export async function SendSetCookies(server, server_request){
+	const url = new URL(server_request.url);
+	const remote = JSON.parse(url.searchParams.get('remote'));
+	const set_cookies = url.searchParams.get('cookies');
+	
+	await load_setcookies(server, remote, set_cookies);
+
+	return new Response(new Uint8Array(), {
+		status: 200,
+	});
 }
 
 async function handle_common_response(rewriter, server, server_request, url, response, ...args){
@@ -98,7 +133,7 @@ async function handle_common_response(rewriter, server, server_request, url, res
 	for(let remove of remove_general_headers)response_headers.delete(remove);
 	
 	if('set-cookie' in response.json_headers){
-		load_setcookies(server, url, response.json_headers['set-cookie']);
+		await load_setcookies(server, url, response.json_headers['set-cookie']);
 	}
 	
 	response_headers.set('referrer-policy', 'same-origin') ;

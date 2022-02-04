@@ -104,6 +104,6 @@ export class RewriteURL {
 		const cut = url.slice(url.indexOf(this.tomp.directory));
 		const { field } = this.get_attributes(cut);
 
-		return this.unwrap(field).toString();
+		return this.unwrap(field);
 	}
 };

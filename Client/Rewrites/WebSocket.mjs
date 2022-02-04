@@ -111,7 +111,9 @@ export class WebSocketRewrite extends Rewrite {
 				}
 				
 				let cookies = await get_cookies(that.client, remote);
-				if(cookies)request_headers['Cookie'] = cookies;
+				if(cookies.length > 0){
+					request_headers['Cookie'] = cookies.toString();
+				}
 				
 				this.#socket = new _WebSocket(bare_ws, [
 					'bare',

@@ -61,9 +61,10 @@ export class RequestRewrite extends Rewrite {
 			configurable: true,
 			enumerable: true,
 			get: wrap_function(url.get, (target, that, args) => {
-				/*let result = Reflect.apply(target, that, args);
-				result = this.client.tomp.url.unwrap_ez(result);
-				return result;*/
+				if(!this.request_urls.has(that)){
+					return Reflect.apply(target, that, args);
+				}
+
 				return this.request_urls.get(that);
 			}),
 			set: undefined,

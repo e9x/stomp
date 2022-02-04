@@ -58,7 +58,19 @@ function idb_range_startswith(str){
 	return IDBKeyRange.bound(str, increase_lastchr(str), false, true);
 }
 
-export async function get_cookies(server, url){
+class BrowserCookieArray extends Array {
+	toString(){
+		const result = [];
+		
+		for(let cookie of this){
+			result.push(`${cookie.name}=${cookie.value}`);
+		}
+
+		return result.join('; ');
+	}
+};
+
+export async function get_cookies(server, remote){
 	const now = new Date();
 
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
@@ -66,31 +78,32 @@ export async function get_cookies(server, url){
 	
 	await server.ready;
 	
-	const entries = await server.db.getAllFromIndex('cookies', 'path', idb_range_startswith(get_directory(url.path)));
+	//  const entries = await server.db.getAllFromIndex('cookies', 'path', idb_range_startswith(get_directory(remote.path)));
+	const entries = await server.db.getAll('cookies');
 	
-	const new_cookies = [];
+	console.log(entries, get_directory(remote.path));
+	
+	const result = new BrowserCookieArray();
 	
 	for(let cookie of entries){
-		let expires = new Date(0);
+		let expired = false;
 		
 		if('maxAge' in cookie){
-			expires = set.getTime() + cookie.maxAge;
+			expired = set.getTime() + (cookie.maxAge * 1e3) < now;
 		}else if('expires' in cookie){
-			expires = cookie.expires;
+			expired = cookie.expires < now;
+		}else if('session' in cookie){
+			expired = cookie.session !== server.session;
 		}
 		
-		if(expires < now){
+		if(expired){
 			server.db.delete('cookies', cookie.id);
-		}
-
-		if(('.' + url.host).endsWith(cookie.domain)){
-			new_cookies.push(`${cookie.name}=${cookie.value}`);
+		}else if(`.${remote.host}`.endsWith(cookie.domain)){
+			result.push(cookie);
 		}
 	}
 	
-	// server.tomp.log.debug('Send cookies:', new_cookies);
-
-	return new_cookies.join('; ');
+	return result;
 }
 
 const samesites = ['lax','strict','none'];
@@ -129,7 +142,7 @@ function normalize_cookie(cookie, host){
 	return result;
 }
 
-export async function load_setcookies(server, url, setcookie){
+export async function load_setcookies(server, remote, setcookie){
 	for(let set of [].concat(setcookie)){
 		const parsed = setcookie_parser(setcookie, {
 			decodeValues: false,
@@ -141,13 +154,17 @@ export async function load_setcookies(server, url, setcookie){
 		const index = server.db.transaction('cookies', 'readwrite').store.index('path');
 		
 		for(let cookie of parsed){
-			cookie = normalize_cookie(cookie, url.host);
+			cookie = normalize_cookie(cookie, remote.host);
 
 			const id = cookie.domain + '@' + cookie.path + '@' + cookie.name;
 			
 			if(!cookie.value){
 				server.db.delete('cookies', id);
 			}else{
+				if(!('maxAge' in cookie) && !('expires' in cookie)){
+					cookie.session = server.session;
+				}
+
 				server.db.put('cookies', {
 					...cookie,
 					id,
