@@ -145,17 +145,14 @@ export class WebSocketRewrite extends Rewrite {
 				});
 
 				this.#socket.addEventListener('open', async event => {
-					const cookie_name = `bare-meta-${this.#id}`;
-					const [,value] = that.client.cookie.value.match(new RegExp(`${cookie_name}=(.*?)(;|$)`));
+					const meta = await(await fetch(new URL(that.client.tomp.bare + 'v1/ws-meta', location), {
+						headers: {
+							'x-bare-id': this.#id,
+						},
+						method: 'GET',
+					})).json();
 					
-					if(!value){
-						that.tomp.log.error('Unable to read meta cookie ${cookie_name} in document.cookies.');
-						throw{};
-					}
-
-					that.client.cookie.value = `${cookie_name}=; expires=${new Date(0)}`;
-
-					await this.#read_meta(JSON.parse(decodeURIComponent(value)));
+					await this.#read_meta(meta);
 					
 					this.dispatchEvent(new Event('open', event));
 				});
