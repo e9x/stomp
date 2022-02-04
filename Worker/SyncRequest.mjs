@@ -12,8 +12,6 @@ export class SyncRequest {
 		});
 	}
 	async process(data){
-		console.log(data);
-
 		const request = new Request(data[0], data[1]);
 		
 		const response = await new Promise((resolve, reject) => {
@@ -53,7 +51,7 @@ export class SyncRequest {
 				
 				const response = await this.process(data);
 				
-				console.log('Sending:', response);
+				// console.log('Sending:', response);
 
 				cookie.value = encodeURIComponent(JSON.stringify(['incoming', response]));
 				cookieStore.set(cookie);

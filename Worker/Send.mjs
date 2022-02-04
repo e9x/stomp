@@ -93,8 +93,6 @@ export async function SendGetCookies(server, server_request){
 	const json = url.searchParams.has('json');
 	const cookies = await get_cookies(server, remote);
 	
-	console.log(cookies, remote);
-
 	if(json){
 		return new Response(JSON.stringify(cookies), {
 			headers: {

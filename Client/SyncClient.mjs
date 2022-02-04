@@ -19,7 +19,7 @@ export class SyncClient {
 	}
 	work(){}
 	create_response(data){
-		console.log('Received:', data);
+		// console.log('Received:', data);
 		const response = new Response(data[0], data[1]);
 		response.responseText = data[2];
 		return response;

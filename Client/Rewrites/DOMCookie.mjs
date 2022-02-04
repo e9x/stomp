@@ -24,13 +24,11 @@ export class DOMCookieRewrite extends Rewrite {
 					throw new TypeError('Illegal invocation');
 				}
 
-				const { responseText } = this.client.sync.fetch(`${this.client.tomp.directory}worker:set-cookies/?` + new URLSearchParams({
+				this.client.sync.fetch(`${this.client.tomp.directory}worker:set-cookies/?` + new URLSearchParams({
 					remote: JSON.stringify(this.client.location.page_url),
 					cookies: value,
 				}));
 				
-				console.log(responseText);
-
 				return value;
 			}),
 		});

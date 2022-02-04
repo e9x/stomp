@@ -81,8 +81,6 @@ export async function get_cookies(server, remote){
 	//  const entries = await server.db.getAllFromIndex('cookies', 'path', idb_range_startswith(get_directory(remote.path)));
 	const entries = await server.db.getAll('cookies');
 	
-	console.log(entries, get_directory(remote.path));
-	
 	const result = new BrowserCookieArray();
 	
 	for(let cookie of entries){
