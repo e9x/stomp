@@ -59,7 +59,7 @@ export class SyncClient {
 			if(name == 'incoming')break;
 		}
 		
-		this.client.cookie.value = `${id}=${cookieopt}; expires=` + new Date(0);
+		this.client.cookie.value = `${id}=${cookieopt}; expires=${new Date(0)}`;
 
 		return this.create_response(data);
 	}

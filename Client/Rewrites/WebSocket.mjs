@@ -86,11 +86,11 @@ export class WebSocketRewrite extends Rewrite {
 				}
 
 				if('sec-websocket-protocol' in lower_headers){
-					this.#protocol = lower_headers['sec-websocket-protocol'].toString();
+					this.#protocol = String(lower_headers['sec-websocket-protocol']);
 				}
 				
 				if('sec-websocket-extensions' in lower_headers){
-					this.#extensions = lower_headers['sec-websocket-extensions'].toString();
+					this.#extensions = String(lower_headers['sec-websocket-extensions']);
 				}
 
 				if('set-cookie' in lower_headers){
@@ -152,6 +152,8 @@ export class WebSocketRewrite extends Rewrite {
 						that.tomp.log.error('Unable to read meta cookie ${cookie_name} in document.cookies.');
 						throw{};
 					}
+
+					that.client.cookie.value = `${cookie_name}=; expires=${new Date(0)}`;
 
 					await this.#read_meta(JSON.parse(decodeURIComponent(value)));
 					
