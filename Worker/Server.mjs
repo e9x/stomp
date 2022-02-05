@@ -28,7 +28,7 @@ export class Server {
 			},
 		});
 	}
-	send_json(status, json){
+	json(status, json){
 		this.tomp.log.trace(json);
 		
 		return new Response(JSON.stringify(json, null, '\t'), {
@@ -80,7 +80,7 @@ export class Server {
 			}
 		}catch(err){
 			this.tomp.log.error(err);
-			return this.send_json(500, {
+			return this.json(500, {
 				message: `TOMPServer encountered an exception while handling your request. Contact this server's administrator.`,
 			});
 		}

@@ -113,7 +113,7 @@ export async function SendSetCookies(server, server_request){
 	
 	await load_setcookies(server, remote, set_cookies);
 
-	return new Response(new Uint8Array(), {
+	return new Response(undefined,  {
 		status: 200,
 	});
 }
@@ -187,7 +187,7 @@ export async function SendBinary(server, server_request, field){
 	try{
 		response = await TOMPFetch(server, url, server_request, exact_request_headers);
 	}catch(err){
-		if(err instanceof TOMPError)return server.send_json(err.status, err.message);
+		if(err instanceof TOMPError)return server.json(err.status, err.message);
 		else throw err;
 	}
 	const response_headers = await handle_common_response(server.tomp.binary, server, server_request, url, response);
@@ -221,7 +221,7 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	try{
 		response = await TOMPFetch(server, url, server_request, request_headers);
 	}catch(err){
-		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
+		if(err instanceof TOMPError)return server.json(err.status, err.body);
 		else throw err;
 	}
 	
@@ -267,7 +267,7 @@ export async function SendHTML(server, server_request, field){
 	try{
 		response = await TOMPFetch(server, url, server_request, request_headers);
 	}catch(err){
-		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
+		if(err instanceof TOMPError)return server.json(err.status, err.body);
 		else throw err;
 	}
 	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, response);
@@ -304,7 +304,7 @@ export async function SendForm(server, server_request, field){
 		
 		headers.set('location', server.tomp.html.serve(url, url));
 		
-		return new Response(new Uint8Array(), {
+		return new Response(undefined,  {
 			headers,
 			status: 302,
 		});
@@ -313,25 +313,26 @@ export async function SendForm(server, server_request, field){
 	const search_ind = field.indexOf('?');
 	
 	if(search_ind == -1){
-		return void server.send_json(400, {
-			message: `Invalid form GET`,
-		});
+		const {gd_error,url} = await get_data(server, server_request, field);
+		if(gd_error)return gd_error;
+
+		headers.set('location', server.tomp.html.serve(url, url));
+	}else{
+		const search = field.slice(search_ind);
+		field = field.slice(0, search_ind);
+		
+		const {gd_error,url} = await get_data(server, server_request, field);
+		if(gd_error)return gd_error;
+		
+		const orig_search_ind = url.path.indexOf('?');
+		
+		url.path = url.path.slice(0, orig_search_ind == -1 ? url.length : orig_search_ind) + search;
+		headers.set('location', server.tomp.html.serve(url, url));
 	}
 	
-	const search = field.slice(search_ind);
-	field = field.slice(0, search_ind);
-	
-	const {gd_error,url} = await get_data(server, server_request, field);
-	if(gd_error)return gd_error;
-	
-	const orig_search_ind = url.path.indexOf('?');
-	
-	url.path = url.path.slice(0, orig_search_ind == -1 ? url.length : orig_search_ind) + search;
-	headers.set('location', server.tomp.html.serve(url, url));
-	// server.tomp.html.serve(updated, updated);
-
-	return new Response(new Uint8Array(), {
+	// https://stackoverflow.com/questions/14935090/how-to-preserve-request-body-on-performing-http-redirect-from-servlet-filter
+	return new Response(undefined, {
 		headers,
-		status: 302,
+		status: 307 ,
 	});
 }
