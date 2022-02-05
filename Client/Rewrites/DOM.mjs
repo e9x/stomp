@@ -240,18 +240,18 @@ export class DOMRewrite extends Rewrite {
 			}
 		}
 		
-		this.get_attribute = Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute ]) => {
+		Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute ]) => {
 			attribute = String(attribute).toLowerCase();
 			let result = Reflect.apply(target, that, [ attribute ]);
 			result = this.process_get_attribute(that, attribute, false, result, Reflect.getPrototypeOf(that)[Symbol.toStringTag]);
 			return result;
 		});
 
-		this.set_attribute = Element.prototype.setAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute, value ]) => {
+		Element.prototype.setAttribute = wrap_function(Element.prototype.setAttribute, (target, that, [ attribute, value ]) => {
 			attribute = String(attribute).toLowerCase();
 			value = String(value);
-			const result = Reflect.apply(target, that, [ attribute, this.process_set_attribute(that, attribute, false, value, Reflect.getPrototypeOf(that)[Symbol.toStringTag]) ]);
-			return result;
+			value = this.process_set_attribute(that, attribute, false, value, Reflect.getPrototypeOf(that)[Symbol.toStringTag]);
+			Reflect.apply(target, that, [ attribute, value ]);
 		});
 	}
 	process_get_attribute(node, name, use_class, value, class_name){

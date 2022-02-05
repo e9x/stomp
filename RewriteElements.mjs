@@ -374,7 +374,6 @@ export class RewriteElements {
 						switch(element.attributes.get('http-equiv')){
 							case'refresh':
 								return this.tomp.html.wrap_http_refresh(value, url);
-								break;
 						}
 					},
 				}
@@ -479,16 +478,7 @@ export class RewriteElements {
 		
 		for(let ab of this.abstract){
 			if(!this.test_name(element.type, ab.name.tag))continue;
-
-			if(ab.type == 'delete'){
-				if(wrap){
-					element.type = 'tomp-' + element.type;
-				}else if(element.type.startsWith('tomp-')){
-					element.type = element.type.slice('tomp-'.length);
-				}
-				continue;
-			}
-
+			
 			if('content' in ab){
 				const content = element.text;
 
@@ -547,7 +537,8 @@ export class RewriteElements {
 					
 					const changed = this.abstract_type(value, url, element, data, wrap);
 					
-					if(changed != undefined){
+					if(changed !== undefined){
+						element.attributes.set(`data-tomp-${name}`, value);
 						element.attributes.set(name, changed);
 					}
 				}
@@ -584,7 +575,9 @@ export class RewriteElements {
 					return '';
 				}
 				
-				if(data.type == 'delete' && element.attributes.has(`data-tomp-${name}`)){
+				// data.type === 'delete' && 
+				// data-tomp- is the get/setAttribute value
+				if((data.type === 'delete' || !use_class) && element.attributes.has(`data-tomp-${name}`)){
 					return element.attributes.get(`data-tomp-${name}`);
 				}
 				
@@ -649,6 +642,17 @@ export class RewriteElements {
 				}
 
 				const changed = this.abstract_type(value, url, element, data, true);
+					
+				/*
+				if:
+					not a class: node.getAttribute
+					didnt match a class: node.src
+				*/
+
+				if(!use_class || !data.class_name){
+					element.attributes.set(`data-tomp-${name}`, value);
+				}
+
 				return changed;
 			}
 		}
