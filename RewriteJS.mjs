@@ -1,5 +1,5 @@
 import { ParseDataURI } from './DataURI.mjs'
-import { parse } from 'acorn';
+import { parseScript } from 'meriyah';
 import { generate } from 'escodegen';
 import { AcornIterator } from './IterateAcorn.mjs';
 import { builders as b } from 'ast-types';
@@ -30,12 +30,14 @@ export class RewriteJS {
 	wrap(code, url, worker){
 		if(this.tomp.noscript)return '';
 
+		let ast;
+
 		try{
-			var ast = parse(code, { 
+			ast = parseScript(code, { 
 				ecmaVersion: 2022,
-				allowAwaitOutsideFunction: true,
-				allowReturnOutsideFunction: true, 
-				allowImportExportEverywhere: true,
+				module: true,
+				webcompat: true,
+				globalReturn: true, 
 			});
 		}catch(err){
 			if(err instanceof SyntaxError){
@@ -215,12 +217,14 @@ export class RewriteJS {
 	unwrap(code, url){
 		if(this.tomp.noscript)return '';
 
+		let ast;
+
 		try{
-			var ast = parse(code, { 
+			ast = parseScript(code, { 
 				ecmaVersion: 2022,
-				allowAwaitOutsideFunction: true,
-				allowReturnOutsideFunction: true, 
-				allowImportExportEverywhere: true,
+				module: true,
+				webcompat: true,
+				globalReturn: true, 
 			});
 		}catch(err){
 			if(err instanceof SyntaxError){

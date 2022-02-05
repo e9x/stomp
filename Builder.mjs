@@ -36,11 +36,6 @@ export class Builder {
 				path: output,
 				filename: '[name].js',
 			},
-			plugins: [
-				new webpack.ProvidePlugin({
-					process: 'process/browser',
-				}),
-			],
 		});
 	}
 	build(){
