@@ -72,10 +72,11 @@ export class WebSocketRewrite extends Rewrite {
 			CLOSED = 3;
 			#socket;
 			#ready;
+			#remote = {};
 			#binaryType = 'blob';
-			#remote;
 			#protocol = '';
 			#extensions = '';
+			#url = '';
 			#id = Math.random().toString(36).slice(2);
 			async #read_meta({ headers }){
 				const lower_headers = {};
@@ -168,6 +169,9 @@ export class WebSocketRewrite extends Rewrite {
 					this.dispatchEvent(new Event('close', event));
 				});
 			}
+			get url(){
+				return this.#url;
+			}
 			constructor(url = didnt_specify, protocol = []){
 				super();
 
@@ -177,8 +181,10 @@ export class WebSocketRewrite extends Rewrite {
 					throw new DOMException(`Failed to construct 'WebSocket': 1 argument required, but only 0 present.`);
 				}
 
+				let parsed;
+
 				try{
-					var parsed = new URL(url);
+					parsed = new URL(url);
 				}catch(err){
 					throw new DOMException(`Faiiled to construct 'WebSocket': The URL '${url}' is invalid.`);
 				}
@@ -191,6 +197,8 @@ export class WebSocketRewrite extends Rewrite {
 				
 				if(isNaN(port))port = default_ports[parsed.protocol];
 				
+				this.#url = parsed.href;
+
 				this.#ready = this.#open({
 					host: parsed.hostname,
 					path: parsed.pathname + parsed.search,
