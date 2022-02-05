@@ -112,7 +112,7 @@ export class RewriteJS {
 					if(ctx.parent.type == 'AssignmentPattern' && ctx.parent_key == 'left') break;
 					if(!undefinable.includes(ctx.node.name))break;
 					
-					if(ctx.parent.type == 'UpdateExpression' || ctx.parent.type == 'AssignmentExpression'){
+					if(ctx.parent.type == 'UpdateExpression' || ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
 						ctx.parent.replace_with(b.assignmentExpression(
 							'=',
 							ctx.node,
@@ -254,7 +254,7 @@ export class RewriteJS {
 				case'CallExpression':
 					
 					// void function tompc$_main(){if(!("tompc$" in this))importScripts("/client.js")}();
-					if(ctx.node.callee.type == 'FunctionExpression' && ctx.node.callee.id.name == `${global_client}_main`){
+					if(ctx.node.callee.type == 'FunctionExpression' && ctx.node.callee?.id.name == `${global_client}_main`){
 						ctx.remove_descendants_from_stack();
 						ctx.parent.parent.detach();
 					}
