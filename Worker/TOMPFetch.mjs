@@ -1,10 +1,12 @@
 // Implements the protocol for requesting bare data from a server
 // See ../Server/Send.mjs
-import { TOMPError } from '../TOMPError.mjs';
+import TOMPError from '../TOMPError.mjs';
 
 const forbids_body = ['GET','HEAD'];
 
-export async function TOMPFetch(server, url, server_request, request_headers){
+export const status_empty = [101,204,205,304];
+
+export default async function TOMPFetch(server, url, server_request, request_headers){
 	if(url.protocol.startsWith('blob:')){
 		const response = await fetch(`blob:${location.origin}${url.path}`);
 		response.json_headers = Object.fromEntries(response.headers.entries());
@@ -62,25 +64,24 @@ export async function TOMPFetch(server, url, server_request, request_headers){
 		headers.set(lower, value);
 	}
 	
-	const spoof = {
-		status,
-		statusText,
-		headers,
-		json_headers,
-		raw_header_names,
-		arrayBuffer: response.arrayBuffer.bind(response),
-		blob: response.blob.bind(response),
-		body: response.body,
-		bodyUsed: response.bodyUsed,
-		clone: response.clone.bind(response),
-		formData: response.formData.bind(response),
-		json: response.json.bind(response),
-		ok: response.ok,
-		redirected: response.redirected,
-		text: response.text.bind(response),
-		type: response.type,
-		url: response.url,
-	};
+	let result;
+	
+	if(status_empty.includes(+status)){
+		result = new Response(undefined, {
+			status,
+			statusText,
+			headers,
+		});
+	}else{
+		result = new Response(response.body, {
+			status,
+			statusText,
+			headers,
+		});
+	}
 
-	return spoof;
+	result.json_headers = json_headers;
+	result.raw_header_names = raw_header_names;
+	
+	return result;
 }

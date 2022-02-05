@@ -1,7 +1,7 @@
 import { MapHeaderNamesFromArray } from './HeaderUtil.mjs'
 import { html_types, get_mime } from '../RewriteElements.mjs';
-import { TOMPError } from '../TOMPError.mjs';
-import { TOMPFetch } from './TOMPFetch.mjs';
+import TOMPError from '../TOMPError.mjs';
+import TOMPFetch, { status_empty } from './TOMPFetch.mjs';
 import { load_setcookies, get_cookies } from './Cookies.mjs';
 
 const remove_general_headers = [
@@ -37,8 +37,6 @@ const remove_csp_headers = [
 	'x-powered-by',
 	'x-xss-protection',
 ];
-
-const status_empty = [101,204,205,304];
 
 async function handle_common_request(server, server_request, request_headers, url){
 	if(server_request.headers.has('referer')){
