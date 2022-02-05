@@ -87,7 +87,7 @@ export async function get_cookies(server, remote){
 		let expired = false;
 		
 		if('maxAge' in cookie){
-			expired = set.getTime() + (cookie.maxAge * 1e3) < now;
+			expired = cookie.set.getTime() + (cookie.maxAge * 1e3) < now;
 		}else if('expires' in cookie){
 			expired = cookie.expires < now;
 		}else if('session' in cookie){

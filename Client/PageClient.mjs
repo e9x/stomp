@@ -5,6 +5,7 @@ import { StorageRewrite } from './Rewrites/Storage.mjs';
 import { DOMCookieRewrite } from './Rewrites/DOMCookie.mjs';
 import { PageRequestRewrite } from './Rewrites/PageRequest.mjs';
 import { SyncClient } from './SyncClient.mjs';
+import { global } from '../Global.mjs';
 
 export class PageClient extends Client {
 	static type = 'page';
@@ -24,5 +25,8 @@ export class PageClient extends Client {
 		this.dom.work();
 		this.cookie.work();
 		this.page_request.work();
+
+		delete global.CookieStore;
+		delete global.EventSource;
 	}
 };
