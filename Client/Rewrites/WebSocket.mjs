@@ -67,7 +67,6 @@ export class WebSocketRewrite extends Rewrite {
 		const instances = new WeakSet();
 
 		class WebSocketProxy extends EventTarget {
-			[Symbol.toStringTag] = 'WebSocket';
 			#socket;
 			#ready;
 			#remote = {};
@@ -253,6 +252,13 @@ export class WebSocketRewrite extends Rewrite {
 		TargetConstant(WebSocketProxy, 'CLOSING', 2);
 		TargetConstant(WebSocketProxy, 'CLOSED', 3);
 
+		Reflect.defineProperty(WebSocketProxy.prototype, Symbol.toStringTag, {
+			configurable: true,
+			enumerable: false,
+			writable: false,
+			value: 'WebSocket',
+		});
+
 		mirror_attributes(WebSocket, WebSocketProxy);
 
 		const descriptors = Object.getOwnPropertyDescriptors(WebSocketProxy.prototype);
@@ -262,6 +268,11 @@ export class WebSocketRewrite extends Rewrite {
 			const descriptor = descriptors[key];
 	
 			const mirror_descriptor = mirror_descriptors[key];
+
+			if(!mirror_descriptor){
+				console.warn('Key not present in global:', key);
+				continue;
+			}
 
 			if(!descriptor?.configurable)continue;
 	
@@ -277,6 +288,8 @@ export class WebSocketRewrite extends Rewrite {
 				});
 	
 				changed = true;
+			}else if('value' in descriptor){
+				mirror_descriptor.value = descriptor.value;
 			}
 	
 			if(typeof descriptor.get == 'function'){
