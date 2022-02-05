@@ -2,7 +2,7 @@ import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { encode_protocol, valid_protocol } from '../EncodeProtocol.mjs';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.mjs';
-import { wrap_function } from '../RewriteUtil.mjs';
+import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 
 const default_ports = {
 	'ws:': 80,
@@ -145,12 +145,15 @@ export class WebSocketRewrite extends Rewrite {
 				});
 
 				this.#socket.addEventListener('open', async event => {
-					const meta = await(await fetch(new URL(that.client.tomp.bare + 'v1/ws-meta', location), {
-						headers: {
-							'x-bare-id': this.#id,
-						},
-						method: 'GET',
-					})).json();
+					const meta = await(await Reflect.apply(that.client.request.global_fetch, global, [
+						new URL(that.client.tomp.bare + 'v1/ws-meta', location),
+						{
+							headers: {
+								'x-bare-id': this.#id,
+							},
+							method: 'GET',
+						}
+					])).json();
 					
 					await this.#read_meta(meta);
 					
