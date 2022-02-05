@@ -22,7 +22,7 @@ export class RequestRewrite extends Rewrite {
 					
 					if(init.headers != undefined && !(init.headers instanceof Headers)){
 						// preserve header capitalization for http/1 and http/1.1
-						init.headers = Object.setPrototypeOf({...init.headers, 'x-tomp-impl-names': JSON.stringify(Object.keys(init.headers)) }, null)
+						init.headers = {...init.headers, 'x-tomp-impl-names': JSON.stringify(Reflect.ownKeys(init.headers)) };
 					}
 				}
 			}

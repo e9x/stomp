@@ -201,7 +201,7 @@ export class DOMRewrite extends Rewrite {
 		this.attr_work();
 		this.anchor_work();
 		
-		for(let key of Object.getOwnPropertyNames(global)){
+		for(let key of Reflect.ownKeys(global)){
 			for(let ab of this.client.tomp.elements.abstract){
 				if(!this.client.tomp.elements.test_name(key, ab.name.class)){
 					continue;
@@ -215,7 +215,7 @@ export class DOMRewrite extends Rewrite {
 				}
 
 				if('attributes' in ab)for(let data of ab.attributes){
-					for(let name of Object.getOwnPropertyNames(cls.prototype)){
+					for(let name of Reflect.ownKeys(cls.prototype)){
 						if(!this.client.tomp.elements.test_name(name, data.class_name || data.name)){
 							continue;
 						}
@@ -243,14 +243,14 @@ export class DOMRewrite extends Rewrite {
 		this.get_attribute = Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute ]) => {
 			attribute = String(attribute).toLowerCase();
 			let result = Reflect.apply(target, that, [ attribute ]);
-			result = this.process_get_attribute(that, attribute, false, result, Object.getPrototypeOf(that)[Symbol.toStringTag]);
+			result = this.process_get_attribute(that, attribute, false, result, Reflect.getPrototypeOf(that)[Symbol.toStringTag]);
 			return result;
 		});
 
 		this.set_attribute = Element.prototype.setAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute, value ]) => {
 			attribute = String(attribute).toLowerCase();
 			value = String(value);
-			const result = Reflect.apply(target, that, [ attribute, this.process_set_attribute(that, attribute, false, value, Object.getPrototypeOf(that)[Symbol.toStringTag]) ]);
+			const result = Reflect.apply(target, that, [ attribute, this.process_set_attribute(that, attribute, false, value, Reflect.getPrototypeOf(that)[Symbol.toStringTag]) ]);
 			return result;
 		});
 	}

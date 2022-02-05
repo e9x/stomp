@@ -42,14 +42,19 @@ export class PageRequestRewrite extends Rewrite {
 		});
 		
 		XMLHttpRequest.prototype.open = wrap_function(XMLHttpRequest.prototype.open, (target, that, [method, url, async, username, password]) => {
-			this.xml_data.set(that, {
-				headers: Object.setPrototypeOf({}, null),
+			const data = {
+				headers: {},
 				url,
 				method,
 				async,
 				username,
 				password,
-			});
+			};
+			
+			Reflect.setPrototypeOf(data.headers, null);
+			
+			this.xml_data.set(that, data);
+			
 			url = this.client.tomp.binary.serve(new URL(url, this.client.location.proxy), this.client.location.proxy);
 			return Reflect.apply(target, that, [ method, url, async, username, password ]);
 		});
@@ -75,7 +80,7 @@ export class PageRequestRewrite extends Rewrite {
 			if(this.xml_data.has(that)){
 				const data = this.xml_data.get(that);
 
-				data.headers['x-tomp-impl-names'] = JSON.stringify(Object.keys(data.headers));
+				data.headers['x-tomp-impl-names'] = JSON.stringify(Reflect.ownKeys(data.headers));
 
 				data.body = body;
 

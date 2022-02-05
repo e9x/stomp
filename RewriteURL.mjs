@@ -76,12 +76,16 @@ export class RewriteURL {
 
 		const path = decodeURIComponent(field.slice(metai + 1));
 		
-		return Object.setPrototypeOf({
+		const result = {
 			protocol,
 			path,
 			port,
 			host,
-		}, ParsedRewrittenURL.prototype);
+		};
+		
+		Reflect.setPrototypeOf(result, ParsedRewrittenURL.prototype);
+		
+		return result;
 	}
 	get_attributes(url){
 		url = String(url);

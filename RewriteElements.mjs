@@ -39,9 +39,15 @@ export class RewriteElements {
 		this.tomp = tomp;
 	}
 	test_name(name, match){
-		if(name instanceof RegExp)return name === match;
-		else if(typeof match == 'string')return name == match;
-		else return name.match(match);
+		if(name instanceof RegExp){
+			return name === match;
+		}else if(typeof match == 'string'){
+			return name == match;
+		}else if(typeof name == 'string'){
+			return name.match(match);
+		}else{
+			return false;
+		}
 	}
 	wrap_innerHTML(value, url, element, wrap){
 		for(let ab of this.abstract){

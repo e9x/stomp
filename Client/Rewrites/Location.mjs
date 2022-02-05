@@ -1,6 +1,6 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { wrap_function, Reflect, getOwnPropertyDescriptors } from '../RewriteUtil.mjs';
+import { wrap_function, Reflect, getOwnPropertyDescriptors, defineProperties } from '../RewriteUtil.mjs';
 import { Type } from 'ast-types';
 
 export class LocationRewrite extends Rewrite {
@@ -12,13 +12,16 @@ export class LocationRewrite extends Rewrite {
 		else this.work_worker();
 	}
 	work_worker(){
-		this.global = Object.setPrototypeOf(global.location, Object.defineProperties({}, Object.getOwnPropertyDescriptors(WorkerLocation.prototype)));
-		this.proxy = Object.setPrototypeOf({}, WorkerLocation.prototype);
+		this.global = global.location;
+		this.proxy = {};
+		
+		Reflect.setPrototypeOf(this.global, defineProperties({}, getOwnPropertyDescriptors(WorkerLocation.prototype)));
+		Reflect.setPrototypeOf(this.proxy, WorkerLocation.prototype);
 
 		const scope_location = Reflect.getOwnPropertyDescriptor(WorkerGlobalScope.prototype, 'location');
 		const legal_contexts = [ this.proxy, null, undefined ];
 
-		Object.defineProperty(WorkerGlobalScope.prototype, 'location', {
+		Reflect.defineProperty(WorkerGlobalScope.prototype, 'location', {
 			configurable: true,
 			enumerable: true,
 			get: wrap_function(scope_location.get, (target, that, args) => {
@@ -31,7 +34,7 @@ export class LocationRewrite extends Rewrite {
 		for(let prop of ['href','host','hostname','protocol','port','pathname','origin','hash','search']){
 			const desc = Reflect.getOwnPropertyDescriptor(WorkerLocation.prototype, prop);
 			
-			Object.defineProperty(WorkerLocation.prototype, prop, {
+			Reflect.defineProperty(WorkerLocation.prototype, prop, {
 				configurable: true,
 				enumerable: true,
 				get: desc.get ? wrap_function(desc.get, (target, that, args) => {
@@ -50,7 +53,7 @@ export class LocationRewrite extends Rewrite {
 
 		const toString = Reflect.getOwnPropertyDescriptor(WorkerLocation.prototype, 'toString');
 
-		Object.defineProperty(WorkerLocation.prototype, 'toString', {
+		Reflect.defineProperty(WorkerLocation.prototype, 'toString', {
 			configurable: false,
 			enumerable: true,
 			writable: false,
@@ -83,7 +86,7 @@ export class LocationRewrite extends Rewrite {
 		}
 
 		{
-			const location = Object.getOwnPropertyDescriptor(global.document, 'location');
+			const location = Reflect.getOwnPropertyDescriptor(global.document, 'location');
 
 			this.global_description_document = location;
 			
@@ -102,12 +105,13 @@ export class LocationRewrite extends Rewrite {
 			};
 		}
 
-		this.proxy = Object.setPrototypeOf({}, Location.prototype);
+		this.proxy = {};
+		Reflect.setPrototypeOf(this.proxy, null);
 
 		for(let prop of ['href','host','hostname','protocol','port','pathname','origin','hash','search']){
 			const desc = Reflect.getOwnPropertyDescriptor(this.global, prop);
 			
-			Object.defineProperty(this.proxy, prop, {
+			Reflect.defineProperty(this.proxy, prop, {
 				configurable: false,
 				enumerable: true,
 				get: desc.get ? wrap_function(desc.get, (target, that, args) => {
@@ -126,7 +130,7 @@ export class LocationRewrite extends Rewrite {
 
 		const toString = Reflect.getOwnPropertyDescriptor(this.global, 'toString');
 
-		Object.defineProperty(this.proxy, 'toString', {
+		Reflect.defineProperty(this.proxy, 'toString', {
 			configurable: false,
 			enumerable: true,
 			writable: false,
@@ -138,7 +142,7 @@ export class LocationRewrite extends Rewrite {
 		
 		const { assign, replace, reload, ancestorOrigins } = getOwnPropertyDescriptors(this.global);
 
-		Object.defineProperty(this.proxy, 'assign', {
+		Reflect.defineProperty(this.proxy, 'assign', {
 			configurable: false,
 			enumerable: true,
 			writable: false,
@@ -148,7 +152,7 @@ export class LocationRewrite extends Rewrite {
 			}),
 		});
 
-		Object.defineProperty(this.proxy, 'replace', {
+		Reflect.defineProperty(this.proxy, 'replace', {
 			configurable: false,
 			enumerable: true,
 			writable: false,
@@ -158,7 +162,7 @@ export class LocationRewrite extends Rewrite {
 			}),
 		});
 
-		Object.defineProperty(this.proxy, 'reload', {
+		Reflect.defineProperty(this.proxy, 'reload', {
 			configurable: false,
 			enumerable: true,
 			writable: false,
@@ -168,7 +172,7 @@ export class LocationRewrite extends Rewrite {
 			}),
 		});
 		
-		if(ancestorOrigins)Object.defineProperty(this.proxy, 'ancestorOrigins', {
+		if(ancestorOrigins)Reflect.defineProperty(this.proxy, 'ancestorOrigins', {
 			configurable: false,
 			enumerable: true,
 			get: wrap_function(ancestorOrigins.get, (target, that, args) => {

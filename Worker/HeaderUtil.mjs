@@ -1,5 +1,7 @@
 export function ObjectFromRawHeaders(raw){
-	const result = Object.setPrototypeOf({}, null);
+	const result = {};
+	
+	Reflect.setPrototypeOf(result, null);
 
 	for(let i = 0; i < raw.length; i += 2){
 		let [header,value] = raw.slice(i, i + 2);

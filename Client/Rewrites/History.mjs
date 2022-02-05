@@ -50,13 +50,13 @@ export class HistoryRewrite extends Rewrite {
 			}
 		};
 
-		Object.defineProperty(global, 'History', {
+		Reflect.defineProperty(global, 'History', {
 			configurable: true,
 			enumerable: false,
 			value: History,
 			writable: true,
 		});
 
-		Object.setPrototypeOf(global.history, History.prototype);
+		Reflect.setPrototypeOf(global.history, History.prototype);
 	}
 };

@@ -175,22 +175,28 @@ export async function SendBinary(server, server_request, field){
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
-	const exact_request_headers = Object.setPrototypeOf(Object.fromEntries(request_headers.entries()), null);
+	const exact_request_headers = Object.fromEntries(request_headers.entries());
+	
+	Reflect.setPrototypeOf(exact_request_headers, null);
 
 	if(server_request.headers.has('x-tomp-impl-names')){
 		MapHeaderNamesFromArray(JSON.parse(server_request.headers.get('x-tomp-impl-names')), exact_request_headers);
 		delete exact_request_headers['x-tomp-impl-names'];
 	}
 	
+	let response;
+	
 	try{
-		var response = await TOMPFetch(server, url, server_request, exact_request_headers);
+		response = await TOMPFetch(server, url, server_request, exact_request_headers);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.message);
 		else throw err;
 	}
 	const response_headers = await handle_common_response(server.tomp.binary, server, server_request, url, response);
 	
-	var exact_response_headers = Object.setPrototypeOf(Object.fromEntries([...response_headers.entries()]), null);
+	let exact_response_headers = Object.fromEntries([...response_headers.entries()]);
+	Reflect.setPrototypeOf(exact_request_headers, null);
+	
 	MapHeaderNamesFromArray(response.raw_header_names, exact_response_headers);
 	
 	if(status_empty.includes(+response.status)){
@@ -212,8 +218,10 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
+	let response;
+
 	try{
-		var response = await TOMPFetch(server, url, server_request, request_headers);
+		response = await TOMPFetch(server, url, server_request, request_headers);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
 		else throw err;
@@ -221,7 +229,7 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	
 	const response_headers = await handle_common_response(rewriter, server, server_request, url, response, ...args);
 	
-	var send = new Uint8Array();
+	let send = new Uint8Array();
 
 	if(status_empty.includes(+response.status)){
 		return new Response({
@@ -256,15 +264,17 @@ export async function SendHTML(server, server_request, field){
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
+	let response;
+
 	try{
-		var response = await TOMPFetch(server, url, server_request, request_headers);
+		response = await TOMPFetch(server, url, server_request, request_headers);
 	}catch(err){
 		if(err instanceof TOMPError)return server.send_json(err.status, err.body);
 		else throw err;
 	}
 	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, response);
 
-	var send = new Uint8Array();
+	let send = new Uint8Array();
 	if(!status_empty.includes(+response.status)){
 		if(html_types.includes(get_mime(response_headers.get('content-type') || ''))){
 			send = server.tomp.html.wrap(await response.text(), url.toString());

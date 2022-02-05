@@ -2,7 +2,7 @@ import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { encode_protocol, valid_protocol } from '../EncodeProtocol.mjs';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.mjs';
-import { mirror_attributes, Reflect, wrap_function } from '../RewriteUtil.mjs';
+import { mirror_attributes, Reflect, getOwnPropertyDescriptors, wrap_function } from '../RewriteUtil.mjs';
 
 const default_ports = {
 	'ws:': 80,
@@ -19,15 +19,15 @@ function TargetConstant(target, key, value){
 		value,
 	};
 
-	Object.defineProperty(target, key, descriptor);
-	Object.defineProperty(target.prototype, key, descriptor);
+	Reflect.defineProperty(target, key, descriptor);
+	Reflect.defineProperty(target.prototype, key, descriptor);
 }
 
 function EventTarget_on(target, event){
 	const property = `on${event}`;
 	const listeners = new WeakMap();
 
-	Object.defineProperty(target, property, {
+	Reflect.defineProperty(target, property, {
 		enumerable: true,
 		configurable: true,
 		get(){
@@ -98,7 +98,9 @@ export class WebSocketRewrite extends Rewrite {
 			async #open(remote, protocol){
 				this.#remote = remote;
 
-				const request_headers = Object.setPrototypeOf({}, null);
+				const request_headers = {};
+				Reflect.setPrototypeOf(request_headers, null);
+				
 				request_headers['Host'] = remote.host;
 				request_headers['Origin'] = that.client.location.proxy.origin;
 				request_headers['Pragma'] = 'no-cache';
@@ -261,8 +263,8 @@ export class WebSocketRewrite extends Rewrite {
 
 		mirror_attributes(WebSocket, WebSocketProxy);
 
-		const descriptors = Object.getOwnPropertyDescriptors(WebSocketProxy.prototype);
-		const mirror_descriptors = Object.getOwnPropertyDescriptors(WebSocket.prototype);
+		const descriptors = getOwnPropertyDescriptors(WebSocketProxy.prototype);
+		const mirror_descriptors = getOwnPropertyDescriptors(WebSocket.prototype);
 
 		for(let key in descriptors){
 			const descriptor = descriptors[key];
@@ -317,7 +319,7 @@ export class WebSocketRewrite extends Rewrite {
 			}
 	
 			if(changed){
-				Object.defineProperty(WebSocketProxy.prototype, key, mirror_descriptor);
+				Reflect.defineProperty(WebSocketProxy.prototype, key, mirror_descriptor);
 			}
 		}
 

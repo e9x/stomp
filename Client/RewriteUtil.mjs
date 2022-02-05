@@ -2,7 +2,9 @@ import { global } from '../Global.mjs';
 
 export const function_strings = new Map();
 
-export const getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors.bind(Object);
+export const getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors;
+
+export const defineProperties = Object.defineProperties;
 
 export const Proxy = global.Proxy;
 
@@ -24,8 +26,8 @@ export const Reflect = {
 
 export function mirror_attributes(from, to){
 	function_strings.set(to, from.toString());
-	Object.defineProperty(to, 'length', Object.getOwnPropertyDescriptor(from, 'length'));
-	Object.defineProperty(to, 'name', Object.getOwnPropertyDescriptor(from, 'name'));
+	Reflect.defineProperty(to, 'length', Reflect.getOwnPropertyDescriptor(from, 'length'));
+	Reflect.defineProperty(to, 'name', Reflect.getOwnPropertyDescriptor(from, 'name'));
 	return to;
 };
 
@@ -107,7 +109,7 @@ export function proxy_multitarget(first, second){
 
 export function bind_natives(target){
 	for(let prop in target){
-		const desc = Object.getOwnPropertyDescriptor(target, prop);
+		const desc = Reflect.getOwnPropertyDescriptor(target, prop);
 
 		if(!desc?.configurable)continue;
 
@@ -138,7 +140,7 @@ export function bind_natives(target){
 		}
 
 		if(changed){
-			Object.defineProperty(target, prop, desc);
+			Reflect.defineProperty(target, prop, desc);
 		}
 	}
 }

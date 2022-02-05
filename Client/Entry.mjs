@@ -17,7 +17,7 @@ global[global_client] = config => {
 		throw new Error('Unknown context!');
 	}
 	
-	Object.defineProperty(global, global_client, {
+	Reflect.defineProperty(global, global_client, {
 		enumerable: false,
 		configurable: false,
 		writable: false,
