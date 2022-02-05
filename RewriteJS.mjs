@@ -254,9 +254,11 @@ export class RewriteJS {
 				case'CallExpression':
 					
 					// void function tompc$_main(){if(!("tompc$" in this))importScripts("/client.js")}();
-					if(ctx.node.callee.type == 'FunctionExpression' && ctx.node.callee?.id.name == `${global_client}_main`){
+					if(ctx.node.callee.type == 'FunctionExpression' && ctx.node.callee.id?.name == `${global_client}_main`){
 						ctx.remove_descendants_from_stack();
 						ctx.parent.parent.detach();
+
+						break;
 					}
 
 					// console.log('call', code.slice(ctx.node.start, ctx.node.end));
