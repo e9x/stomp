@@ -2,7 +2,7 @@ import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { encode_protocol, valid_protocol } from '../EncodeProtocol.mjs';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.mjs';
-import { Reflect, wrap_function } from '../RewriteUtil.mjs';
+import { mirror_attributes, Reflect, wrap_function } from '../RewriteUtil.mjs';
 
 const default_ports = {
 	'ws:': 80,
@@ -11,39 +11,44 @@ const default_ports = {
 
 const ws_protocols = ['wss:','ws:'];
 
-function EventTarget_on(target, original, event, instances){
+function TargetConstant(target, key, value){
+	const descriptor = {
+		configurable: false,
+		writable: false,
+		enumerable: true,
+		value,
+	};
+
+	Object.defineProperty(target, key, descriptor);
+	Object.defineProperty(target.prototype, key, descriptor);
+}
+
+function EventTarget_on(target, event){
 	const property = `on${event}`;
-	const desc = Object.getOwnPropertyDescriptor(original, property);
 	const listeners = new WeakMap();
 
 	Object.defineProperty(target, property, {
-		get: wrap_function(desc.get, (target, that, args) => { 
-			if(!instances.has(that)){
-				throw new TypeError('Illegal Invocation');
-			}
-
-			if(listeners.has(that)){
-				return listeners.get(that);
+		enumerable: true,
+		configurable: true,
+		get(){
+			if(listeners.has(this)){
+				return listeners.get(this);
 			}else{
 				return null;
 			}
-		}),
-		set: wrap_function(desc.set, (target, that, [ value ]) => {
-			if(!instances.has(that)){
-				throw new TypeError('Illegal Invocation');
-			}
-
+		},
+		set(value){
 			if(typeof value == 'function'){
-				if(listeners.has(that)){
-					that.removeEventListener(event, listeners.get(that));
+				if(listeners.has(this)){
+					this.removeEventListener(event, listeners.get(this));
 				}
 
-				listeners.set(that, value);
-				that.addEventListener(event, value);
+				listeners.set(this, value);
+				this.addEventListener(event, value);
 			}
 
 			return value;
-		}),
+		},
 	});
 }
 
@@ -52,7 +57,7 @@ export class WebSocketRewrite extends Rewrite {
 	work(){
 		const that = this;
 
-		const _WebSocket = global.WebSocket;
+		const { WebSocket } = global;
 
 		const bare_ws = new URL(this.client.tomp.bare + 'v1/', location);
 		bare_ws.protocol = bare_ws.protocol == 'https:' ? 'wss:' : 'ws:';
@@ -61,15 +66,8 @@ export class WebSocketRewrite extends Rewrite {
 
 		const instances = new WeakSet();
 
-		class WebSocket extends EventTarget {
-			static CONNECTING = 0;
-			static OPEN = 1;
-			static CLOSING = 2;
-			static CLOSED = 3;
-			CONNECTING = 0;
-			OPEN = 1;
-			CLOSING = 2;
-			CLOSED = 3;
+		class WebSocketProxy extends EventTarget {
+			[Symbol.toStringTag] = 'WebSocket';
 			#socket;
 			#ready;
 			#remote = {};
@@ -125,7 +123,7 @@ export class WebSocketRewrite extends Rewrite {
 					request_headers['Cookie'] = cookies.toString();
 				}
 				
-				this.#socket = new _WebSocket(bare_ws, [
+				this.#socket = new WebSocket(bare_ws, [
 					'bare',
 					encode_protocol(JSON.stringify({
 						remote,
@@ -213,7 +211,7 @@ export class WebSocketRewrite extends Rewrite {
 				return this.#extensions;
 			}
 			get readyState(){
-				return this.socket ? this.socket.readyState : _WebSocket.CONNECTING;
+				return this.socket ? this.socket.readyState : WebSocket.CONNECTING;
 			}
 			get binaryType(){
 				return this.#binaryType;
@@ -246,11 +244,70 @@ export class WebSocketRewrite extends Rewrite {
 			}
 		};
 
-		EventTarget_on(WebSocket.prototype, _WebSocket.prototype, 'close', instances);
-		EventTarget_on(WebSocket.prototype, _WebSocket.prototype, 'open', instances);
-		EventTarget_on(WebSocket.prototype, _WebSocket.prototype, 'message', instances);
-		EventTarget_on(WebSocket.prototype, _WebSocket.prototype, 'error', instances);
+		EventTarget_on(WebSocketProxy.prototype, 'close');
+		EventTarget_on(WebSocketProxy.prototype, 'open');
+		EventTarget_on(WebSocketProxy.prototype, 'message');
+		EventTarget_on(WebSocketProxy.prototype, 'error');
+		TargetConstant(WebSocketProxy, 'CONNECTING', 0);
+		TargetConstant(WebSocketProxy, 'OPEN', 1);
+		TargetConstant(WebSocketProxy, 'CLOSING', 2);
+		TargetConstant(WebSocketProxy, 'CLOSED', 3);
 
-		global.WebSocket = WebSocket;
+		mirror_attributes(WebSocket, WebSocketProxy);
+
+		const descriptors = Object.getOwnPropertyDescriptors(WebSocketProxy.prototype);
+		const mirror_descriptors = Object.getOwnPropertyDescriptors(WebSocket.prototype);
+
+		for(let key in descriptors){
+			const descriptor = descriptors[key];
+	
+			const mirror_descriptor = mirror_descriptors[key];
+
+			if(!descriptor?.configurable)continue;
+	
+			let changed = false;
+	
+			if(typeof descriptor.value == 'function'){
+				mirror_descriptor.value = wrap_function(mirror_descriptor.value, (target, that, args) => {
+					if(!instances.has(that)){
+						throw new TypeError('Illegal Invocation');
+					}
+
+					return Reflect.apply(descriptor.value, that, args);
+				});
+	
+				changed = true;
+			}
+	
+			if(typeof descriptor.get == 'function'){
+				mirror_descriptor.get = wrap_function(mirror_descriptor.get, (target, that, args) => {
+					if(!instances.has(that)){
+						throw new TypeError('Illegal Invocation');
+					}
+
+					return Reflect.apply(descriptor.get, that, args);
+				});
+	
+				changed = true;
+			}
+	
+			if(typeof descriptor.set == 'function'){
+				mirror_descriptor.set = wrap_function(mirror_descriptor.set, (target, that, args) => {
+					if(!instances.has(that)){
+						throw new TypeError('Illegal Invocation');
+					}
+
+					return Reflect.apply(descriptor.set, that, args);
+				});
+	
+				changed = true;
+			}
+	
+			if(changed){
+				Object.defineProperty(WebSocketProxy.prototype, key, mirror_descriptor);
+			}
+		}
+
+		global.WebSocket = WebSocketProxy;
 	}
 };
