@@ -3,6 +3,7 @@ import { global } from '../../Global.mjs';
 import { encode_protocol, valid_protocol } from '../EncodeProtocol.mjs';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.mjs';
 import { mirror_attributes, Reflect, getOwnPropertyDescriptors, wrap_function } from '../RewriteUtil.mjs';
+import { TargetConstant, EventTarget_on, mirror_class } from '../NativeUtil.mjs';
 
 const default_ports = {
 	'ws:': 80,
@@ -11,53 +12,11 @@ const default_ports = {
 
 const ws_protocols = ['wss:','ws:'];
 
-function TargetConstant(target, key, value){
-	const descriptor = {
-		configurable: false,
-		writable: false,
-		enumerable: true,
-		value,
-	};
-
-	Reflect.defineProperty(target, key, descriptor);
-	Reflect.defineProperty(target.prototype, key, descriptor);
-}
-
-function EventTarget_on(target, event){
-	const property = `on${event}`;
-	const listeners = new WeakMap();
-
-	Reflect.defineProperty(target, property, {
-		enumerable: true,
-		configurable: true,
-		get(){
-			if(listeners.has(this)){
-				return listeners.get(this);
-			}else{
-				return null;
-			}
-		},
-		set(value){
-			if(typeof value == 'function'){
-				if(listeners.has(this)){
-					this.removeEventListener(event, listeners.get(this));
-				}
-
-				listeners.set(this, value);
-				this.addEventListener(event, value);
-			}
-
-			return value;
-		},
-	});
-}
-
 export class WebSocketRewrite extends Rewrite {
 	#socket
+	global = global.WebSocket;
 	work(){
 		const that = this;
-
-		const { WebSocket } = global;
 
 		const bare_ws = new URL(this.client.tomp.bare + 'v1/', location);
 		bare_ws.protocol = bare_ws.protocol == 'https:' ? 'wss:' : 'ws:';
@@ -124,7 +83,7 @@ export class WebSocketRewrite extends Rewrite {
 					request_headers['Cookie'] = cookies.toString();
 				}
 				
-				this.#socket = new WebSocket(bare_ws, [
+				this.#socket = new this.global(bare_ws, [
 					'bare',
 					encode_protocol(JSON.stringify({
 						remote,
@@ -212,7 +171,7 @@ export class WebSocketRewrite extends Rewrite {
 				return this.#extensions;
 			}
 			get readyState(){
-				return this.socket ? this.socket.readyState : WebSocket.CONNECTING;
+				return this.socket ? this.socket.readyState : this.global.CONNECTING;
 			}
 			get binaryType(){
 				return this.#binaryType;
@@ -253,75 +212,7 @@ export class WebSocketRewrite extends Rewrite {
 		TargetConstant(WebSocketProxy, 'OPEN', 1);
 		TargetConstant(WebSocketProxy, 'CLOSING', 2);
 		TargetConstant(WebSocketProxy, 'CLOSED', 3);
-
-		Reflect.defineProperty(WebSocketProxy.prototype, Symbol.toStringTag, {
-			configurable: true,
-			enumerable: false,
-			writable: false,
-			value: 'WebSocket',
-		});
-
-		mirror_attributes(WebSocket, WebSocketProxy);
-
-		const descriptors = getOwnPropertyDescriptors(WebSocketProxy.prototype);
-		const mirror_descriptors = getOwnPropertyDescriptors(WebSocket.prototype);
-
-		for(let key in descriptors){
-			const descriptor = descriptors[key];
-	
-			const mirror_descriptor = mirror_descriptors[key];
-
-			if(!mirror_descriptor){
-				console.warn('Key not present in global:', key);
-				continue;
-			}
-
-			if(!descriptor?.configurable)continue;
-	
-			let changed = false;
-	
-			if(typeof descriptor.value == 'function'){
-				mirror_descriptor.value = wrap_function(mirror_descriptor.value, (target, that, args) => {
-					if(!instances.has(that)){
-						throw new TypeError('Illegal Invocation');
-					}
-
-					return Reflect.apply(descriptor.value, that, args);
-				});
-	
-				changed = true;
-			}else if('value' in descriptor){
-				mirror_descriptor.value = descriptor.value;
-			}
-	
-			if(typeof descriptor.get == 'function'){
-				mirror_descriptor.get = wrap_function(mirror_descriptor.get, (target, that, args) => {
-					if(!instances.has(that)){
-						throw new TypeError('Illegal Invocation');
-					}
-
-					return Reflect.apply(descriptor.get, that, args);
-				});
-	
-				changed = true;
-			}
-	
-			if(typeof descriptor.set == 'function'){
-				mirror_descriptor.set = wrap_function(mirror_descriptor.set, (target, that, args) => {
-					if(!instances.has(that)){
-						throw new TypeError('Illegal Invocation');
-					}
-
-					return Reflect.apply(descriptor.set, that, args);
-				});
-	
-				changed = true;
-			}
-	
-			if(changed){
-				Reflect.defineProperty(WebSocketProxy.prototype, key, mirror_descriptor);
-			}
-		}
+		mirror_class(this.global, WebSocketProxy, instances);
 
 		global.WebSocket = WebSocketProxy;
 	}

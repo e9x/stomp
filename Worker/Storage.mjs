@@ -50,6 +50,12 @@ export async function removeItem(server, session, name, remote){
 	await server.db.delete(get_db_name(session), get_id(name, remote));
 }
 
+export async function hasItem(server, session, name, remote){
+	remote = new ParsedRewrittenURL(remote);
+	const data = await server.db.getFromIndex(get_db_name(session), 'id', get_id(name, remote));
+	return data !== undefined;
+}
+
 export async function getKeys(server, session, remote){
 	remote = new ParsedRewrittenURL(remote);
 	const tx = server.db.transaction(get_db_name(session));

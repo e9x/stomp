@@ -1,6 +1,7 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { Reflect } from '../RewriteUtil.mjs';
+import { mirror_class } from '../NativeUtil.mjs';
 
 export class StorageRewrite extends Rewrite {
 	StorageHandler = {
@@ -9,10 +10,12 @@ export class StorageRewrite extends Rewrite {
 				return Reflect.get(target, prop, receiver);
 			}
 			
-			let result = Reflect.apply(this.proxy.prototype.getItem, target, [ prop ]);
+			let result = Reflect.apply(this.proxy.prototype.getItem, this.get_proxy(target), [ prop ]);
 			
 			// null
-			if(typeof result !== 'string')result = undefined;
+			if(typeof result !== 'string'){
+				result = undefined;
+			}
 
 			return result;
 		},
@@ -21,18 +24,52 @@ export class StorageRewrite extends Rewrite {
 				return Reflect.set(target, prop, receiver);
 			}
 
-			Reflect.apply(this.proxy.prototype.setItem, target, [ prop, value ]);
+			Reflect.apply(this.proxy.prototype.setItem, this.get_proxy(target), [ prop, value ]);
 
 			return value;
 		},
 		getOwnPropertyDescriptor: (target, prop) => {
-			const desc = Reflect.getOwnPropertyDescriptor(target, prop);
-
-			if(typeof desc.value == 'string'){
-				desc.value = this.client.tomp.css.wrap(desc.value, this.client.location.proxy, 'value');
+			if(typeof prop == 'symbol' || prop in target || prop in this.proxy.prototype){
+				return Reflect.getOwnPropertyDescriptor(target, prop, receiver);
 			}
 
-			return desc;
+			/*
+			configurable: true
+			enumerable: true
+			value: "1"
+			writable: true
+			*/
+
+			let result = Reflect.apply(this.proxy.prototype.getItem, this.get_proxy(target), [ prop ]);
+			
+			// null
+			if(typeof result !== 'string'){
+				return undefined;
+			}
+
+			return {
+				value: result,
+				writable: true,
+				enumerable: true,
+				configurable: true,
+			};
+		},
+		deleteProperty: (target, prop) => {
+			if(typeof prop == 'symbol' || prop in target || prop in this.proxy.prototype){
+				return Reflect.deleteProperty(target, prop);
+			}
+
+			Reflect.apply(this.proxy.prototype.removeItem, this.get_proxy(target), [ prop ]);
+
+			return true;
+		},
+		has: (target, prop) => {
+			const { responseText } = this.client.sync.fetch(this.worker_storage + new URLSearchParams({
+				func: 'hasItem',
+				args: JSON.stringify([ this.is_session(target), prop, this.client.location.page_url ]),
+			}));
+
+			return JSON.parse(responseText);
 		},
 		ownKeys: target => {
 			const { responseText } = this.client.sync.fetch(this.worker_storage + new URLSearchParams({
@@ -45,6 +82,14 @@ export class StorageRewrite extends Rewrite {
 			return Reflect.ownKeys(target).concat(keys);
 		},
 	};
+	get_proxy(target){
+		if(target === this.sessionStorageTarget){
+			return this.sessionStorage;
+		}else if(target === this.localStorageTarget){
+			return this.localStorage;
+		}
+	}
+	global = global.Storage;
 	localStorageTarget = {};
 	sessionStorageTarget = {};
 	is_session(target){
@@ -184,6 +229,9 @@ export class StorageRewrite extends Rewrite {
 			configurable: false,
 		});
 
+		mirror_class(this.global, StorageProxy, instances);
+
+		this.proxy = StorageProxy;
 		global.Storage = StorageProxy;
 	}
 };
