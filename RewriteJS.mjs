@@ -121,6 +121,7 @@ export class RewriteJS {
 								b.literal(ctx.node.name),
 								b.arrowFunctionExpression([
 									b.identifier('tomp$target'),
+									b.identifier('tomp$value'),
 								], ctx.parent.type == 'UpdateExpression' ? b.updateExpression(
 									ctx.parent.node.operator,
 									b.identifier('tomp$target'),
@@ -128,8 +129,9 @@ export class RewriteJS {
 								) : b.assignmentExpression(
 									ctx.parent.node.operator,
 									b.identifier('tomp$target'),
-									ctx.parent.node.right,
+									b.identifier('tomp$value'),
 								)),
+								ctx.parent.type == 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
 								b.literal(generate(ctx.parent.node)),
 							]),
 						));
@@ -183,6 +185,7 @@ export class RewriteJS {
 							b.arrowFunctionExpression([
 								b.identifier('tomp$target'),
 								b.identifier('tomp$prop'),
+								b.identifier('tomp$value'),
 							], ctx.parent.type == 'UpdateExpression' ? b.updateExpression(
 								ctx.parent.node.operator,
 								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop'), true),
@@ -190,8 +193,9 @@ export class RewriteJS {
 							) : b.assignmentExpression(
 								ctx.parent.node.operator,
 								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop'), true),
-								ctx.parent.node.right,
+								b.identifier('tomp$value'),
 							)),
+							ctx.parent.type == 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
 							b.literal(generate(ctx.parent.node)),
 						]));
 					}else{

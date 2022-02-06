@@ -85,7 +85,7 @@ export class AccessRewrite extends Rewrite {
 		if(this.unique_parent)return parent[global_client].access.get_desc(desc);
 		else return desc;
 	}
-	set2(target, prop, operate){
+	set2(target, prop, operate, righthand){
 		// possibly a context
 		
 		if(this.client.type === 'page'){
@@ -99,14 +99,14 @@ export class AccessRewrite extends Rewrite {
 			}
 		}
 		
-		return operate(this.get(target, prop), prop);
+		return operate(this.get(target, prop), prop, righthand);
 	}
 	// identifier = value; identifier += value; identifier++;
 	// location = set2(location, 'location', proxy => proxy += 'test')
-    set1(value, name, operate){
+    set1(value, name, operate, righthand){
 		const proxy = this.get(value, name);
 
-		return operate(proxy);
+		return operate(proxy, righthand);
 	}
 	get2(target, prop){
 		return this.get(target[prop], prop);
