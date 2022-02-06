@@ -54,8 +54,14 @@ export async function getKeys(server, session, remote){
 	remote = new ParsedRewrittenURL(remote);
 	const tx = server.db.transaction(get_db_name(session));
 	const index = tx.store.index('origin');
+	const all = await index.getAll(IDBKeyRange.only(remote.toOrigin()));
+	const result = [];
 
-	return await index.getAllKeys(IDBKeyRange.only(remote.toOrigin()));
+	for(let { name } of all){
+		result.push(name);
+	}
+
+	return result;
 }
 
 export async function clear(server, session, remote){
