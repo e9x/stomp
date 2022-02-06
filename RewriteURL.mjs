@@ -3,6 +3,12 @@ export const protocols =     ['http:','https:','blob:http:','blob:https:'];
 export const default_ports = [80     ,443     ,80          ,443          ];
 
 export class ParsedRewrittenURL {
+	constructor({ protocol, host, port, path }){
+		this.protocol = protocol;
+		this.host = host;
+		this.port = port;
+		this.path = path;
+	}
 	get port_string(){
 		if(default_ports.includes(this.port)){
 			return '';
@@ -12,6 +18,9 @@ export class ParsedRewrittenURL {
 	}
 	toString(){
 		return `${this.protocol}//${this.host}${this.port_string}${this.path}`;
+	}
+	toOrigin(){
+		return `${this.protocol}//${this.host}${this.port_string}`;
 	}
 };
 
@@ -76,16 +85,12 @@ export class RewriteURL {
 
 		const path = decodeURIComponent(field.slice(metai + 1));
 		
-		const result = {
+		return new ParsedRewrittenURL({
 			protocol,
 			path,
 			port,
 			host,
-		};
-		
-		Reflect.setPrototypeOf(result, ParsedRewrittenURL.prototype);
-		
-		return result;
+		});
 	}
 	get_attributes(url){
 		url = String(url);

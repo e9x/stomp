@@ -1,8 +1,9 @@
 import { TOMP } from '../TOMP.mjs';
 import { Process } from './Process.mjs';
-import { SendGetCookies, SendSetCookies, SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendManifest } from './Send.mjs';
+import { SendGetCookies, SendSetCookies, SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendManifest, SendStorage } from './Send.mjs';
 import { openDB } from 'idb/with-async-ittr';
-import {create_db as create_cookie_db} from './Cookies.mjs';
+import { create_db as create_cookie_db } from './Cookies.mjs';
+import { create_db as create_storage_db } from './Storage.mjs';
 import { SyncRequest } from './SyncRequest.mjs';
 
 export class Server {
@@ -25,11 +26,12 @@ export class Server {
 				consts.createIndex('name', 'name');*/
 				
 				create_cookie_db(db);
+				create_storage_db(db);
 			},
 		});
 	}
 	json(status, json){
-		this.tomp.log.trace(json);
+		// this.tomp.log.trace(json);
 		
 		return new Response(JSON.stringify(json, null, '\t'), {
 			status,
@@ -46,6 +48,9 @@ export class Server {
 					break;
 				case'worker:set-cookies':
 					return await SendSetCookies(this, request, field)
+					break;
+				case'worker:storage':
+					return await SendStorage(this, request, field)
 					break;
 				case'worker:sync-request':
 					return await this.sync_request.route(request);

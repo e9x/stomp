@@ -4,15 +4,15 @@ import { WorkerClient } from './WorkerClient.mjs';
 import { global_client } from '../RewriteJS.mjs';
 import { global } from '../Global.mjs';
 
-global[global_client] = config => {
+global[global_client] = (...args) => {
 	let created;
 
 	/*if(typeof ServiceWorkerGlobalScope == 'function' && global instanceof ServiceWorkerGlobalScope){
 		created = new WorkerClient(config);
 	}else */if(typeof WorkerGlobalScope == 'function' && global instanceof WorkerGlobalScope){
-		created = new WorkerClient(config);
+		created = new WorkerClient(...args);
 	}else if(typeof Window == 'function' && global instanceof Window){
-		created = new PageClient(config);
+		created = new PageClient(...args);
 	}else{
 		throw new Error('Unknown context!');
 	}

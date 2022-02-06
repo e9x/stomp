@@ -118,6 +118,26 @@ export async function SendSetCookies(server, server_request){
 	});
 }
 
+import * as Storage from './Storage.mjs';
+
+export async function SendStorage(server, server_request){
+	const url = new URL(server_request.url);
+	const func = url.searchParams.get('func');
+	const args = JSON.parse(url.searchParams.get('args'));
+	
+	if(!(func in Storage)){
+		console.warn('Unknown function:', func);
+		return server.json(400);
+	}
+
+	try{
+		return server.json(200, await Storage[func](server, ...args));
+	}catch(err){
+		console.error(err);
+		return server.json(500, { message: err.message });
+	}
+}
+
 async function handle_common_response(rewriter, server, server_request, url, response, ...args){
 	const response_headers = new Headers(response.headers);
 	
@@ -227,8 +247,6 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	
 	const response_headers = await handle_common_response(rewriter, server, server_request, url, response, ...args);
 	
-	let send = new Uint8Array();
-
 	if(status_empty.includes(+response.status)){
 		return new Response({
 			headers: response_headers,
@@ -273,6 +291,7 @@ export async function SendHTML(server, server_request, field){
 	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, response);
 
 	let send = new Uint8Array();
+	
 	if(!status_empty.includes(+response.status)){
 		if(html_types.includes(get_mime(response_headers.get('content-type') || ''))){
 			send = server.tomp.html.wrap(await response.text(), url.toString());
