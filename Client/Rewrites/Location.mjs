@@ -105,7 +105,7 @@ export class LocationRewrite extends Rewrite {
 		}
 
 		this.proxy = {};
-		Reflect.setPrototypeOf(this.proxy, null);
+		Reflect.setPrototypeOf(this.proxy, Location.prototype);
 
 		for(let prop of ['href','host','hostname','protocol','port','pathname','origin','hash','search']){
 			const desc = Reflect.getOwnPropertyDescriptor(this.global, prop);
@@ -171,15 +171,17 @@ export class LocationRewrite extends Rewrite {
 			}),
 		});
 		
-		if(ancestorOrigins)Reflect.defineProperty(this.proxy, 'ancestorOrigins', {
-			configurable: false,
-			enumerable: true,
-			get: wrap_function(ancestorOrigins.get, (target, that, args) => {
-				if(that != this.proxy)throw new TypeError('Invalid invocation');
-				// should have no items
-				return this.global.ancestorOrigins;
-			}),
-		});
+		if(ancestorOrigins){
+			Reflect.defineProperty(this.proxy, 'ancestorOrigins', {
+				configurable: false,
+				enumerable: true,
+				get: wrap_function(ancestorOrigins.get, (target, that, args) => {
+					if(that != this.proxy)throw new TypeError('Invalid invocation');
+					// should have no items
+					return this.global.ancestorOrigins;
+				}),
+			});
+		}
 	}
 	get page_url(){
 		return this.client.tomp.url.unwrap_ez(this.global.href);
