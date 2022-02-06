@@ -5,34 +5,35 @@ import { wrap_function, Reflect } from '../RewriteUtil.mjs';
 export class RequestRewrite extends Rewrite {
 	response_url = new WeakMap();
 	request_urls = new WeakMap();
+	eventsource_urls = new WeakMap();
 	global_fetch = global.fetch;
 	global = global.Request;
 	work(){
 		const desc_url = Reflect.getOwnPropertyDescriptor(Response.prototype, 'url');
 		const legal_windows = [null,undefined,global];
 		
-		const eventsource_urls = new WeakMap();
+		{
+			const url = Reflect.getOwnPropertyDescriptor(global.EventSource.prototype, 'url');
 
-		const url = Reflect.getOwnPropertyDescriptor(global.EventSource.prototype, 'url');
-
-		Reflect.defineProperty(global.EventSource.prototype, 'url', {
-			configurable: true,
-			enumerable: true,	
-			get: wrap_function(url.get, (target, that, args) => {
-				if(eventsource_urls.has(that)){
-					return eventsource_urls.get(that);
-				}else{
-					return Reflect.apply(target, that, args);
-				}
-			}),
-		});
+			Reflect.defineProperty(global.EventSource.prototype, 'url', {
+				configurable: true,
+				enumerable: true,	
+				get: wrap_function(url.get, (target, that, args) => {
+					if(this.eventsource_urls.has(that)){
+						return this.eventsource_urls.get(that);
+					}else{
+						return Reflect.apply(target, that, args);
+					}
+				}),
+			});
+		}
 
 		global.EventSource = wrap_function(global.EventSource, (target, that, [ url ]) => {
 			url = new URL(input, this.client.location.proxy);
 			
 
 			const result = Reflect.construct(target, [ this.client.tomp.binary.serve(url, this.client.location.proxy) ]);
-			eventsource_urls.set(result, url.href);
+			this.eventsource_urls.set(result, url.href);
 
 			return result;
 		}, true);
@@ -84,20 +85,21 @@ export class RequestRewrite extends Rewrite {
 			return result;
 		}, true);
 		
-		const url = Reflect.getOwnPropertyDescriptor(this.global.prototype, 'url');
+		{
+			const url = Reflect.getOwnPropertyDescriptor(this.global.prototype, 'url');
 
-		Reflect.defineProperty(this.global.prototype, 'url', {
-			configurable: true,
-			enumerable: true,
-			get: wrap_function(url.get, (target, that, args) => {
-				if(!this.request_urls.has(that)){
-					return Reflect.apply(target, that, args);
-				}
+			Reflect.defineProperty(this.global.prototype, 'url', {
+				configurable: true,
+				enumerable: true,
+				get: wrap_function(url.get, (target, that, args) => {
+					if(!this.request_urls.has(that)){
+						return Reflect.apply(target, that, args);
+					}
 
-				return this.request_urls.get(that);
-			}),
-			set: undefined,
-		});
+					return this.request_urls.get(that);
+				}),
+			});
+		}
 
 		return Request;
 	}
