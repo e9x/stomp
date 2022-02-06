@@ -18,6 +18,6 @@ export class IDBRewrite extends Rewrite {
 
 				return name;
 			})
-		})
+		});
 	}
 };
