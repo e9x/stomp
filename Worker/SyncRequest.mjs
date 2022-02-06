@@ -12,6 +12,11 @@ export class SyncRequest {
 		});
 	}
 	async process(data){
+		if(!Array.isArray(data)){
+			console.trace('Bad data:', data);
+			return ['BAD DATA'];
+		}
+
 		const request = new Request(data[0], data[1]);
 		
 		const response = await new Promise((resolve, reject) => {

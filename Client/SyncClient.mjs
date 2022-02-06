@@ -48,8 +48,9 @@ export class SyncClient {
 		
 		let name;
 		let data;
-		
-		while(true){
+		let cycles;
+
+		for(cycles = 1e4; cycles > 0; cycles--){
 			const match = this.client.cookie.value.match(regex);
 			
 			if(!match)continue;
@@ -59,6 +60,10 @@ export class SyncClient {
 			[name,data] = JSON.parse(decodeURIComponent(value));
 			
 			if(name == 'incoming')break;
+		}
+
+		if(!cycles){
+			this.client.log.error('Used max cycles when requesting', url);
 		}
 		
 		this.client.cookie.value = `${id}=; path=${this.client.tomp.directory}; expires=${new Date(0)}`;

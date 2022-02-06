@@ -64,15 +64,6 @@ export class RewriteJS {
 					ctx.node.source.value = this.serve(new URL(ctx.node.source.value, url), url);
 					
 					break;
-				case 'VariableDeclarator':
-					
-					if(ctx.node.id.type != 'ObjectPattern' || !ctx.node.init)break;
-					
-					ctx.node.init = b.callExpression(b.memberExpression(global_access, b.identifier('pattern')), [
-						ctx.node.init,
-					]);
-					
-					break;
 				case'CallExpression':
 					
 					const {callee} = ctx.node;
@@ -113,28 +104,34 @@ export class RewriteJS {
 					if(!undefinable.includes(ctx.node.name))break;
 					
 					if(ctx.parent.type == 'UpdateExpression' || ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
-						ctx.parent.replace_with(b.assignmentExpression(
-							'=',
+						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set1')), [
 							ctx.node,
-							b.callExpression(b.memberExpression(global_access, b.identifier('set1')), [
+							b.literal(ctx.node.name),
+							// return what the intended value is
+							b.arrowFunctionExpression([
+								b.identifier('tomp$target'),
+								b.identifier('tomp$prop'),
+								b.identifier('tomp$value'),
+							], ctx.parent.type == 'UpdateExpression' ? b.updateExpression(
+								ctx.parent.node.operator,
+								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop'), true),
+								ctx.parent.node.prefix,
+							) : b.assignmentExpression(
+								ctx.parent.node.operator,
+								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop'), true),
+								b.identifier('tomp$value'),
+							)),
+							// set
+							b.arrowFunctionExpression([
+								b.identifier('tomp$value'),
+							], b.assignmentExpression(
+								'=',
 								ctx.node,
-								b.literal(ctx.node.name),
-								b.arrowFunctionExpression([
-									b.identifier('tomp$target'),
-									b.identifier('tomp$value'),
-								], ctx.parent.type == 'UpdateExpression' ? b.updateExpression(
-									ctx.parent.node.operator,
-									b.identifier('tomp$target'),
-									ctx.parent.node.prefix,
-								) : b.assignmentExpression(
-									ctx.parent.node.operator,
-									b.identifier('tomp$target'),
-									b.identifier('tomp$value'),
-								)),
-								ctx.parent.type == 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
-								b.literal(generate(ctx.parent.node)),
-							]),
-						));
+								b.identifier('tomp$value'),
+							)),
+							ctx.parent.type == 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
+							b.literal(generate(ctx.parent.node)),
+						]));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
 							ctx.node,
@@ -228,7 +225,7 @@ export class RewriteJS {
 				ecmaVersion: 2022,
 				module: true,
 				webcompat: true,
-				globalReturn: true, 
+				globalReturn: true,
 			});
 		}catch(err){
 			if(err instanceof SyntaxError){

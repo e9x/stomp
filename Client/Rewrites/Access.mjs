@@ -4,6 +4,7 @@ import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { undefinable, global_client } from '../../RewriteJS.mjs';
 
 export const global_proxy = 'tompcgp$';
+export const global_name = 'tompcgn$';
 
 export class AccessRewrite extends Rewrite {
 	// unique_top = parent !== top && global_client in parent;
@@ -15,6 +16,7 @@ export class AccessRewrite extends Rewrite {
 	unique_parent = false;
 	work(){
 		this.client.location.global[global_proxy] = this.client.location.proxy;
+		this.client.location.global[global_name] = 'location';
 		this.client.eval.global[global_proxy] = this.client.eval.eval_global_proxy;
 		
 		if(this.client.type === 'page'){
@@ -85,34 +87,48 @@ export class AccessRewrite extends Rewrite {
 		if(this.unique_parent)return parent[global_client].access.get_desc(desc);
 		else return desc;
 	}
-	set2(target, prop, operate, righthand){
+	set2(target, key, operate, righthand){
 		// possibly a context
 		
 		if(this.client.type === 'page'){
 			if(target === global){
-				if(prop == 'location'){
+				if(key == 'location'){
 					target = this.client.location.proxy;
-					prop = 'href';
+					key = 'href';
 				}
 			}else if(typeof target === 'object' && target !== null && global_client in target){
-				return target[global_client].access.set2(target, prop, operate);
+				return target[global_client].access.set2(target, key, operate);
 			}
 		}
 		
-		return operate(this.get(target, prop), prop, righthand);
+		return operate(this.get(target, key), key, righthand);
 	}
 	// identifier = value; identifier += value; identifier++;
 	// location = set2(location, 'location', proxy => proxy += 'test')
-    set1(value, name, operate, righthand){
-		const proxy = this.get(value, name);
+    set1(target, name, operate, set, righthand){
+		const proxy = this.get(target, name);
 
-		return operate(proxy, righthand);
+		const property = Symbol();
+		const object = {
+			[property]: proxy,
+		};
+		
+		const result = operate(object, property, righthand);
+		const value = object[property];
+
+		if(typeof target === 'object' && target !== null && target[global_name] === 'location'){
+			set(this.client.tomp.html.serve(new URL(value, this.client.location.proxy), this.client.location.proxy));
+		}else{
+			set(value);
+		}
+
+		return result;
 	}
-	get2(target, prop){
-		return this.get(target[prop], prop);
+	get2(target, key){
+		return this.get(target[key], key);
 	}
-	get(obj, prop, check_parent = true /* only specified by and in this function */){
-		if(undefinable.includes(prop) && (typeof obj === 'function' || typeof obj =='object') && obj !== null){
+	get(obj, key, check_parent = true /* only specified by and in this function */){
+		if(undefinable.includes(key) && (typeof obj === 'function' || typeof obj =='object') && obj !== null){
 			if(global_proxy in obj){
 				return obj[global_proxy];
 			}
