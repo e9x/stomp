@@ -27,6 +27,5 @@ export class PageClient extends Client {
 		this.page_request.work();
 
 		delete global.CookieStore;
-		delete global.EventSource;
 	}
 };

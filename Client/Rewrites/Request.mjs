@@ -11,6 +11,32 @@ export class RequestRewrite extends Rewrite {
 		const desc_url = Reflect.getOwnPropertyDescriptor(Response.prototype, 'url');
 		const legal_windows = [null,undefined,global];
 		
+		const eventsource_urls = new WeakMap();
+
+		const url = Reflect.getOwnPropertyDescriptor(global.EventSource.prototype, 'url');
+
+		Reflect.defineProperty(global.EventSource.prototype, 'url', {
+			configurable: true,
+			enumerable: true,	
+			get: wrap_function(url.get, (target, that, args) => {
+				if(eventsource_urls.has(that)){
+					return eventsource_urls.get(that);
+				}else{
+					return Reflect.apply(target, that, args);
+				}
+			}),
+		});
+
+		global.EventSource = wrap_function(global.EventSource, (target, that, [ url ]) => {
+			url = new URL(input, this.client.location.proxy);
+			
+
+			const result = Reflect.construct(target, [ this.client.tomp.binary.serve(url, this.client.location.proxy) ]);
+			eventsource_urls.set(result, url.href);
+
+			return result;
+		}, true);
+
 		global.fetch = wrap_function(global.fetch, async (target, that, [input, init]) => {
 			if(!legal_windows.includes(that))throw new TypeError('Illegal invocation');
 			
