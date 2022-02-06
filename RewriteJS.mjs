@@ -37,7 +37,7 @@ export class RewriteJS {
 				ecmaVersion: 2022,
 				module: true,
 				webcompat: true,
-				globalReturn: true, 
+				globalReturn: true,
 			});
 		}catch(err){
 			if(err instanceof SyntaxError){
