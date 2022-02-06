@@ -47,9 +47,7 @@ export async function setItem(server, session, name, value, remote){
 
 export async function removeItem(server, session, name, remote){
 	remote = new ParsedRewrittenURL(remote);
-	await server.db.delete(get_db_name(session), {
-		id: get_id(name, remote),
-	});
+	await server.db.delete(get_db_name(session), get_id(name, remote));
 }
 
 export async function getKeys(server, session, remote){
