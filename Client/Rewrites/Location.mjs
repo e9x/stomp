@@ -28,7 +28,6 @@ export class LocationRewrite extends Rewrite {
 				if(!legal_contexts.includes(that))throw new TypeError('Illegal Invocation');
 				return this.proxy;
 			}),
-			set: undefined,
 		});
 		
 		for(let prop of ['href','host','hostname','protocol','port','pathname','origin','hash','search']){
@@ -180,7 +179,6 @@ export class LocationRewrite extends Rewrite {
 				// should have no items
 				return this.global.ancestorOrigins;
 			}),
-			set: undefined,
 		});
 	}
 	get page_url(){
