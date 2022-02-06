@@ -40,26 +40,28 @@ export class SyncClient {
 			return this.create_response(JSON.parse(http.responseText));
 		}
 
-		const cookieopt = `; path=${this.client.tomp.directory}`;
+		const cookieopt = ``;
 		const id = 'sync-request-' + Math.random().toString(16).slice(2);
 		const regex = new RegExp(`${id}=(.*?)(;|$)`);
 		
-		this.client.cookie.value = `${id}=${encodeURIComponent(JSON.stringify([ 'outgoing', args ]))}${cookieopt}`;
+		this.client.cookie.value = `${id}=${encodeURIComponent(JSON.stringify([ 'outgoing', args ]))}; path=${this.client.tomp.directory}; max-age=10`;
 		
 		let name;
 		let data;
 		
 		while(true){
-			const [,value] = this.client.cookie.value.match(regex);
+			const match = this.client.cookie.value.match(regex);
 			
-			if(!value)continue;
+			if(!match)continue;
 			
+			const [,value] = match;
+
 			[name,data] = JSON.parse(decodeURIComponent(value));
 			
 			if(name == 'incoming')break;
 		}
 		
-		this.client.cookie.value = `${id}=${cookieopt}; expires=${new Date(0)}`;
+		this.client.cookie.value = `${id}=; path=${this.client.tomp.directory}; expires=${new Date(0)}`;
 
 		return this.create_response(data);
 	}
