@@ -232,6 +232,11 @@ export class RewriteJS {
 		return code;
 	}
 	pattern_declarator(ctx){
+		if(!ctx.parent.node.init){
+			// very weird...
+			return;
+		}
+
 		/*
 		const {
 			window: {location: test},
@@ -317,6 +322,7 @@ export class RewriteJS {
 						console.error(pattern.type, value.type, result.type, 'was id', generate(pattern), JSON.stringify(pattern));
 					}
 				}else{
+					// AssignmentPattern
 					console.warn('Unknown', value.type);
 				}
 
