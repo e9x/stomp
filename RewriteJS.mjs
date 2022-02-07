@@ -204,6 +204,22 @@ export class RewriteJS {
 					}
 
 					break;
+				case'ObjectPattern':
+					
+					// declaring a variable that was received, not setting
+					if(ctx.parent.type === 'VariableDeclarator'){
+						this.pattern_declarator(ctx);	
+					}
+
+					break;
+				case'ArrayPattern':
+					
+					// declaring a variable that was received, not setting
+					if(ctx.parent.type === 'VariableDeclarator'){
+						this.pattern_declarator(ctx);	
+					}
+
+					break;
 			}
 		}
 
@@ -214,6 +230,104 @@ export class RewriteJS {
 		}
 
 		return code;
+	}
+	pattern_declarator(ctx){
+		/*
+		const {
+			window: {location: test},
+			location: wrapped,		
+		} = window;
+		console.log(test);
+
+		const { test, wrapped } = tompc$.access.pattern(window, [ { window: { location: 'test' }, location: 'wrapped' } ]);
+		*/
+		
+		const pattern_root = b.objectExpression([]);
+		const declare = [];
+		const stack = [
+			[
+				pattern_root,
+				ctx.node,
+			],
+		];
+		
+		while(stack.length){
+			let [result, pattern] = stack.pop();
+
+			let list;
+
+			if(pattern.type == 'ArrayPattern'){
+				list = pattern.elements;
+			}else if(pattern.type === 'ObjectPattern'){
+				list = pattern.properties;
+			}
+			
+			for(let i = 0; i < list.length; i++){
+				let key;
+				let value;
+				
+				let part = list[i];
+				
+				if(pattern.type == 'ArrayPattern'){
+					value = part;
+				}else if(pattern.type === 'ObjectPattern'){
+					({value,key} = part);
+				}
+
+				// console.log(result.type, value.type);
+
+				if(value === null){
+					if(result.type == 'ArrayExpression'){
+						result.elements.push(null);
+					}
+					
+					continue;
+				}
+
+				if(value.type === 'ArrayPattern'){
+					const expr = b.arrayExpression([]);
+
+					if(result.type == 'ArrayExpression'){
+						result.elements.push(expr);
+					}else if(result.type === 'ObjectExpression'){
+						result.properties.push(b.property('init', key, expr));
+					}
+
+					// console.log('ArrayPattern value:', value);
+					stack.push([ expr, value ]);
+				}else if(value.type === 'ObjectPattern'){
+					const expr = b.objectExpression([]);
+					
+					if(result.type == 'ArrayExpression'){
+						result.elements.push(expr);
+					}else if(result.type === 'ObjectExpression'){
+						result.properties.push(b.property('init', key, expr));
+					}
+
+					// console.log('ObjectPattern value:', value);
+					stack.push([ expr, value ]);
+				}else if(value.type === 'Identifier'){
+					if(result.type == 'ArrayExpression'){
+						declare.push({ ...b.property('init', value, value), shorthand: true });
+						result.elements.push(b.literal(value.name));
+					}else if(result.type == 'ObjectExpression'){
+						declare.push({ ...b.property('init', value, value), shorthand: true });
+						result.properties.push(b.property('init', key, b.literal(value.name)));
+					}else{
+						console.error(pattern.type, value.type, result.type, 'was id', generate(pattern), JSON.stringify(pattern));
+					}
+				}else{
+					console.warn('Unknown', value.type);
+				}
+
+			}
+		}
+
+		ctx.parent.replace_with(b.variableDeclarator(b.objectPattern(declare), b.callExpression(b.memberExpression(global_access, b.identifier('pattern')), [
+			ctx.parent.node.init,
+			pattern_root,
+			b.literal(generate(ctx.parent.node)),
+		])));
 	}
 	unwrap(code, url){
 		if(this.tomp.noscript)return '';

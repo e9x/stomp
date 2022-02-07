@@ -103,6 +103,17 @@ export class AccessRewrite extends Rewrite {
 		
 		return operate(this.get(target, key), key, righthand);
 	}
+	/*assign(righthand, assignments, member_assignments){
+		for(let [ righthand_key, target, name, set ] of assignments){
+			this.set1(target, name, (target, prop) => target[prop] = righthand[righthand_key], value => set(value), righthand[righthand_key]);
+		}
+		
+		for(let [ righthand_key, target, key ] of member_assignments){
+			this.set2(target, key, (target, key, value) => target[key] = value, righthand[righthand_key]);
+		}
+
+		return righthand;
+	}*/
 	// identifier = value; identifier += value; identifier++;
 	// location = set2(location, 'location', proxy => proxy += 'test')
     set1(target, name, operate, set, righthand){
@@ -136,11 +147,30 @@ export class AccessRewrite extends Rewrite {
 		
 		return obj;
     }
-	pattern(obj){
-		const result = {...obj};
+	pattern(target, destructor){
+		const stack = [
+			[ target, destructor ],
+		];
 
-		for(let key of undefinable)if(key in result){
-			result[key] = this.get(result[key], key);
+		const result = {};
+
+		Reflect.setPrototypeOf(result, null);
+
+		while(stack.length){
+			const [ target, destructor ] = stack.pop();
+
+			for(let key in destructor){
+				const value = this.get2(target, key); // target[key];
+				const pattern = destructor[key];
+				
+				if(typeof pattern === 'string'){
+					result[pattern] = value;
+				}else if(Array.isArray(pattern)){
+					stack.push([value,pattern]);
+				}else if(typeof pattern === 'object' && pattern !== null){
+					stack.push([value,pattern]);
+				}
+			}
 		}
 
 		return result;
