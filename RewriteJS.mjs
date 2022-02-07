@@ -242,7 +242,7 @@ export class RewriteJS {
 		const { test, wrapped } = tompc$.access.pattern(window, [ { window: { location: 'test' }, location: 'wrapped' } ]);
 		*/
 		
-		const pattern_root = b.objectExpression([]);
+		const pattern_root = ctx.type == 'ObjectPattern' ? b.objectExpression([]) : b.arrayExpression([]);
 		const declare = [];
 		const stack = [
 			[
@@ -280,7 +280,7 @@ export class RewriteJS {
 					if(result.type == 'ArrayExpression'){
 						result.elements.push(null);
 					}
-					
+
 					continue;
 				}
 
