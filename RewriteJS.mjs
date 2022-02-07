@@ -208,7 +208,7 @@ export class RewriteJS {
 					
 					// declaring a variable that was received, not setting
 					if(ctx.parent.type === 'VariableDeclarator'){
-						this.pattern_declarator(ctx);	
+						// this.pattern_declarator(ctx);	
 					}
 
 					break;
@@ -216,7 +216,7 @@ export class RewriteJS {
 					
 					// declaring a variable that was received, not setting
 					if(ctx.parent.type === 'VariableDeclarator'){
-						this.pattern_declarator(ctx);	
+						// this.pattern_declarator(ctx);	
 					}
 
 					break;
@@ -234,6 +234,7 @@ export class RewriteJS {
 	pattern_declarator(ctx){
 		if(!ctx.parent.node.init){
 			// very weird...
+			console.log('No init:', generate(ctx.parent.parent.node));
 			return;
 		}
 
