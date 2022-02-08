@@ -83,7 +83,7 @@ export class WebSocketRewrite extends Rewrite {
 					request_headers['Cookie'] = cookies.toString();
 				}
 				
-				this.#socket = new this.global(bare_ws, [
+				this.#socket = new that.global(bare_ws, [
 					'bare',
 					encode_protocol(JSON.stringify({
 						remote,
