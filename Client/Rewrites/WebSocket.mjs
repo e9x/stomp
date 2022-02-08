@@ -18,9 +18,11 @@ export class WebSocketRewrite extends Rewrite {
 	work(){
 		const that = this;
 
-		const bare_ws = new URL(this.client.tomp.bare + 'v1/', this.client.base);
+		const bare_ws = new URL(this.client.tomp.bare + 'v1/', location);
 		bare_ws.protocol = bare_ws.protocol == 'https:' ? 'wss:' : 'ws:';
 		
+		const bare_ws_meta = new URL(that.client.tomp.bare + 'v1/ws-meta', location);
+
 		const didnt_specify = Symbol();
 
 		const instances = new WeakSet();
@@ -105,7 +107,7 @@ export class WebSocketRewrite extends Rewrite {
 
 				this.#socket.addEventListener('open', async event => {
 					const meta = await(await Reflect.apply(that.client.request.global_fetch, global, [
-						new URL(that.client.tomp.bare + 'v1/ws-meta', location),
+						bare_ws_meta,
 						{
 							headers: {
 								'x-bare-id': this.#id,
