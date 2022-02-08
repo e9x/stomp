@@ -66,7 +66,7 @@ export class StorageRewrite extends Rewrite {
 		has: (target, prop) => {
 			const { responseText } = this.client.sync.fetch(this.worker_storage + new URLSearchParams({
 				func: 'hasItem',
-				args: JSON.stringify([ this.is_session(target), prop, that.client.base ]),
+				args: JSON.stringify([ this.is_session(target), prop, this.client.base ]),
 			}));
 
 			return JSON.parse(responseText);
@@ -74,7 +74,7 @@ export class StorageRewrite extends Rewrite {
 		ownKeys: target => {
 			const { responseText } = this.client.sync.fetch(this.worker_storage + new URLSearchParams({
 				func: 'getKeys',
-				args: JSON.stringify([ this.is_session(target), that.client.base ]),
+				args: JSON.stringify([ this.is_session(target), this.client.base ]),
 			}));
 
 			const keys = JSON.parse(responseText);
@@ -109,7 +109,7 @@ export class StorageRewrite extends Rewrite {
 			clear(){
 				that.client.sync.fetch(that.worker_storage + new URLSearchParams({
 					func: 'clear',
-					args: JSON.stringify([ that.is_session(this), this.client.base ]),
+					args: JSON.stringify([ that.is_session(this), that.client.base ]),
 				}));
 			}
 			getItem(key = unspecified){
@@ -121,7 +121,7 @@ export class StorageRewrite extends Rewrite {
 				
 				const { responseText } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
 					func: 'getItem',
-					args: JSON.stringify([ that.is_session(this), key, this.client.base ]),
+					args: JSON.stringify([ that.is_session(this), key, that.client.base ]),
 				}));
 
 				if(responseText === ''){
@@ -139,7 +139,7 @@ export class StorageRewrite extends Rewrite {
 				
 				const { responseText } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
 					func: 'getItem',
-					args: JSON.stringify([ that.is_session(this), keyNum, this.client.base ]),
+					args: JSON.stringify([ that.is_session(this), keyNum, that.client.base ]),
 				}));
 
 				if(responseText === ''){
@@ -151,7 +151,7 @@ export class StorageRewrite extends Rewrite {
 			get length(){
 				const { responseText } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
 					func: 'length',
-					args: JSON.stringify([ that.is_session(this), this.client.base ]),
+					args: JSON.stringify([ that.is_session(this), that.client.base ]),
 				}));
 				
 				return JSON.parse(responseText);
@@ -165,7 +165,7 @@ export class StorageRewrite extends Rewrite {
 
 				that.client.sync.fetch(that.worker_storage + new URLSearchParams({
 					func: 'removeItem',
-					args: JSON.stringify([ that.is_session(this), key, this.client.base ]),
+					args: JSON.stringify([ that.is_session(this), key, that.client.base ]),
 				}));
 			}
 			setItem(key = unspecified, value = unspecified){
@@ -178,7 +178,7 @@ export class StorageRewrite extends Rewrite {
 
 				const { responseText } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
 					func: 'setItem',
-					args: JSON.stringify([ that.is_session(this), key, value, this.client.base ]),
+					args: JSON.stringify([ that.is_session(this), key, value, that.client.base ]),
 				}));
 
 				if(responseText === ''){
