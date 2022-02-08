@@ -244,11 +244,19 @@ export class DOMRewrite extends Rewrite {
 			configurable: true,
 		});
 	}
+	domparser_worker(){
+		DOMParser.prototype.parseFromString = wrap_function(DOMParser.prototype.parseFromString, (target, that, [ str, type ]) => {
+			str = this.client.tomp.html.wrap(str, this.tomp.bare);
+
+			return Reflect.apply(target, that, [ str, type ]);a
+		});
+	}
 	work(){
 		this.style_work();
 		this.attr_work();
 		this.iframe_work();
 		this.anchor_work();
+		this.domparser_worker();
 		
 		for(let key of Reflect.ownKeys(global)){
 			for(let ab of this.client.tomp.elements.abstract){
