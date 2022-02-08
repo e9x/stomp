@@ -18,10 +18,10 @@ export class WebSocketRewrite extends Rewrite {
 	work(){
 		const that = this;
 
-		const bare_ws = new URL(this.client.tomp.bare + 'v1/', location);
+		const bare_ws = new URL(this.client.tomp.bare + 'v1/', this.client.host);
 		bare_ws.protocol = bare_ws.protocol == 'https:' ? 'wss:' : 'ws:';
 		
-		const bare_ws_meta = new URL(that.client.tomp.bare + 'v1/ws-meta', location);
+		const bare_ws_meta = new URL(that.client.tomp.bare + 'v1/ws-meta', this.client.host);
 
 		const didnt_specify = Symbol();
 

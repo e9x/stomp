@@ -4,7 +4,8 @@ import { global } from '../Global.mjs';
 
 export class WorkerClient extends Client {
 	static type = 'worker';
-	base = this.tomp.url.parse_url(location);
+	base = this.tomp.url.parse_url(this.tomp.url.unwrap_ez(location));
+	host = this.tomp.url.parse_url(location.href);
 	constructor(config){
 		super(config);
 		
@@ -12,7 +13,7 @@ export class WorkerClient extends Client {
 	}
 	work_modules(){
 		super.work_modules();
-		
+
 		/* script url isnt relative to the imported script
 		relative to the creation url scope
 		*/

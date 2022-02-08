@@ -24,6 +24,3 @@ global[global_client] = (...args) => {
 		value: created,
 	});
 };
-
-
-console.log('loaded into', global);
