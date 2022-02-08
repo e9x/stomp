@@ -20,7 +20,7 @@ export class DOMCookieRewrite extends Rewrite {
 				}
 
 				const { responseText } = this.client.sync.fetch(`${this.client.tomp.directory}worker:get-cookies/?` + new URLSearchParams({
-					remote: JSON.stringify(this.client.location.page_url),
+					remote: JSON.stringify(this.client.base),
 				}));
 
 				return responseText;
@@ -31,7 +31,7 @@ export class DOMCookieRewrite extends Rewrite {
 				}
 
 				this.client.sync.fetch(`${this.client.tomp.directory}worker:set-cookies/?` + new URLSearchParams({
-					remote: JSON.stringify(this.client.location.page_url),
+					remote: JSON.stringify(this.client.base),
 					cookies: value,
 				}));
 				

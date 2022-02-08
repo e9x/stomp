@@ -16,7 +16,7 @@ global[global_client] = (...args) => {
 	}else{
 		throw new Error('Unknown context!');
 	}
-	
+
 	Reflect.defineProperty(global, global_client, {
 		enumerable: false,
 		configurable: false,
@@ -24,3 +24,6 @@ global[global_client] = (...args) => {
 		value: created,
 	});
 };
+
+
+console.log('loaded into', global);

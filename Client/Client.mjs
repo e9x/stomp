@@ -17,7 +17,8 @@ export class Client {
 	constructor(config){
 		this.tomp = new TOMP(config);
 		this.ready = this.work();
-		
+	}
+	work_modules(){
 		this.function = new FunctionRewrite(this);
 		this.websocket = new WebSocketRewrite(this);
 		this.idb = new IDBRewrite(this);

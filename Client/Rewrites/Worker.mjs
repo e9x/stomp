@@ -15,13 +15,13 @@ export class WorkerRewrite extends Rewrite {
 			constructor(url, options){
 				super();
 
-				url = new URL(url, that.client.location.proxy);
+				url = new URL(url, that.client.base);
 				
-				if(url.origin != that.client.location.proxy.origin){
-					throw new DOMException(`Failed to construct 'Worker': Script at'${url}' cannot be accessed from origin '${that.client.location.proxy.origin}'.`);
+				if(url.origin != that.client.base.origin){
+					throw new DOMException(`Failed to construct 'Worker': Script at'${url}' cannot be accessed from origin '${that.client.base.origin}'.`);
 				}
 				
-				this.#worker = new _Worker(that.client.tomp.js.serve(url, that.client.location.proxy, true), options);
+				this.#worker = new _Worker(that.client.tomp.js.serve(url, that.client.base, true), options);
 				
 				this.#worker.addEventListener('message', event => {
 					this.dispatchEvent(new MessageEvent('message', event));

@@ -4,6 +4,7 @@ import { global as g } from '../../Global.mjs';
 const global = g;
 import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { TOMPElement } from '../../RewriteElements.mjs';
+import { global_client } from '../../RewriteJS.mjs';
 
 const { getAttribute, setAttribute, hasAttribute, removeAttribute, getAttributeNames } = global?.Element?.prototype || {};
 const { localName } = getOwnPropertyDescriptors(global?.Element?.prototype || {});
@@ -94,14 +95,14 @@ export class DOMRewrite extends Rewrite {
 				let result = Reflect.get(target, prop, receiver);
 				
 				if(typeof result == 'string' && prop != 'cssText'){
-					result = this.client.tomp.css.unwrap(result, this.client.location.proxy, 'value');
+					result = this.client.tomp.css.unwrap(result, this.client.base, 'value');
 				}
 				
 				return result;
 			},
 			set: (target, prop, value) => {
 				if(typeof value == 'string' && prop != 'cssText'){
-					value = this.client.tomp.css.wrap(value, this.client.location.proxy, 'value');
+					value = this.client.tomp.css.wrap(value, this.client.base, 'value');
 				}
 				
 				const result = Reflect.set(target, prop, value);
@@ -111,7 +112,7 @@ export class DOMRewrite extends Rewrite {
 				const desc = Reflect.getOwnPropertyDescriptor(target, prop);
 
 				if(typeof desc.value == 'string'){
-					desc.value = this.client.tomp.css.wrap(desc.value, this.client.location.proxy, 'value');
+					desc.value = this.client.tomp.css.wrap(desc.value, this.client.base, 'value');
 				}
 
 				return desc;
@@ -130,26 +131,26 @@ export class DOMRewrite extends Rewrite {
 		Reflect.defineProperty(CSSStyleDeclaration.prototype, 'cssText', {
 			get: wrap_function(cssText.get, (target, that, args) => {
 				let result = Reflect.apply(target, that, args);
-				result = this.client.tomp.css.unwrap(result, this.client.location.proxy, 'declarationList');
+				result = this.client.tomp.css.unwrap(result, this.client.base, 'declarationList');
 				return result;
 			}),
 			set: wrap_function(cssText.set, (target, that, [ value ]) => {
-				value = this.client.tomp.css.wrap(value, this.client.location.proxy, 'declarationList');
+				value = this.client.tomp.css.wrap(value, this.client.base, 'declarationList');
 				const result = Reflect.apply(target, that, [ value ]);
 				return result;
 			}),
 			configurable: true,
-			enumerabe: true,
+			enumerable: true,
 		});
 		
 		CSSStyleDeclaration.prototype.getPropertyValue = wrap_function(CSSStyleDeclaration.prototype.getPropertyValue, (target, that, [ property ]) => {
 			let result = Reflect.apply(target, that, [ property ]);
-			result = this.client.tomp.css.unwrap(result, this.client.location.proxy, 'value');
+			result = this.client.tomp.css.unwrap(result, this.client.base, 'value');
 			return result;
 		});
 		
 		CSSStyleDeclaration.prototype.setProperty = wrap_function(CSSStyleDeclaration.prototype.setProperty, (target, that, [ property, value, priority ]) => {
-			value = this.client.tomp.css.wrap(value, this.client.location.proxy, 'value');
+			value = this.client.tomp.css.wrap(value, this.client.base, 'value');
 			const result = Reflect.apply(target, that, [ property, value, priority ]);
 			return result;
 		});
@@ -163,12 +164,12 @@ export class DOMRewrite extends Rewrite {
 			Reflect.defineProperty(HTMLAnchorElement.prototype, prop, {
 				get: desc.get ? wrap_function(desc.get, (target, that, args) => {
 					const the_href = Reflect.apply(href.get, that, []);
-					const url = new URL(this.client.tomp.url.unwrap_ez(new URL(the_href, this.client.location.proxy), this.client.location.proxy));
+					const url = new URL(this.client.tomp.url.unwrap_ez(new URL(the_href, this.client.base), this.client.base));
 					return url[prop];
 				}) : undefined,
 				set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
 					const the_href = Reflect.apply(href.get, that, []);
-					const url = new URL(this.client.tomp.url.unwrap_ez(new URL(the_href, this.client.location.proxy), this.client.location.proxy));
+					const url = new URL(this.client.tomp.url.unwrap_ez(new URL(the_href, this.client.base), this.client.base));
 					url[prop] = value;
 					Reflect.apply(href.set, that, [ this.client.tomp.url.wrap(url.href, this.client.location.priority) ]);
 					return value;
@@ -176,8 +177,53 @@ export class DOMRewrite extends Rewrite {
 			});
 		}
 	}
+	iframe_work(){
+		const { contentWindow, contentDocument } = getOwnPropertyDescriptors(HTMLIFrameElement.prototype);
+		
+		const get_contentWindow = (target, that, args) => {
+			const window = Reflect.apply(target, that, args);
+
+			if(window === null){
+				return null;
+			}
+
+			if(!(global_client in window)){
+				const http = new window.XMLHttpRequest();
+				
+				http.open('GET', this.client.tomp.directory + 'client.js', false);
+
+				http.send();
+
+				window.eval(http.responseText);
+				
+				window[global_client](this.client.tomp);
+			}
+
+			return window;
+		};
+
+		Reflect.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', {
+			get: wrap_function(contentWindow.get, get_contentWindow),
+			enumerable: true,
+			configurable: true,
+		});
+		
+		Reflect.defineProperty(HTMLIFrameElement.prototype, 'contentDocument', {
+			get: wrap_function(contentDocument.get, (target, that, args) => {
+				const window = get_contentWindow(contentWindow.get, that, args);
+
+				if(window === null){
+					return null;
+				}
+
+				return window.document;
+			}),
+			enumerable: true,
+			configurable: true,
+		});
+	}
 	attr_work(){
-		const { value } = getOwnPropertyDescriptors(Attr.prototype);
+		const value = Reflect.getOwnPropertyDescriptor(Attr.prototype, 'value');
 
 		Reflect.defineProperty(Attr.prototype, 'value', {
 			get: wrap_function(value.get, (target, that, args) => {
@@ -194,11 +240,14 @@ export class DOMRewrite extends Rewrite {
 				value = this.process_set_attribute(node, name, false, value);
 				return Reflect.apply(target, that, [ value ]);
 			}),
+			enumerable: true,
+			configurable: true,
 		});
 	}
 	work(){
 		this.style_work();
 		this.attr_work();
+		this.iframe_work();
 		this.anchor_work();
 		
 		for(let key of Reflect.ownKeys(global)){
@@ -256,7 +305,7 @@ export class DOMRewrite extends Rewrite {
 	}
 	process_get_attribute(node, name, use_class, value, class_name){
 		const element = new TOMPElementDOM(node);
-		const result = this.client.tomp.elements.get_attribute(element, this.client.location.proxy, name, use_class, value, class_name);
+		const result = this.client.tomp.elements.get_attribute(element, this.client.base, name, use_class, value, class_name);
 
 		element.sync();
 		
@@ -265,7 +314,7 @@ export class DOMRewrite extends Rewrite {
 	}
 	process_set_attribute(node, name, use_class, value, class_name){
 		const element = new TOMPElementDOM(node);
-		const result = this.client.tomp.elements.set_attribute(element, this.client.location.proxy, name, use_class, value, class_name);
+		const result = this.client.tomp.elements.set_attribute(element, this.client.base, name, use_class, value, class_name);
 		element.sync();
 		return result;
 	}

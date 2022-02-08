@@ -128,7 +128,7 @@ export class AccessRewrite extends Rewrite {
 		const value = object[property];
 
 		if(typeof target === 'object' && target !== null && target[global_name] === 'location'){
-			set(this.client.tomp.html.serve(new URL(value, this.client.location.proxy), this.client.location.proxy));
+			set(this.client.tomp.html.serve(new URL(value, this.client.base), this.client.base));
 		}else{
 			set(value);
 		}

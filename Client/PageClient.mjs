@@ -9,9 +9,15 @@ import { global } from '../Global.mjs';
 
 export class PageClient extends Client {
 	static type = 'page';
+	base = this.tomp.url.parse_url(document.baseURI);
 	constructor(config){
 		super(config);
 
+		this.work_modules();
+	}
+	work_modules(){
+		super.work_modules();
+		
 		this.sync = new SyncClient(this);
 		this.history = new HistoryRewrite(this);
 		this.storage = new StorageRewrite(this);

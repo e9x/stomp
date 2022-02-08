@@ -18,7 +18,7 @@ export class WebSocketRewrite extends Rewrite {
 	work(){
 		const that = this;
 
-		const bare_ws = new URL(this.client.tomp.bare + 'v1/', location);
+		const bare_ws = new URL(this.client.tomp.bare + 'v1/', this.client.base);
 		bare_ws.protocol = bare_ws.protocol == 'https:' ? 'wss:' : 'ws:';
 		
 		const didnt_specify = Symbol();
@@ -61,7 +61,7 @@ export class WebSocketRewrite extends Rewrite {
 				Reflect.setPrototypeOf(request_headers, null);
 				
 				request_headers['Host'] = remote.host;
-				request_headers['Origin'] = that.client.location.proxy.origin;
+				request_headers['Origin'] = that.client.base.origin;
 				request_headers['Pragma'] = 'no-cache';
 				request_headers['Cache-Control'] = 'no-cache';
 				request_headers['Upgrade'] = 'websocket';

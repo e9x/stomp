@@ -29,10 +29,10 @@ export class RequestRewrite extends Rewrite {
 		}
 
 		global.EventSource = wrap_function(global.EventSource, (target, that, [ url ]) => {
-			url = new URL(input, this.client.location.proxy);
+			url = new URL(input, this.client.base);
 			
 
-			const result = Reflect.construct(target, [ this.client.tomp.binary.serve(url, this.client.location.proxy) ]);
+			const result = Reflect.construct(target, [ this.client.tomp.binary.serve(url, this.client.base) ]);
 			this.eventsource_urls.set(result, url.href);
 
 			return result;
@@ -42,7 +42,7 @@ export class RequestRewrite extends Rewrite {
 			if(!legal_windows.includes(that))throw new TypeError('Illegal invocation');
 			
 			if(!this.request_urls.has(input)){
-				input = this.client.tomp.binary.serve(new URL(input, this.client.location.proxy), this.client.location.proxy);
+				input = this.client.tomp.binary.serve(new URL(input, this.client.base), this.client.base);
 				
 				if(typeof init == 'object' && init != undefined){
 					init = {...init};
@@ -76,7 +76,7 @@ export class RequestRewrite extends Rewrite {
 
 			let [ url, init ] = args;
 
-			url = new URL(url, this.client.location.proxy);
+			url = new URL(url, this.client.base);
 			
 			const result = Reflect.construct(target, [ url, init ]);
 

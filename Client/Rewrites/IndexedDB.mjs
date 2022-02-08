@@ -5,7 +5,7 @@ import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../RewriteUti
 export class IDBRewrite extends Rewrite {
 	work(){
 		global.IDBFactory.prototype.open = wrap_function(global.IDBFactory.prototype.open, (target, that, [ name, version ]) => {
-			return Reflect.apply(target, that, [ `${name}@${this.client.location.proxy.origin}`])
+			return Reflect.apply(target, that, [ `${name}@${this.client.base.toOrigin()}`])
 		});
 
 		const { name } = getOwnPropertyDescriptors(IDBDatabase.prototype);

@@ -37,37 +37,50 @@ export class RewriteURL {
 		const created = new URL(url);
 
 		const obj = {
-			port: created.port,
-			search: created.search,
-			hash: created.hash,
-			host: created.host,
-			hostname: created.hostname,
+			host: created.hostname,
+			path: created.pathname + created.search,
+			port: parseInt(created.port),
 			protocol: created.protocol,
-			pathname: created.pathname,
-			username: created.username,
-			password: created.password,	
-			href: created.href,
 		};
+		
+		if(isNaN(obj.port)){
+			obj.port = default_ports[protocols.indexOf(obj.protocol)];
+		}
 		
 		if(blob){
 			obj.protocol = 'blob:' + obj.protocol;
 		}
 
-		return obj;
+		return new ParsedRewrittenURL(obj);
 	}
 	wrap(url, service){
+		url = String(url);
+		
+		let hash = '';
+		
+		{
+			const index = url.indexOf('#');
+			
+			if(index !== -1){
+				hash = url.slice(index);
+				url = url.slice(0, index);
+			}
+		}
+		
 		url = this.parse_url(url);
 		
 		const protoi = protocols.indexOf(url.protocol);
-		let port = parseInt(url.port);
-		if(isNaN(port))port = default_ports[protoi];
 		
 		// android-app, ios-app, mailto, many other non-browser protocols
-		if(protoi == -1)return url.href; // throw new RangeError(`Unsupported protocol '${url.protocol}'`);
-		if(isNaN(port))throw new URIError(`Unknown default port for protocol: '${url.protocol}'`);
-
-		const field = ((port << 4) + protoi).toString(16) + '/' + encodeURIComponent(url.pathname + url.search) + url.hash;
-		return this.tomp.directory + service + '/' + url.hostname + '/' + field;
+		if(protoi == -1){
+			return url.toString();
+		}
+		
+		// throw new RangeError(`Unsupported protocol '${url.protocol}'`);
+		
+		const field = ((url.port << 4) + protoi).toString(16) + '/' + encodeURIComponent(url.path) + hash;
+		
+		return this.tomp.directory + service + '/' + url.host + '/' + field;
 	}
 	// only called in send.js get_data
 	unwrap(field){
