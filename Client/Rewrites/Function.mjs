@@ -11,7 +11,7 @@ export class FunctionRewrite extends Rewrite {
 		function NewFunction(...args){
 			if(args.length !== 0){
 				let [ code ] = args.splice(-1, 1);
-				code = that.client.tomp.js.wrap(code, that.client.location.proxy);
+				code = that.client.tomp.js.wrap(code, that.client.base);
 				args.push(code);				
 			}
 
@@ -21,7 +21,7 @@ export class FunctionRewrite extends Rewrite {
 		function NewAsyncFunction(...args){
 			if(args.length !== 0){
 				let code = args.splice(-1, 1);
-				code = that.client.tomp.js.wrap(code, that.client.location.proxy);
+				code = that.client.tomp.js.wrap(code, that.client.base);
 				args.push(code);					
 			}
 

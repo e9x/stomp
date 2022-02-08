@@ -9,7 +9,7 @@ import { global } from '../Global.mjs';
 
 export class PageClient extends Client {
 	static type = 'page';
-	base = this.tomp.url.parse_url(document.baseURI);
+	base = this.tomp.url.parse_url(this.tomp.url.unwrap_ez(document.baseURI));
 	constructor(config){
 		super(config);
 

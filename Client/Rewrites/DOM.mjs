@@ -171,7 +171,7 @@ export class DOMRewrite extends Rewrite {
 					const the_href = Reflect.apply(href.get, that, []);
 					const url = new URL(this.client.tomp.url.unwrap_ez(new URL(the_href, this.client.base), this.client.base));
 					url[prop] = value;
-					Reflect.apply(href.set, that, [ this.client.tomp.url.wrap(url.href, this.client.location.priority) ]);
+					Reflect.apply(href.set, that, [ this.client.tomp.url.wrap(url.href, this.client.base) ]);
 					return value;
 				}) : undefined,
 			});
