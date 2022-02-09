@@ -1,10 +1,12 @@
-export class RewriteManifest {
-	constructor(tomp){
-		this.tomp = tomp;
-	}
+import { Rewriter} from './Rewriter.mjs';
+
+export class RewriteManifest extends Rewriter {
+	static service = 'worker:manifest';
 	wrap(code, url){
+		let manifest;
+
 		try{
-			var manifest = JSON.parse(code);
+			manifest = JSON.parse(code);
 		}catch(err){
 			console.error(err);
 			return code;
@@ -54,13 +56,5 @@ export class RewriteManifest {
 	}
 	unwrap(code, url){
 		return code;
-	}
-	serve(serve, url){
-		serve = serve.toString();
-		if(serve.startsWith('data:')){
-			const {mime,data} = ParseDataURI(serve);
-			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
-		}
-		return this.tomp.url.wrap(serve, 'worker:manifest');
 	}
 };

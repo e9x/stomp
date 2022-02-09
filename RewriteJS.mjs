@@ -1,8 +1,8 @@
-import { ParseDataURI } from './DataURI.mjs'
 import { parseScript } from 'meriyah';
 import { generate } from 'escodegen';
 import { AcornIterator } from './IterateAcorn.mjs';
 import { builders as b } from 'ast-types';
+import { Rewriter } from './Rewriter.mjs';
 
 export const global_client = 'tompc$';
 
@@ -13,10 +13,8 @@ export const undefinable = ['eval','location'];
 // only eval and location are of interest
 
 
-export class RewriteJS {
-	constructor(tomp){
-		this.tomp = tomp;
-	}
+export class RewriteJS extends Rewriter {
+	static service = 'worker:js';
 	worker_main(url){
 		const cli = `${this.tomp.directory}client.js`;
 
@@ -437,19 +435,31 @@ export class RewriteJS {
 		return generate(ast);
 	}
 	serve(serve, url, worker){
-		serve = serve.toString();
+		serve = String(serve);
+
+		if(serve.startsWith('blob:')){
+			return serve;
+		}
+
 		if(serve.startsWith('data:')){
 			const {mime,data} = ParseDataURI(serve);
 			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
 		}
+
 		return this.tomp.url.wrap(serve, worker ? 'worker:wjs' : 'worker:js');
 	}
 	unwrap_serving(serving, url){
-		serving = serving.toString();
+		serve = String(serve);
+
+		if(serve.startsWith('blob:')){
+			return serve;
+		}
+
 		if(serving.startsWith('data:')){
 			const {mime,data} = ParseDataURI(serving);
 			return `data:${mime},${encodeURIComponent(this.unwrap(data, url))}`;
 		}
+		
 		return this.tomp.url.unwrap_ez(serving);
 	}
 };

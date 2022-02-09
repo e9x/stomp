@@ -1,11 +1,8 @@
-import { ParseDataURI } from './DataURI.mjs';
 import { parse, walk, generate } from 'css-tree';
-import { AcornIterator } from './IterateAcorn.mjs';
+import { Rewriter } from './Rewriter.mjs';
 
-export class RewriteCSS {
-	constructor(tomp){
-		this.tomp = tomp;
-	}
+export class RewriteCSS extends Rewriter {
+	static service = 'worker:css';
 	wrap(code, url, context = 'stylesheet'){
 		try{
 			var ast = parse(code, { context });
@@ -60,21 +57,5 @@ export class RewriteCSS {
 		});
 
 		return generate(ast);
-	}
-	serve(serve, url){
-		serve = serve.toString();
-		if(serve.startsWith('data:')){
-			const {mime,data} = ParseDataURI(serve);
-			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
-		}
-		return this.tomp.url.wrap(serve, 'worker:css');
-	}
-	unwrap_serving(serving, url){
-		serving = serving.toString();
-		if(serving.startsWith('data:')){
-			const {mime,data} = ParseDataURI(serving);
-			return `data:${mime},${encodeURIComponent(this.unwrap(data, url))}`;
-		}
-		return this.tomp.url.unwrap_ez(serving);
 	}
 };

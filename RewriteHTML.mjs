@@ -1,8 +1,8 @@
-import { ParseDataURI } from './DataURI.mjs'
 import { serialize, parse, parseFragment } from 'parse5';
 import { Parse5Iterator } from './IterateParse5.mjs';
 import { global_client } from './RewriteJS.mjs';
 import { TOMPElement } from './RewriteElements.mjs';
+import { Rewriter } from './Rewriter.mjs';
 
 const essential_nodes = ['#documentType','#document','#text','html','head','body'];
 
@@ -58,10 +58,8 @@ class TOMPElementParse5 extends TOMPElement {
 	}
 };
 
-export class RewriteHTML {
-	constructor(tomp){
-		this.tomp = tomp;
-	}
+export class RewriteHTML extends Rewriter {
+	static service = 'worker:html';
 	get_head(url){
 		const nodes = [];
 
@@ -152,21 +150,5 @@ export class RewriteHTML {
 		
 		const resolved = new URL(value.slice(urlstart + 4, urlend), url).href;
 		return value.slice(0, urlstart) + this.serve(resolved, url) + value.slice(urlend);
-	}
-	serve(serve, url){
-		serve = serve.toString();
-		if(serve.startsWith('data:')){
-			const {mime,data} = ParseDataURI(serve);
-			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
-		}
-		return this.tomp.url.wrap(serve, 'worker:html');
-	}
-	unwrap_serving(serving, url){
-		serving = serving.toString();
-		if(serving.startsWith('data:')){
-			const {mime,data} = ParseDataURI(serving);
-			return `data:${mime},${encodeURIComponent(this.unwrap(data, url))}`;
-		}
-		return this.tomp.url.unwrap_ez(serving);
 	}
 };

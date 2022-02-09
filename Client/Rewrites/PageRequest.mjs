@@ -2,6 +2,8 @@ import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { wrap_function, Reflect } from '../RewriteUtil.mjs';
 
+const beacon_protocols = ['http:','https:'];
+
 export class PageRequestRewrite extends Rewrite {
 	xml_data = new WeakMap();
 	handle_xml_request(xml, data, body){
@@ -36,8 +38,14 @@ export class PageRequestRewrite extends Rewrite {
 
 		Navigator.prototype.sendBeacon = wrap_function(Navigator.prototype.sendBeacon, (target, that, [url, data]) => {
 			if(that != navigator)throw new TypeError('Illegal invocation');	
+			
+			url = new URL(url, this.client.base);
+			
+			if(!beacon_protocols.includes(url.protocol)){
+				throw new TypeError(`Failed to execute 'sendBeacon' on 'Navigator': Beacons are only supported over HTTP(S).`);
+			}
 
-			url = this.client.tomp.binary.serve(new URL(url, this.client.base), this.client.base);
+			url = this.client.tomp.binary.serve(url, this.client.base);
 			return Reflect.apply(target, that, [url, data]);
 		});
 		
