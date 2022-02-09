@@ -248,7 +248,7 @@ export class DOMRewrite extends Rewrite {
 		DOMParser.prototype.parseFromString = wrap_function(DOMParser.prototype.parseFromString, (target, that, [ str, type ]) => {
 			str = this.client.tomp.html.wrap(str, this.tomp.bare);
 
-			return Reflect.apply(target, that, [ str, type ]);a
+			return Reflect.apply(target, that, [ str, type ]);
 		});
 	}
 	work(){
