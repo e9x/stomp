@@ -28,17 +28,28 @@ export class RequestRewrite extends Rewrite {
 			});
 		}
 
+		global.URL.createObjectURL = wrap_function(global.URL.createObjectURL, (target, that, args) => {
+			let result = Reflect.apply(target, that, args);
+			result = result.replace(this.client.location.global.origin, this.client.location.proxy.origin);
+			return result;
+		});
+
+		global.URL.revokeObjectURL = wrap_function(global.URL.revokeObjectURL, (target, that, [ url ]) => {
+			url = String(url);
+			url = url.replace(this.client.location.proxy.origin, this.client.location.global.origin);
+			Reflect.apply(target, that, [ url ]);
+		});
+
 		global.EventSource = wrap_function(global.EventSource, (target, that, [ url ]) => {
 			url = new URL(input, this.client.base);
 			
-
 			const result = Reflect.construct(target, [ this.client.tomp.binary.serve(url, this.client.base) ]);
 			this.eventsource_urls.set(result, url.href);
 
 			return result;
 		}, true);
 
-		global.fetch = wrap_function(global.fetch, async (target, that, [input, init]) => {
+		global.fetch = wrap_function(global.fetch, (target, that, [input, init]) => {
 			if(!legal_windows.includes(that))throw new TypeError('Illegal invocation');
 			
 			if(!this.request_urls.has(input)){
@@ -54,9 +65,18 @@ export class RequestRewrite extends Rewrite {
 				}
 			}
 			
-			const response = await Reflect.apply(target, that, [ input, init ]);
-			this.response_url.set(response, this.client.tomp.url.unwrap_ez(desc_url.get.call(response)));
-			return response;
+			const promise = Reflect.apply(target, that, [ input, init ]);
+
+			return new Promise((resolve, reject) => {
+				promise.then(response => {
+					this.response_url.set(response, this.client.tomp.url.unwrap_ez(desc_url.get.call(response)));
+					resolve(response);
+				});
+
+				promise.catch(error => {
+					reject(error);
+				});
+			});
 		});
 		
 		Reflect.defineProperty(Response.prototype, 'url', {

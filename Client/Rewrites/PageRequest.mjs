@@ -21,12 +21,6 @@ export class PageRequestRewrite extends Rewrite {
 			return Reflect.apply(target, that, [ url, tar, features ]);
 		});
 
-		global.URL.createObjectURL = wrap_function(global.URL.createObjectURL, (target, that, args) => {
-			let result = Reflect.apply(target, that, args);
-			result = result.replace(this.client.location.global.origin, this.client.location.proxy.origin);
-			return result;
-		});
-
 		AudioWorklet.prototype.addModule = wrap_function(AudioWorklet.prototype.addModule, (target, that, [ url, options ]) => {
 			url = new URL(url, this.client.base);
 			url = this.client.tomp.js.serve(url, this.client.base);
