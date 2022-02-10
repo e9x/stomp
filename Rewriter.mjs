@@ -13,7 +13,6 @@ export class Rewriter {
 			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
 		}
 
-		console.log(this.constructor.service);
 		return this.tomp.url.wrap(serve, this.constructor.service);
 	}
 	unwrap_serving(serving, url){
@@ -25,5 +24,11 @@ export class Rewriter {
 		}
 		
 		return this.tomp.url.unwrap_ez(serving);
+	}
+	wrap(code, url){
+		return code;
+	}
+	unwrap(code, url){
+		return code;
 	}
 };
