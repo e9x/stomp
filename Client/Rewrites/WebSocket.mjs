@@ -3,7 +3,7 @@ import { global } from '../../Global.mjs';
 import { encode_protocol, valid_protocol } from '../EncodeProtocol.mjs';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.mjs';
 import { mirror_attributes, Reflect, getOwnPropertyDescriptors, wrap_function } from '../RewriteUtil.mjs';
-import { TargetConstant, EventTarget_on, mirror_class } from '../NativeUtil.mjs';
+import { DOMObjectConstructor, TargetConstant, EventTarget_on, mirror_class } from '../NativeUtil.mjs';
 
 const default_ports = {
 	'ws:': 80,
@@ -206,6 +206,7 @@ export class WebSocketRewrite extends Rewrite {
 			}
 		};
 
+		WebSocketProxy = DOMObjectConstructor(WebSocketProxy);
 		EventTarget_on(WebSocketProxy.prototype, 'close');
 		EventTarget_on(WebSocketProxy.prototype, 'open');
 		EventTarget_on(WebSocketProxy.prototype, 'message');

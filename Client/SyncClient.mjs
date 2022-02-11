@@ -14,7 +14,7 @@ export class SyncClient {
 	create_response(data){
 		// console.log('Received:', data);
 		const response = new Response(data[0], data[1]);
-		response.responseText = data[2];
+		response.responseText = data[0];
 		return response;
 	}
 	fetch(url, init){

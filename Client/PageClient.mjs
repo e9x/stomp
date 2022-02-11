@@ -6,6 +6,7 @@ import { DOMCookieRewrite } from './Rewrites/DOMCookie.mjs';
 import { PageRequestRewrite } from './Rewrites/PageRequest.mjs';
 import { SyncClient } from './SyncClient.mjs';
 import { global } from '../Global.mjs';
+import { XMLHttpRequestRewrite } from './Rewrites/XMLHttpRequest.mjs';
 
 export class PageClient extends Client {
 	static type = 'page';
@@ -25,8 +26,10 @@ export class PageClient extends Client {
 		this.dom = new DOMRewrite(this);
 		this.cookie = new DOMCookieRewrite(this);
 		this.page_request = new PageRequestRewrite(this);
+		this.xml = new XMLHttpRequestRewrite(this);
 
 		this.sync.work();
+		this.xml.work();
 		this.history.work();
 		this.storage.work();
 		this.dom.work();

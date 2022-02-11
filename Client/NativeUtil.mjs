@@ -111,3 +111,18 @@ export function mirror_class(from, to, instances){
 		}
 	}
 }
+
+export function DOMObjectConstructor(original){
+	function result(...args){
+		if(new.target){
+			return new original(...args);
+		}else{
+			throw new TypeError(`Failed to construct 'XMLHttpRequest': Please use the 'new' operator, this DOM object constructor cannot be called as a function.`);
+		}
+	}
+
+	result.prototype = original.prototype;
+	result.prototype.constructor = result;
+	
+	return result;
+}

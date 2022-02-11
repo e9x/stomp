@@ -5,15 +5,6 @@ import { wrap_function, Reflect } from '../RewriteUtil.mjs';
 const beacon_protocols = ['http:','https:'];
 
 export class PageRequestRewrite extends Rewrite {
-	xml_data = new WeakMap();
-	handle_xml_request(xml, data, body){
-		if(data.async){
-			
-		}
-	}
-	xml_on_response(response){
-
-	}
 	work(){
 		global.open = wrap_function(global.open, (target, that, [ url, tar, features ]) => {
 			url = new URL(url, this.location.proxy);
@@ -43,24 +34,6 @@ export class PageRequestRewrite extends Rewrite {
 			return Reflect.apply(target, that, [url, data]);
 		});
 		
-		XMLHttpRequest.prototype.open = wrap_function(XMLHttpRequest.prototype.open, (target, that, [method, url, async, username, password]) => {
-			const data = {
-				headers: {},
-				url,
-				method,
-				async,
-				username,
-				password,
-			};
-			
-			Reflect.setPrototypeOf(data.headers, null);
-			
-			this.xml_data.set(that, data);
-			
-			url = this.client.tomp.binary.serve(new URL(url, this.client.base), this.client.base);
-			return Reflect.apply(target, that, [ method, url, async, username, password ]);
-		});
-
 		/*XMLHttpRequest.prototype.setRequestHeader = wrap_function(XMLHttpRequest.prototype.setRequestHeader, (target, that, [header, value]) => {
 			value = String(value);
 			

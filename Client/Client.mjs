@@ -27,7 +27,7 @@ export class Client {
 		this.eval = new EvalRewrite(this);
 		this.location = new LocationRewrite(this);
 		this.access = new AccessRewrite(this);
-
+		
 		this.function.work();
 		this.websocket.work();
 		this.idb.work();

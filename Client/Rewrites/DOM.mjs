@@ -244,11 +244,17 @@ export class DOMRewrite extends Rewrite {
 			configurable: true,
 		});
 	}
-	domparser_worker(){
+	domparser_work(){
 		DOMParser.prototype.parseFromString = wrap_function(DOMParser.prototype.parseFromString, (target, that, [ str, type ]) => {
 			str = this.client.tomp.html.wrap(str, this.tomp.bare);
 
 			return Reflect.apply(target, that, [ str, type ]);
+		});
+
+		XMLSerializer.prototype.serializeToString = wrap_function(XMLSerializer.prototype.serializeToString, (target, that, args) => {
+			let result = Reflect.apply(target, that, args);
+			result = this.client.tomp.html.unwrap(result, this.client.base);
+			return result;
 		});
 	}
 	work(){
@@ -256,7 +262,7 @@ export class DOMRewrite extends Rewrite {
 		this.attr_work();
 		this.iframe_work();
 		this.anchor_work();
-		this.domparser_worker();
+		this.domparser_work();
 		
 		for(let key of Reflect.ownKeys(global)){
 			for(let ab of this.client.tomp.elements.abstract){
