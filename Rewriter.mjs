@@ -20,7 +20,7 @@ export class Rewriter {
 
 		if(serving.startsWith('data:')){
 			const {mime,data} = ParseDataURI(serving);
-			return `data:${mime},${encodeURIComponent(this.unwrap(data, url))}`;
+			return `data:${mime},${encodeURI(this.unwrap(data, url))}`;
 		}
 		
 		return this.tomp.url.unwrap_ez(serving);

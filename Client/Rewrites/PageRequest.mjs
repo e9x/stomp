@@ -7,7 +7,7 @@ const beacon_protocols = ['http:','https:'];
 export class PageRequestRewrite extends Rewrite {
 	work(){
 		global.open = wrap_function(global.open, (target, that, [ url, tar, features ]) => {
-			url = new URL(url, this.location.proxy);
+			url = new URL(url, this.client.base);
 			url = this.client.tomp.html.serve(url, this.client.base);
 			return Reflect.apply(target, that, [ url, tar, features ]);
 		});
