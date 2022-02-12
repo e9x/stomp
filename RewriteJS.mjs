@@ -36,6 +36,7 @@ export class RewriteJS extends Rewriter {
 				module: true,
 				webcompat: true,
 				globalReturn: true,
+				next: true,
 			});
 		}catch(err){
 			if(err instanceof SyntaxError){
@@ -345,6 +346,7 @@ export class RewriteJS extends Rewriter {
 				module: true,
 				webcompat: true,
 				globalReturn: true,
+				next: true,
 			});
 		}catch(err){
 			if(err instanceof SyntaxError){
