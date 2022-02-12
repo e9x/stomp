@@ -115,8 +115,7 @@ export function mirror_class(from, to, instances){
 export function DOMObjectConstructor(original){
 	function result(...args){
 		if(new.target){
-			console.trace(new.target);
-			return Reflect.construct(original, args);
+			return Reflect.construct(original, args, new.target);
 		}else{
 			throw new TypeError(`Failed to construct '${original.name}': Please use the 'new' operator, this DOM object constructor cannot be called as a function.`);
 		}
