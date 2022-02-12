@@ -18,7 +18,7 @@ export class SyncClient {
 			throw new TypeError(error);
 		}
 		
-		const rawArrayBuffer = decode_base64(base64ArrayBuffer);
+		const { rawArrayBuffer: buffer } = decode_base64(base64ArrayBuffer);
 
 		const response = new Response(rawArrayBuffer, init);
 

@@ -107,7 +107,7 @@ export class XMLHttpRequestRewrite extends Rewrite {
 				if(this.#is_text){
 					return this.responseText;
 				}else if(this.#responseType === 'arraybuffer'){
-					return this.#response.buffer;
+					return this.#response;
 				}else if(this.#responseType === 'document'){
 					return this.#responseXML;
 				}
@@ -122,7 +122,6 @@ export class XMLHttpRequestRewrite extends Rewrite {
 				this.#readyState = HEADERS_RECEIVED;
 				this.#status = response.status;
 				this.#statusText = response.statusText;
-				console.log(response.url)
 				this.#responseURL = that.client.tomp.html.unwrap_serving(response.url, that.client.base);
 				this.#response_headers = response.headers;
 				this.#dispatch_readyState();
