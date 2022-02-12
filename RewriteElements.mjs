@@ -308,6 +308,15 @@ export class RewriteElements {
 		},
 		{
 			name: {
+				tag: 'frame',
+				class: 'HTMLFrameElement',
+			},
+			attributes: [
+				{ name: 'src', type: 'url', service: 'html' },
+			],
+		},
+		{
+			name: {
 				tag: 'use',
 				class: 'SVGUseElement',
 			},
