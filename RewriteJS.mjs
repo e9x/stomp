@@ -1,5 +1,5 @@
 import { parseScript } from 'meriyah';
-import { generate } from 'escodegen';
+import { generate } from '@javascript-obfuscator/escodegen';
 import { AcornIterator } from './IterateAcorn.mjs';
 import { builders as b } from 'ast-types';
 import { Rewriter } from './Rewriter.mjs';
