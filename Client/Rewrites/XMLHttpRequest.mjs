@@ -8,8 +8,8 @@ export class XMLHttpRequestRewrite extends Rewrite {
 	global_target = global.XMLHttpRequestEventTarget;
 	work(){
 		const instances = new WeakSet();
-
 		const real = Symbol();
+		const that = this;
 
 		class XMLHttpRequestEventTargetProxy extends EventTarget {
 			constructor(key){
@@ -32,9 +32,15 @@ export class XMLHttpRequestRewrite extends Rewrite {
 			#async = false;
 			#username = undefined;
 			#password = undefined;
-			#fetch(url, init, callback/*(response)*/){
+			#fetch(url, init, callback/*(error, response, buffer)*/){
 				if(this.#async){
-					this.client.request.global_fetch(url.init).then();
+					that.client.request.global_fetch(url, init).then(async response => {
+						const buffer = await response.arrayBuffer();
+						callback(undefined, response, buffer);
+					}).catch(error => callback(error));	
+				}else{
+					const response = that.client.sync.fetch(url, init);
+					callback(undefined, response, response.rawArrayBuffer);
 				}
 			}
 			open(method, url, async, username, password){
@@ -65,7 +71,13 @@ export class XMLHttpRequestRewrite extends Rewrite {
 				this.#headers.append(header, value);
 			}
 			send(body){
+				this.#fetch(that.client.tomp.binary.serve(new URL(this.#url, that.client.base), that.client.base), {
+					method: this.#method,
+					headers: this.#headers,
 
+				}, (error, response, buffer) => {
+					console.log(error, response, buffer);
+				});
 			}
 
 		};
