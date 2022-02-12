@@ -50,6 +50,7 @@ export class XMLHttpRequestRewrite extends Rewrite {
 			#response = new Uint8Array();
 			#status = 0;
 			#statusText = '';
+			#abort = new AbortController();
 			get status(){
 				return this.#status;
 			}
@@ -138,7 +139,12 @@ export class XMLHttpRequestRewrite extends Rewrite {
 			}
 			#on_done(error, response, buffer){
 				if(error !== undefined){
-					console.error('abort', error);
+					if(this.#abort.signal.aborted){
+						return;
+					}
+
+					console.error('error', error);
+					this.dispatchEvent(new Event('error'));
 					return;
 				}
 
@@ -157,6 +163,8 @@ export class XMLHttpRequestRewrite extends Rewrite {
 			}
 			#fetch(url, init){
 				if(this.#async){
+					init.signal = this.#abort.signal;
+
 					Reflect.apply(that.client.request.global_fetch, global, [ url, init ]).then(async response => {
 						this.#on_headers(undefined, response);
 						const buffer = await response.arrayBuffer();
@@ -172,8 +180,14 @@ export class XMLHttpRequestRewrite extends Rewrite {
 					}
 				}
 			}
-			overrideMimeType(mime){
-
+			overrideMimeType(mime){}
+			abort(){
+				if(!this.#async){
+					return;
+				}
+				
+				this.#abort.abort();
+				this.dispatchEvent(new ProgressEvent('abort'));
 			}
 			open(method, url, async, username, password){
 				this.#readyState = OPENED;
