@@ -1,3 +1,4 @@
+import { encode_base64 } from '../Base64.mjs';
 import { global } from '../Global.mjs';
 import { engine } from '../UserAgent.mjs';
 import { Reflect } from './RewriteUtil.mjs';
@@ -10,6 +11,7 @@ export class SyncClient {
 	constructor(client){
 		this.client = client;
 	}
+	encoder = new TextEncoder('utf-8');
 	work(){}
 	create_response(data){
 		// console.log('Received:', data);
@@ -20,15 +22,29 @@ export class SyncClient {
 	fetch(url, init){
 		const request = new Request(url, init);
 		
+		const options = {	
+			method: request.method,
+			cache: request.cache,
+			referrer: request.referrer,
+		};
+
+		if(init.headers instanceof Headers){
+			options.headers = Object.fromEntries(init.headers.entries());
+		}else if(typeof init.headers === 'object' && init.headers !== null){
+			options.headers = init.headers;
+		}else{
+			options.headers = {};
+		}
+
+		if(init.body instanceof ArrayBuffer){
+			options.body = encode_base64(init.body);
+		}else if(typeof init.body == 'string'){
+			options.body = encode_base64(this.encoder.encode(init.body));
+		}
+
 		const args = [
 			request.url,
-			{
-				headers: Object.fromEntries(request.headers),
-				method: request.method,
-				body: request.body,
-				cache: request.cache,
-				referrer: request.referrer,
-			},
+			options,
 		];
 
 		if(engine == 'gecko'){
@@ -39,8 +55,7 @@ export class SyncClient {
 			
 			return this.create_response(JSON.parse(http.responseText));
 		}
-
-		const cookieopt = ``;
+		
 		const id = 'sync-request-' + Math.random().toString(16).slice(2);
 		const regex = new RegExp(`${id}=(.*?)(;|$)`);
 		
