@@ -1,4 +1,4 @@
-import { encode_base64 } from '../Base64.mjs';
+import { decode_base64, encode_base64 } from '../Base64.mjs';
 import { global } from '../Global.mjs';
 import { engine } from '../UserAgent.mjs';
 import { Reflect } from './RewriteUtil.mjs';
@@ -13,10 +13,17 @@ export class SyncClient {
 	}
 	encoder = new TextEncoder('utf-8');
 	work(){}
-	create_response(data){
-		// console.log('Received:', data);
-		const response = new Response(data[0], data[1]);
-		response.responseText = data[0];
+	create_response([ error, base64ArrayBuffer, init ]){
+		if(error !== null){
+			throw new TypeError(error);
+		}
+		
+		const rawArrayBuffer = decode_base64(base64ArrayBuffer);
+
+		const response = new Response(rawArrayBuffer, init);
+
+		response.rawArrayBuffer = rawArrayBuffer;
+
 		return response;
 	}
 	fetch(url, init){
@@ -36,15 +43,18 @@ export class SyncClient {
 			options.headers = {};
 		}
 
+		let body;
+
 		if(init.body instanceof ArrayBuffer){
-			options.body = encode_base64(init.body);
+			body = encode_base64(init.body);
 		}else if(typeof init.body == 'string'){
-			options.body = encode_base64(this.encoder.encode(init.body));
+			body = encode_base64(this.encoder.encode(init.body));
 		}
 
 		const args = [
 			request.url,
 			options,
+			body,
 		];
 
 		if(engine == 'gecko'){

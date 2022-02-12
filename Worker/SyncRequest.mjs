@@ -1,3 +1,4 @@
+import { decode_base64, encode_base64 } from '../Base64.mjs';
 import { engine } from '../UserAgent.mjs';
 
 export class SyncRequest {
@@ -11,27 +12,37 @@ export class SyncRequest {
 			},
 		});
 	}
-	async process(data){
-		if(!Array.isArray(data)){
-			console.trace('Bad data:', data);
-			return ['BAD DATA'];
+	async process([ url, options, body ]){
+		if(body !== null){
+			options.body = decode_base64(body);
 		}
 
-		const request = new Request(data[0], data[1]);
+		const request = new Request(url, options);
 		
-		const response = await new Promise((resolve, reject) => {
-			const event = {
-				async respondWith(response){
-					resolve(await response);
-				},
-				request,
-			};
+		let response;
 
-			if(!this.server.request(event))return reject('Declined');
-		});
+		try{
+			response = await new Promise((resolve, reject) => {
+				const event = {
+					async respondWith(response){
+						resolve(await response);
+					},
+					request,
+				};
+	
+				if(!this.server.request(event)){
+					return reject('Declined');
+				}
+			});
+		}catch(error){
+			return [
+				error.message,
+			];
+		}
 
 		return [
-			await response.text(),
+			undefined,
+			encode_base64(await response.arrayBuffer()),
 			{
 				status: response.status,
 				statusText: response.statusText,
