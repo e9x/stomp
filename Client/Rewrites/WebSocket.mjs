@@ -27,6 +27,11 @@ export class WebSocketRewrite extends Rewrite {
 
 		const instances = new WeakSet();
 
+		const CONNECTING = 0;
+		const OPEN = 1;
+		const CLOSING = 2;
+		const CLOSED = 3;
+		
 		class WebSocketProxy extends EventTarget {
 			#socket;
 			#ready;
@@ -173,7 +178,7 @@ export class WebSocketRewrite extends Rewrite {
 				return this.#extensions;
 			}
 			get readyState(){
-				return this.socket ? this.socket.readyState : that.global.CONNECTING;
+				return this.socket ? this.socket.readyState : CONNECTING;
 			}
 			get binaryType(){
 				return this.#binaryType;
@@ -211,10 +216,10 @@ export class WebSocketRewrite extends Rewrite {
 		EventTarget_on(WebSocketProxy.prototype, 'open');
 		EventTarget_on(WebSocketProxy.prototype, 'message');
 		EventTarget_on(WebSocketProxy.prototype, 'error');
-		TargetConstant(WebSocketProxy, 'CONNECTING', 0);
-		TargetConstant(WebSocketProxy, 'OPEN', 1);
-		TargetConstant(WebSocketProxy, 'CLOSING', 2);
-		TargetConstant(WebSocketProxy, 'CLOSED', 3);
+		TargetConstant(WebSocketProxy, 'CONNECTING', CONNECTING);
+		TargetConstant(WebSocketProxy, 'OPEN', OPEN);
+		TargetConstant(WebSocketProxy, 'CLOSING', CLOSING);
+		TargetConstant(WebSocketProxy, 'CLOSED', CLOSED);
 		mirror_class(this.global, WebSocketProxy, instances);
 
 		global.WebSocket = WebSocketProxy;
