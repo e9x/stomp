@@ -49,6 +49,10 @@ export class XMLHttpRequestRewrite extends Rewrite {
 			#responseXML = null;
 			#response = new Uint8Array();
 			#dispatch_readyState(){
+				if(!this.async && this.#readyState !== DONE){
+					return;
+				}
+
 				this.dispatchEvent(new Event('readystatechange'));
 			}
 			get #loading_or_done(){
@@ -141,6 +145,7 @@ export class XMLHttpRequestRewrite extends Rewrite {
 					}).catch(error => this.#on_done(error));	
 				}else{
 					const response = that.client.sync.fetch(url, init);
+					this.#on_headers(undefined, response);
 					this.#on_done(undefined, response, response.rawArrayBuffer);
 				}
 			}
