@@ -26,6 +26,12 @@ export class XMLHttpRequestRewrite extends Rewrite {
 
 		const XMLHttpRequestResponseType = ['', 'arraybuffer', 'blob', 'document', 'json', 'text', 'moz-chunked-arraybuffer', 'ms-stream'];
 
+		const UNSENT = 0;
+		const OPENED = 1;
+		const HEADERS_RECEIVED = 2;
+		const LOADING = 3;
+		const DONE = 4;
+		
 		class XMLHttpRequestProxy extends XMLHttpRequestEventTargetProxy {
 			constructor(){
 				super(real);
@@ -38,12 +44,15 @@ export class XMLHttpRequestRewrite extends Rewrite {
 			#username = undefined;
 			#password = undefined;
 			#responseType = '';
-			#readyState = that.global.UNSENT;
+			#readyState = UNSENT;
 			#responseURL = '';
 			#responseXML = null;
 			#response = new Uint8Array();
+			#dispatch_readyState(){
+				this.dispatchEvent(new Event('readystatechange'));
+			}
 			get #loading_or_done(){
-				return this.#readyState === that.global.LOADING || this.#readyState === that.global.DONE;
+				return this.#readyState === LOADING || this.#readyState === DONE;
 			}
 			get #is_text(){
 				return this.#responseType === '' || this.#responseType === 'text';
@@ -93,18 +102,50 @@ export class XMLHttpRequestRewrite extends Rewrite {
 
 				return this.#response;
 			}
-			#fetch(url, init, callback/*(error, response, buffer)*/){
+			#on_headers(error, response){
+				this.#readyState = HEADERS_RECEIVED;
+				this.#responseURL = response.url;
+				this.#response_headers = response.headers;
+				this.#dispatch_readyState();
+
+				this.#readyState = LOADING;
+				this.#dispatch_readyState();
+
+				/*
+				// chrome doesn't dispatch loadstart
+				this.dispatchEvent(new ProgressEvent('loadstart', {
+					total: response.headers.get('content-length') || 1000
+				}));
+				*/
+			}
+			#on_done(error, response, buffer){
+				this.#readyState = DONE;
+				this.#response = buffer;
+
+				this.#dispatch_readyState();
+
+				this.dispatchEvent(new ProgressEvent('load', {
+					total: response.headers.get('content-length') || 1000
+				}));
+
+				this.dispatchEvent(new ProgressEvent('loadend', {
+					total: response.headers.get('content-length') || 1000
+				}));
+			}
+			#fetch(url, init){
 				if(this.#async){
 					Reflect.apply(that.client.request.global_fetch, global, [ url, init ]).then(async response => {
+						this.#on_headers(undefined, response);
 						const buffer = await response.arrayBuffer();
-						callback(undefined, response, buffer);
-					}).catch(error => callback(error));	
+						this.#on_done(undefined, response, buffer);
+					}).catch(error => this.#on_done(error));	
 				}else{
 					const response = that.client.sync.fetch(url, init);
-					callback(undefined, response, response.rawArrayBuffer);
+					this.#on_done(undefined, response, response.rawArrayBuffer);
 				}
 			}
 			open(method, url, async, username, password){
+				this.#readyState = OPENED;
 				this.#method = String(method);
 				
 				this.#url = String(url);
@@ -126,35 +167,23 @@ export class XMLHttpRequestRewrite extends Rewrite {
 				}else{
 					this.#password = undefined;
 				}
+				
+				// this.#dispatch_readyState();
 			}
 			setRequestHeader(header, value){
+				if(this.#readyState !== OPENED){
+					throw new DOMException(`Failed to execute 'setRequestHeader' on 'XMLHttpRequest': The object's state must be OPENED.`);
+				}
+
 				// behavior is equal to append
 				this.#headers.append(header, value);
 			}
 			send(body){
+				this.#readyState = OPENED;
+
 				this.#fetch(that.client.tomp.binary.serve(new URL(this.#url, that.client.base), that.client.base), {
 					method: this.#method,
 					headers: this.#headers,
-
-				}, (error, response, buffer) => {
-					console.log(error, response, buffer);
-
-					this.#response = buffer;
-					this.#responseURL = response.url;
-					this.#response_headers = response.headers;
-
-					this.dispatchEvent(new ProgressEvent('loadstart', {
-						total: response.headers.get('content-length') || 1000
-					}));
-					
-					this.dispatchEvent(new ProgressEvent('loadend', {
-						total: response.headers.get('content-length') || 1000
-					}));
-					
-					this.dispatchEvent(new ProgressEvent('load', {
-						total: response.headers.get('content-length') || 1000
-					}));
-					
 				});
 			}
 			getResponseHeader(header){
@@ -163,7 +192,7 @@ export class XMLHttpRequestRewrite extends Rewrite {
 			getAllResponseHeaders(){
 				let result = '';
 
-				for(let [ header, value ] in this.#response_headers){
+				for(let [ header, value ] of this.#response_headers){
 					result += `${header}: ${value}\r\n`;
 				}
 
@@ -181,12 +210,13 @@ export class XMLHttpRequestRewrite extends Rewrite {
 		EventTarget_on(XMLHttpRequestEventTargetProxy.prototype, 'loadstart');
 		EventTarget_on(XMLHttpRequestEventTargetProxy.prototype, 'progress');
 		EventTarget_on(XMLHttpRequestEventTargetProxy.prototype, 'timeout');
-		
-		TargetConstant(XMLHttpRequestProxy, 'UNSENT', 0);
-		TargetConstant(XMLHttpRequestProxy, 'OPENED', 1);
-		TargetConstant(XMLHttpRequestProxy, 'HEADERS_RECEIVED', 2);
-		TargetConstant(XMLHttpRequestProxy, 'LOADING', 3);
-		TargetConstant(XMLHttpRequestProxy, 'DONE', 4);
+
+		EventTarget_on(XMLHttpRequestProxy.prototype, 'readystatechange');
+		TargetConstant(XMLHttpRequestProxy, 'UNSENT', UNSENT);
+		TargetConstant(XMLHttpRequestProxy, 'OPENED', OPENED);
+		TargetConstant(XMLHttpRequestProxy, 'HEADERS_RECEIVED', HEADERS_RECEIVED);
+		TargetConstant(XMLHttpRequestProxy, 'LOADING', LOADING);
+		TargetConstant(XMLHttpRequestProxy, 'DONE', DONE);
 
 		mirror_class(this.global, XMLHttpRequestProxy, instances);
 		mirror_class(this.global_target, XMLHttpRequestEventTargetProxy, instances);
