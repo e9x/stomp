@@ -173,7 +173,7 @@ export class WebSocketRewrite extends Rewrite {
 				return this.#extensions;
 			}
 			get readyState(){
-				return this.socket ? this.socket.readyState : this.global.CONNECTING;
+				return this.socket ? this.socket.readyState : that.global.CONNECTING;
 			}
 			get binaryType(){
 				return this.#binaryType;

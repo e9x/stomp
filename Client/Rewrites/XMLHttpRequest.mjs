@@ -22,19 +22,80 @@ export class XMLHttpRequestRewrite extends Rewrite {
 			}
 		};
 
+		const decoder = new TextDecoder('utf-8');
+
+		const XMLHttpRequestResponseType = ['', 'arraybuffer', 'blob', 'document', 'json', 'text', 'moz-chunked-arraybuffer', 'ms-stream'];
+
 		class XMLHttpRequestProxy extends XMLHttpRequestEventTargetProxy {
 			constructor(){
 				super(real);
 			}
 			#headers = new Headers();
+			#response_headers = new Headers();
 			#method = '';
 			#url = '';
 			#async = false;
 			#username = undefined;
 			#password = undefined;
+			#responseType = '';
+			#readyState = that.global.UNSENT;
+			#responseURL = '';
+			#responseXML = null;
+			#response = new Uint8Array();
+			get #loading_or_done(){
+				return this.#readyState === that.global.LOADING || this.#readyState === that.global.DONE;
+			}
+			get #is_text(){
+				return this.#responseType === '' || this.#responseType === 'text';
+			}
+			get responseText(){
+				if(!this.#is_text){
+					throw new DOMException(`Failed to read the 'responseText' property from 'XMLHttpRequest': The value is only accessible if the object's 'responseType' is '' or 'text' (was '${this.#responseType}').`)
+				}
+
+				return decoder.decode(this.#response);
+			}
+			get responseXML(){
+				return this.#responseXML;
+			}
+			get responseType(){
+				return this.#responseType;
+			}
+			set responseType(value){
+				if(this.#loading_or_done){
+					throw new DOMException(`Failed to set the 'responseType' property on 'XMLHttpRequest': The response type cannot be set if the object's state is LOADING or DONE.`);
+				}else if(!this.#async){
+					throw new DOMException(`Failed to set the 'responseType' property on 'XMLHttpRequest': The response type cannot be changed for synchronous requests made from a document.`)
+				}
+
+				if(!XMLHttpRequestResponseType.includes(value)){
+					console.warn(`The provided value 'test' is not a valid enum value of type XMLHttpRequestResponseType.`);
+					return;
+				}
+
+				this.#responseType = value;
+				return value;
+			}
+			get readyState(){
+				return this.#readyState;
+			}
+			get responseURL(){
+				return this.#responseURL;
+			}
+			get response(){
+				if(this.#is_text){
+					return this.responseText;
+				}else if(this.#responseType === 'arraybuffer'){
+					return this.#response.buffer;
+				}else if(this.#responseType === 'document'){
+					return this.#responseXML;
+				}
+
+				return this.#response;
+			}
 			#fetch(url, init, callback/*(error, response, buffer)*/){
 				if(this.#async){
-					that.client.request.global_fetch(url, init).then(async response => {
+					Reflect.apply(that.client.request.global_fetch, global, [ url, init ]).then(async response => {
 						const buffer = await response.arrayBuffer();
 						callback(undefined, response, buffer);
 					}).catch(error => callback(error));	
@@ -77,21 +138,49 @@ export class XMLHttpRequestRewrite extends Rewrite {
 
 				}, (error, response, buffer) => {
 					console.log(error, response, buffer);
+
+					this.#response = buffer;
+					this.#responseURL = response.url;
+					this.#response_headers = response.headers;
+
+					this.dispatchEvent(new ProgressEvent('loadstart', {
+						total: response.headers.get('content-length') || 1000
+					}));
+					
+					this.dispatchEvent(new ProgressEvent('loadend', {
+						total: response.headers.get('content-length') || 1000
+					}));
+					
+					this.dispatchEvent(new ProgressEvent('load', {
+						total: response.headers.get('content-length') || 1000
+					}));
+					
 				});
 			}
+			getResponseHeader(header){
+				return this.#response_headers.get(header);
+			}
+			getAllResponseHeaders(){
+				let result = '';
 
+				for(let [ header, value ] in this.#response_headers){
+					result += `${header}: ${value}\r\n`;
+				}
+
+				return result;
+			}
 		};
 
-		XMLHttpRequest = DOMObjectConstructor(XMLHttpRequest);
-		XMLHttpRequestEventTarget = DOMObjectConstructor(XMLHttpRequestEventTarget);
+		XMLHttpRequestProxy = DOMObjectConstructor(XMLHttpRequestProxy);
+		XMLHttpRequestEventTargetProxy = DOMObjectConstructor(XMLHttpRequestEventTargetProxy);
 
-		EventTarget_on(XMLHttpRequestEventTarget.prototype, 'abort');
-		EventTarget_on(XMLHttpRequestEventTarget.prototype, 'error');
-		EventTarget_on(XMLHttpRequestEventTarget.prototype, 'load');
-		EventTarget_on(XMLHttpRequestEventTarget.prototype, 'loadend');
-		EventTarget_on(XMLHttpRequestEventTarget.prototype, 'loadstart');
-		EventTarget_on(XMLHttpRequestEventTarget.prototype, 'progress');
-		EventTarget_on(XMLHttpRequestEventTarget.prototype, 'timeout');
+		EventTarget_on(XMLHttpRequestEventTargetProxy.prototype, 'abort');
+		EventTarget_on(XMLHttpRequestEventTargetProxy.prototype, 'error');
+		EventTarget_on(XMLHttpRequestEventTargetProxy.prototype, 'load');
+		EventTarget_on(XMLHttpRequestEventTargetProxy.prototype, 'loadend');
+		EventTarget_on(XMLHttpRequestEventTargetProxy.prototype, 'loadstart');
+		EventTarget_on(XMLHttpRequestEventTargetProxy.prototype, 'progress');
+		EventTarget_on(XMLHttpRequestEventTargetProxy.prototype, 'timeout');
 		
 		TargetConstant(XMLHttpRequestProxy, 'UNSENT', 0);
 		TargetConstant(XMLHttpRequestProxy, 'OPENED', 1);
@@ -99,8 +188,8 @@ export class XMLHttpRequestRewrite extends Rewrite {
 		TargetConstant(XMLHttpRequestProxy, 'LOADING', 3);
 		TargetConstant(XMLHttpRequestProxy, 'DONE', 4);
 
-		mirror_class(this.global, XMLHttpRequest, instances);
-		mirror_class(this.global_target, XMLHttpRequestEventTarget, instances);
+		mirror_class(this.global, XMLHttpRequestProxy, instances);
+		mirror_class(this.global_target, XMLHttpRequestEventTargetProxy, instances);
 
 		global.XMLHttpRequest = XMLHttpRequestProxy;
 		global.XMLHttpRequestEventTarget = XMLHttpRequestEventTargetProxy;
