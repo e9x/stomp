@@ -48,6 +48,14 @@ export class XMLHttpRequestRewrite extends Rewrite {
 			#responseURL = '';
 			#responseXML = null;
 			#response = new Uint8Array();
+			#status = 0;
+			#statusText = '';
+			get status(){
+				return this.#status;
+			}
+			get statusText(){
+				return this.#statusText;
+			}
 			#dispatch_readyState(){
 				if(!this.async && this.#readyState !== DONE){
 					return;
@@ -107,8 +115,15 @@ export class XMLHttpRequestRewrite extends Rewrite {
 				return this.#response;
 			}
 			#on_headers(error, response){
+				if(error){
+					console.error(error);
+				}
+
 				this.#readyState = HEADERS_RECEIVED;
-				this.#responseURL = response.url;
+				this.#status = response.status;
+				this.#statusText = response.statusText;
+				console.log(response.url)
+				this.#responseURL = that.client.tomp.html.unwrap_serving(response.url, that.client.base);
 				this.#response_headers = response.headers;
 				this.#dispatch_readyState();
 
@@ -123,6 +138,11 @@ export class XMLHttpRequestRewrite extends Rewrite {
 				*/
 			}
 			#on_done(error, response, buffer){
+				if(error !== undefined){
+					console.error('abort', error);
+					return;
+				}
+
 				this.#readyState = DONE;
 				this.#response = buffer;
 
@@ -144,10 +164,17 @@ export class XMLHttpRequestRewrite extends Rewrite {
 						this.#on_done(undefined, response, buffer);
 					}).catch(error => this.#on_done(error));	
 				}else{
-					const response = that.client.sync.fetch(url, init);
-					this.#on_headers(undefined, response);
-					this.#on_done(undefined, response, response.rawArrayBuffer);
+					try{
+						const response = that.client.sync.fetch(url, init);
+						this.#on_headers(undefined, response);
+						this.#on_done(undefined, response, response.rawArrayBuffer);
+					}catch(error){
+						this.#on_done(error);
+					}
 				}
+			}
+			overrideMimeType(mime){
+
 			}
 			open(method, url, async, username, password){
 				this.#readyState = OPENED;

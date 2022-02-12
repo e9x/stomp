@@ -16,7 +16,7 @@ export class Rewriter {
 		return this.tomp.url.wrap(serve, this.constructor.service);
 	}
 	unwrap_serving(serving, url){
-		serve = String(serve);
+		serving = String(serving);
 
 		if(serving.startsWith('data:')){
 			const {mime,data} = ParseDataURI(serving);
