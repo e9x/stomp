@@ -1,17 +1,25 @@
-import { Client } from './Client.mjs';
 import { PageClient } from './PageClient.mjs';
 import { WorkerClient } from './WorkerClient.mjs';
 import { global_client } from '../RewriteJS.mjs';
 import { global } from '../Global.mjs';
+import { is_page, is_worker, is_serviceworker } from '../Environment.mjs';
 
-global[global_client] = (...args) => {
+if(global_client in global){
+	throw new Error('TOMP client already loaded!');
+}
+
+if(is_page && document.currentScript){
+	document.currentScript.remove();
+}
+
+function create_instance(...args){
 	let created;
 
-	/*if(typeof ServiceWorkerGlobalScope == 'function' && global instanceof ServiceWorkerGlobalScope){
+	/*if(is_serviceworker){
 		created = new WorkerClient(config);
-	}else */if(typeof WorkerGlobalScope == 'function' && global instanceof WorkerGlobalScope){
+	}else */if(is_worker){
 		created = new WorkerClient(...args);
-	}else if(typeof Window == 'function' && global instanceof Window){
+	}else if(is_page){
 		created = new PageClient(...args);
 	}else{
 		throw new Error('Unknown context!');
@@ -23,4 +31,6 @@ global[global_client] = (...args) => {
 		writable: false,
 		value: created,
 	});
-};
+}
+
+global[global_client] = create_instance;

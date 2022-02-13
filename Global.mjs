@@ -1,8 +1,13 @@
 // Locates the global object.
 
-var glob;
+let g;
 
-if(typeof window == 'object' && window != undefined)glob = window;
-else if(typeof globalThis == 'object' && globalThis != undefined)glob = globalThis;
+if(typeof self === 'object' && self !== undefined){
+	g = self;
+}if(typeof globalThis === 'object' && globalThis !== undefined){
+	g = globalThis;
+}else if(typeof window === 'object' && window !== undefined){
+	g = window;
+}
 
-export const global = glob;
+export const global = g;

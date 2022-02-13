@@ -15,6 +15,8 @@ export class PageClient extends Client {
 	constructor(config){
 		super(config);
 
+		document.currentScript.remove();
+		
 		this.work_modules();
 	}
 	work_modules(){

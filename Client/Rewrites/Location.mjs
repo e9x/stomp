@@ -184,7 +184,11 @@ export class LocationRewrite extends Rewrite {
 		}
 	}
 	get page_url(){
-		return this.client.tomp.url.unwrap_ez(this.global.href);
+		if(this.global.href === 'about:blank'){
+			return 'about:blank';
+		}else{
+			return this.client.tomp.url.unwrap_ez(this.global.href);
+		}
 	}
 	get page_urlo(){
 		return new URL(this.page_url);

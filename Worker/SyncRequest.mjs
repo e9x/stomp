@@ -1,5 +1,5 @@
 import { decode_base64, encode_base64 } from '../Base64.mjs';
-import { engine } from '../UserAgent.mjs';
+import { engine } from '../Environment.mjs';
 
 export class SyncRequest {
 	constructor(server){
