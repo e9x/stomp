@@ -8,10 +8,6 @@ if(global_client in global){
 	throw new Error('TOMP client already loaded!');
 }
 
-if(is_page && document.currentScript){
-	document.currentScript.remove();
-}
-
 function create_instance(...args){
 	let created;
 

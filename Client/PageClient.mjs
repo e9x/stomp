@@ -14,9 +14,11 @@ export class PageClient extends Client {
 	host = this.tomp.url.parse_url(document.baseURI);
 	constructor(config){
 		super(config);
-
-		document.currentScript.remove();
 		
+		for(let node of document.querySelectorAll('[data-is-tomp]')){
+			node.remove();
+		}
+
 		this.work_modules();
 	}
 	work_modules(){
