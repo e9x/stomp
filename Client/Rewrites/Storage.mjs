@@ -23,7 +23,7 @@ export class StorageRewrite extends Rewrite {
 		},
 		set: (target, prop, value) => {
 			if(typeof prop == 'symbol' || prop in target || prop in this.proxy.prototype){
-				return Reflect.set(target, prop, receiver);
+				return Reflect.set(target, prop, value);
 			}
 
 			Reflect.apply(this.proxy.prototype.setItem, this.get_proxy(target), [ prop, value ]);
@@ -32,7 +32,7 @@ export class StorageRewrite extends Rewrite {
 		},
 		getOwnPropertyDescriptor: (target, prop) => {
 			if(typeof prop == 'symbol' || prop in target || prop in this.proxy.prototype){
-				return Reflect.getOwnPropertyDescriptor(target, prop, receiver);
+				return Reflect.getOwnPropertyDescriptor(target, prop);
 			}
 
 			/*
