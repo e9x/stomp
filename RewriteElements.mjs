@@ -338,7 +338,7 @@ export class RewriteElements {
 				},
 				{
 					name: 'rel',
-					type: 'custom',
+					type: 'delete',
 					wrap: (value, url, element) => {
 						let href;
 						
@@ -347,7 +347,7 @@ export class RewriteElements {
 						}else if(element.attributes.has('href')){
 							href = element.attributes.get('href');
 						}else{
-							return;
+							return value;
 						}
 
 						const resolved = new URL(href, url).href;
@@ -361,6 +361,8 @@ export class RewriteElements {
 						}
 
 						element.attributes.set('data-tomp-href', href);
+						
+						return value;
 					},
 				},
 			],
@@ -374,7 +376,6 @@ export class RewriteElements {
 				{
 					name: 'content',
 					type: 'delete',
-					service: 'binary',
 					wrap: (value, url, element) => {
 						switch(element.attributes.get('http-equiv')){
 							case'encoding':
