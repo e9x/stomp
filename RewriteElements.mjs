@@ -485,10 +485,10 @@ export class RewriteElements {
 		if(element.type == 'noscript' && this.tomp.noscript){
 			if(wrap){
 				element.type = 'span';
-				element.attributes.set('data-tomp-was', 'noscript')
-			}else if(element.attributes.get('data-tomp-was') == 'noscript'){
+				element.attributes.set('data-tompn-was', 'noscript')
+			}else if(element.attributes.get('data-tompn-was') == 'noscript'){
 				element.type = 'noscript';
-				element.attributes.delete('data-tomp-was');
+				element.attributes.delete('data-tompn-was');
 			}
 
 			return;
