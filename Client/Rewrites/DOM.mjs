@@ -51,7 +51,11 @@ class TOMPElementDOM extends TOMPElement {
 	constructor(node){
 		super();
 		this.#node = node;
-		this.attributes = new TOMPElementDOMAttributes(this.#node);
+		if(!(this.#node instanceof Element)){
+			this.attributes = new Map();
+		}else{
+			this.attributes = new TOMPElementDOMAttributes(this.#node);
+		}
 	}
 	get type(){
 		return Reflect.apply(localName.get, this.#node, []);

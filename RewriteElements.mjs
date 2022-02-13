@@ -641,9 +641,8 @@ export class RewriteElements {
 		return value;
 	}
 	set_attribute(element, url, name, use_class, value, class_name){
-		if(!value){
-			element.attributes.set(name, '');
-			return;
+		if(value === ''){
+			return '';
 		}
 
 		for(let ab of this.abstract){
