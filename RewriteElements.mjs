@@ -381,6 +381,9 @@ export class RewriteElements {
 					service: 'binary',
 					wrap: (value, url, element) => {
 						switch(element.attributes.get('http-equiv')){
+							case'encoding':
+							case'Content-Type':
+								return value;
 							case'refresh':
 								return this.tomp.html.wrap_http_refresh(value, url);
 						}
