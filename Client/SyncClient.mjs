@@ -75,7 +75,7 @@ export class SyncClient {
 		let data;
 		let cycles;
 
-		for(cycles = 1e6; cycles > 0; cycles--){
+		for(cycles = 1e5; cycles > 0; cycles--){
 			const match = this.client.cookie.value.match(regex);
 			
 			if(!match)continue;
