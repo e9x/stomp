@@ -29,7 +29,19 @@ export class Bootstrapper {
 
 		if(this.config.loglevel <= LOG_DEBUG)console.debug('Registered the service worker.');
 	}
-	process(dest){
-		return this.directory + 'worker:process/' + encodeURIComponent(dest);
+	#send(service, url){
+		return `${this.directory}worker:process/?` + new URLSearchParams({ service, url });
+	}
+	html(url){
+		return this.#send('html', url);
+	}
+	css(url){
+		return this.#send('css', url);
+	}
+	js(url){
+		return this.#send('js', url);
+	}
+	binary(url){
+		return this.#send('binary', url);
 	}
 };

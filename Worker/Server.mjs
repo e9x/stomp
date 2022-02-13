@@ -82,6 +82,11 @@ export class Server {
 				case 'worker:manifest':
 					return await SendManifest(this, request, field);
 					break;
+				default:
+					return this.json(500, {
+						message: `Unknown service ${service}`,
+					});
+					break;
 			}
 		}catch(err){
 			this.tomp.log.error(err);
