@@ -335,6 +335,7 @@ export class RewriteElements {
 				{
 					name: 'href',
 					type: 'delete',
+					wrap: (value, url, element) => value,
 				},
 				{
 					name: 'rel',
@@ -485,10 +486,10 @@ export class RewriteElements {
 		if(element.type == 'noscript' && this.tomp.noscript){
 			if(wrap){
 				element.type = 'span';
-				element.attributes.set('data-tompn-was', 'noscript')
-			}else if(element.attributes.get('data-tompn-was') == 'noscript'){
+				element.attributes.set('data-element-tomp-was', 'noscript')
+			}else if(element.attributes.get('data-element-tomp-was') == 'noscript'){
 				element.type = 'noscript';
-				element.attributes.delete('data-tompn-was');
+				element.attributes.delete('data-element-tomp-was');
 			}
 
 			return;
@@ -547,7 +548,7 @@ export class RewriteElements {
 						continue;
 					}
 					
-					if(data.type == 'delete' && !wrap && element.attributes.has(`data-tomp-${name}`)){
+					if(data.type === 'delete' && !wrap && element.attributes.has(`data-tomp-${name}`)){
 						element.attributes.set(name, element.attributes.get(`data-tomp-${name}`));
 						element.attributes.delete(`data-tomp-${name}`);
 					}
@@ -576,7 +577,10 @@ export class RewriteElements {
 					const changed = this.abstract_type(value, url, element, data, wrap);
 					
 					if(changed !== undefined){
-						element.attributes.set(`data-tomp-${name}`, value);
+						if(wrap){
+							element.attributes.set(`data-tomp-${name}`, value);
+						}
+
 						element.attributes.set(name, changed);
 					}
 				}
