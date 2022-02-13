@@ -218,7 +218,7 @@ export async function SendBinary(server, server_request, field){
 	MapHeaderNamesFromArray(response.raw_header_names, exact_response_headers);
 	
 	if(status_empty.includes(+response.status)){
-		return new Response({
+		return new Response(undefined, {
 			headers: exact_response_headers,
 			status: response.status,
 			statusText: response.statusText,
