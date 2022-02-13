@@ -334,38 +334,33 @@ export class RewriteElements {
 			attributes: [
 				{
 					name: 'href',
-					type: 'url',
-					service: 'binary',
+					type: 'delete',
+				},
+				{
+					name: 'rel',
+					type: 'custom',
 					wrap: (value, url, element) => {
-						const resolved = new URL(value, url).href;
+						let href;
 						
-						switch(element.attributes.get('rel')){
-							case'preload':
-								switch(element.attributes.get('as')){
-									case'style':
-										return this.tomp.css.serve(resolved, url);
-									case'worker':
-									case'script':
-										return this.tomp.js.serve(resolved, url);
-									case'object':
-									case'document':
-										return this.tomp.html.serve(resolved, url);
-									default:
-										return this.tomp.binary.serve(resolved, url);
-								}
-								break;
-							case'manifest':
-								return this.tomp.manifest.serve(resolved, url);
-							case'alternate':
-							case'amphtml':
-							// case'profile':
-								return this.tomp.html.serve(resolved, url);
-							case'stylesheet':
-								return this.tomp.css.serve(resolved, url);
-							default:
-								// this.tomp.log.warn('unknown rel', element.attributes.get('rel'));
-								return this.tomp.binary.serve(resolved, url);
+						if(element.attributes.has('data-tomp-href')){
+							href = element.attributes.get('data-tomp-href');
+						}else if(element.attributes.has('href')){
+							href = element.attributes.get('href');
+						}else{
+							return;
 						}
+
+						const resolved = new URL(href, url).href;
+						const as = element.attributes.get('as');
+						const wrapped = this.wrap_link(url, resolved, value, as);
+
+						if(wrapped === undefined){
+							element.attributes.delete('href');
+						}else{
+							element.attributes.set('href', wrapped);
+						}
+
+						element.attributes.set('data-tomp-href', href);
 					},
 				},
 			],
@@ -393,6 +388,35 @@ export class RewriteElements {
 			],
 		},
 	];
+	wrap_link(url, resolved, rel, as){
+		switch(rel){
+			case'preload':
+				switch(as){
+					case'style':
+						return this.tomp.css.serve(resolved, url);
+					case'worker':
+					case'script':
+						return this.tomp.js.serve(resolved, url);
+					case'object':
+					case'document':
+						return this.tomp.html.serve(resolved, url);
+					default:
+						return this.tomp.binary.serve(resolved, url);
+				}
+				break;
+			case'manifest':
+				return this.tomp.manifest.serve(resolved, url);
+			case'alternate':
+			case'amphtml':
+			// case'profile':
+				return this.tomp.html.serve(resolved, url);
+			case'stylesheet':
+				return this.tomp.css.serve(resolved, url);
+			default:
+				// this.tomp.log.warn('unknown rel', element.attributes.get('rel'));
+				return this.tomp.binary.serve(resolved, url);
+		}
+	}
 	wrap(element, url, persist){
 		return this.#wrap(element, url, persist, true);
 	}
