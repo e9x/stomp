@@ -235,6 +235,15 @@ export class RewriteElements {
 		},
 		{
 			name: {
+				tag: 'input',
+				class: 'HTMLInputElement',
+			},
+			attributes: [
+				{ name: 'src', type: 'url', service: 'binary' },
+			],
+		},
+		{
+			name: {
 				tag: 'video',
 				class: 'HTMLVideoElement',
 			},
