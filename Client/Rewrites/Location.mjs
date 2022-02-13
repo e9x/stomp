@@ -107,7 +107,7 @@ export class LocationRewrite extends Rewrite {
 		this.proxy = {};
 		Reflect.setPrototypeOf(this.proxy, Location.prototype);
 
-		for(let prop of ['href','host','hostname','protocol','port','pathname','origin','hash','search']){
+		for(let prop of ['host','hostname','protocol','port','pathname','origin','hash','search']){
 			const desc = Reflect.getOwnPropertyDescriptor(this.global, prop);
 			
 			Reflect.defineProperty(this.proxy, prop, {
@@ -127,7 +127,7 @@ export class LocationRewrite extends Rewrite {
 			});
 		}
 
-		const toString = Reflect.getOwnPropertyDescriptor(this.global, 'toString');
+		const { href, toString, assign, replace, reload, ancestorOrigins } = getOwnPropertyDescriptors(this.global);
 
 		Reflect.defineProperty(this.proxy, 'toString', {
 			configurable: false,
@@ -138,8 +138,20 @@ export class LocationRewrite extends Rewrite {
 				return this.page_url.toString();
 			}),
 		});
-		
-		const { assign, replace, reload, ancestorOrigins } = getOwnPropertyDescriptors(this.global);
+
+		Reflect.defineProperty(this.proxy, 'href', {
+			configurable: false,
+			enumerable: true,
+			get: wrap_function(href.get, (target, that, args) => {
+				return this.page_url.toString();
+			}),
+			set: wrap_function(href.set, (target, that, [ value ]) => {
+				value = new URL(value, this.client.base);
+				value = this.client.tomp.html.serve(value, this.client.base);
+				this.global.href = value;
+				return value;
+			}),
+		});
 
 		Reflect.defineProperty(this.proxy, 'assign', {
 			configurable: false,
