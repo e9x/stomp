@@ -39,5 +39,11 @@ export class PageClient extends Client {
 		this.page_request.work();
 
 		delete global.CookieStore;
+		delete global.cookieStore;
+		delete global.CookieStoreManager;
+		delete global.ServiceWorker;
+		delete global.ServiceWorkerContainer;
+		delete global.ServiceWorkerRegistration;
+		delete Navigator.prototype.serviceWorker;
 	}
 };
