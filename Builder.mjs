@@ -29,7 +29,7 @@ export class Builder {
 			entry: {
 				client: path.join(__dirname, 'Client', 'Entry.mjs'),
 				worker: path.join(__dirname, 'Worker', 'Entry.mjs'),
-				bootstrapper: path.join(__dirname, 'Bootstrapper.mjs'),
+				bootstrapper: path.join(__dirname, 'Bootstrapper', 'Entry.mjs'),
 			},
 			context: __dirname,
 			output: {

@@ -1,8 +1,8 @@
+import { LOG_DEBUG } from '../Logger.mjs';
+
 const { src } = document.currentScript;
 
-import { LOG_DEBUG } from './Logger.mjs';
-
-class Bootstrapper {
+export class Bootstrapper {
 	constructor(config){
 		this.config = config;
 
@@ -33,5 +33,3 @@ class Bootstrapper {
 		return this.directory + 'worker:process/' + encodeURIComponent(dest);
 	}
 };
-
-window.TompBootstrapper = Bootstrapper;
