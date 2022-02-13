@@ -121,6 +121,8 @@ export class RewriteElements {
 					type: 'custom',
 					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
 				},
+				// see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/nonce
+				{ name: 'nonce', type: 'delete' },
 			],
 		},
 		{
@@ -136,16 +138,6 @@ export class RewriteElements {
 					wrap: (value, url, element) => this.wrap_textContent(value, url, element, true),
 					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
 				},
-			],
-		},
-		// see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/nonce
-		{
-			name: {
-				tag: /[]/,
-				class: 'HTMLElement',
-			},
-			attributes: [
-				{ name: 'nonce', type: 'delete' },
 			],
 		},
 		{
