@@ -26,7 +26,7 @@ export class SyncClient {
 
 		return response;
 	}
-	fetch(url, init){
+	fetch(url, init = {}){
 		const request = new Request(url, init);
 		
 		const options = {	
