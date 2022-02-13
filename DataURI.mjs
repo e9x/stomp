@@ -1,8 +1,12 @@
+import { decode_base64, encode_base64 } from './Base64.mjs';
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 const protocol = 'data:';
 
 export function ParseDataURI(href){
-	if(href instanceof URL)href = href.href;
-	else if(typeof href != 'string')throw new TypeError('Bad data URI type.');
+	href = String(href);
+
 	if(!href.startsWith(protocol))throw new Error('Not a data: URI');
 
 	href = href.slice(protocol.length);
@@ -11,23 +15,52 @@ export function ParseDataURI(href){
 	if(datapos == -1)throw new URIError('Invalid data: URI');
 
 	const split = `${href.slice(0, datapos)}`.split(';');
-	var mime = split.splice(0, 1);
+
+	let mime = split.splice(0, 1);
+
 	if(mime == undefined)throw new URIError('Invalid data: URI');
-	var base64 = false;
+
+	let base64 = false;
 
 	for(let part of split){
-		if(part.startsWith('charset='))mime += ';' + part;
-		else if(part == 'base64')base64 = true;
+		if(part.startsWith('charset=')){
+			mime += ';' + part;
+		}else if(part == 'base64'){
+			base64 = true;
+		}
 	}
 	
 	let data = decodeURIComponent(href.slice(datapos + 1));
 	
-	if(base64)data = atob(data);
+	if(base64){
+		data = decoder.decode(decode_base64(data));
+	}
 	
 	return {
 		mime,
 		data,
+		base64,
 	};
+}
+
+export function CreateDataURI(mime, data, base64){
+	const parts = [ mime ];
+
+	mime = String(mime);
+
+	if(base64){
+		if(!(data instanceof ArrayBuffer)){
+			data = String(data);
+			data = encoder.encode(data);
+		}
+
+		data = encode_base64(data);
+		parts.push('base64');
+	}else{
+		data = String(data);
+	}
+	
+	return `data:${parts.join(';')},${data}`;
 }
 
 /*console.log(ParseDataURI(`data:text/vnd-example+xyz;foo=bar;base64,R0lGODdh`));

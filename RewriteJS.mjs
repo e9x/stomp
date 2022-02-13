@@ -436,32 +436,4 @@ export class RewriteJS extends Rewriter {
 
 		return generate(ast);
 	}
-	serve(serve, url, worker){
-		serve = String(serve);
-
-		if(serve.startsWith('blob:')){
-			return serve;
-		}
-
-		if(serve.startsWith('data:')){
-			const {mime,data} = ParseDataURI(serve);
-			return `data:${mime},${encodeURIComponent(this.wrap(data, url))}`;
-		}
-
-		return this.tomp.url.wrap(serve, worker ? 'worker:wjs' : 'worker:js');
-	}
-	unwrap_serving(serving, url){
-		serve = String(serve);
-
-		if(serve.startsWith('blob:')){
-			return serve;
-		}
-
-		if(serving.startsWith('data:')){
-			const {mime,data} = ParseDataURI(serving);
-			return `data:${mime},${encodeURIComponent(this.unwrap(data, url))}`;
-		}
-		
-		return this.tomp.url.unwrap_ez(serving);
-	}
 };
