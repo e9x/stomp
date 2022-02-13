@@ -1,6 +1,8 @@
 import { Rewrite } from '../Rewrite.mjs';;
 import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 
+const decoder = new TextDecoder();
+
 export class DOMCookieRewrite extends Rewrite {
 	global_descriptor = Reflect.getOwnPropertyDescriptor(Document.prototype, 'cookie');
 	get value(){
@@ -19,11 +21,11 @@ export class DOMCookieRewrite extends Rewrite {
 					throw new TypeError('Illegal invocation');
 				}
 
-				const { responseText } = this.client.sync.fetch(`${this.client.tomp.directory}worker:get-cookies/?` + new URLSearchParams({
+				const { rawArrayBuffer } = this.client.sync.fetch(`${this.client.tomp.directory}worker:get-cookies/?` + new URLSearchParams({
 					remote: JSON.stringify(this.client.base),
 				}));
-
-				return responseText;
+				
+				return decoder.decode(rawArrayBuffer);
 			}),
 			set: wrap_function(this.global_descriptor.set, (target, that, [ value ]) => {
 				if(!legal_documents.includes(that)){

@@ -3,6 +3,8 @@ import { global } from '../../Global.mjs';
 import { Reflect } from '../RewriteUtil.mjs';
 import { mirror_class } from '../NativeUtil.mjs';
 
+const decoder = new TextDecoder();
+
 export class StorageRewrite extends Rewrite {
 	StorageHandler = {
 		get: (target, prop, receiver) => {
@@ -64,24 +66,31 @@ export class StorageRewrite extends Rewrite {
 			return true;
 		},
 		has: (target, prop) => {
-			const { responseText } = this.client.sync.fetch(this.worker_storage + new URLSearchParams({
+			const { rawArrayBuffer } = this.client.sync.fetch(this.worker_storage + new URLSearchParams({
 				func: 'hasItem',
 				args: JSON.stringify([ this.is_session(target), prop, this.client.base ]),
 			}));
 
-			return JSON.parse(responseText);
+			return this.parse_worker_storage(rawArrayBuffer);
 		},
 		ownKeys: target => {
-			const { responseText } = this.client.sync.fetch(this.worker_storage + new URLSearchParams({
+			const { rawArrayBuffer } = this.client.sync.fetch(this.worker_storage + new URLSearchParams({
 				func: 'getKeys',
 				args: JSON.stringify([ this.is_session(target), this.client.base ]),
 			}));
 
-			const keys = JSON.parse(responseText);
+			const keys = this.parse_worker_storage(rawArrayBuffer);
 
 			return Reflect.ownKeys(target).concat(keys);
 		},
 	};
+	parse_worker_storage(rawArrayBuffer){
+		if(rawArrayBuffer.byteLength === 0){
+			return null;
+		}else{
+			return JSON.parse(decoder.decode(rawArrayBuffer));
+		}
+	}
 	get_proxy(target){
 		if(target === this.sessionStorageTarget){
 			return this.sessionStorage;
@@ -119,16 +128,12 @@ export class StorageRewrite extends Rewrite {
 
 				key = String(key);
 				
-				const { responseText } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
+				const { rawArrayBuffer } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
 					func: 'getItem',
 					args: JSON.stringify([ that.is_session(this), key, that.client.base ]),
 				}));
 
-				if(responseText === ''){
-					return null;
-				}else{
-					return JSON.parse(responseText);
-				}
+				return that.parse_worker_storage(rawArrayBuffer);
 			}
 			key(keyNum = unspecified){
 				if(keyNum === unspecified){
@@ -137,24 +142,20 @@ export class StorageRewrite extends Rewrite {
 
 				keyNum = Number(keyNum);
 				
-				const { responseText } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
+				const { rawArrayBuffer } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
 					func: 'getItem',
 					args: JSON.stringify([ that.is_session(this), keyNum, that.client.base ]),
 				}));
 
-				if(responseText === ''){
-					return null;
-				}else{
-					return JSON.parse(responseText);
-				}
+				return that.parse_worker_storage(rawArrayBuffer);
 			}
 			get length(){
-				const { responseText } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
+				const { rawArrayBuffer } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
 					func: 'length',
 					args: JSON.stringify([ that.is_session(this), that.client.base ]),
 				}));
 				
-				return JSON.parse(responseText);
+				return that.parse_worker_storage(rawArrayBuffer);
 			}
 			removeItem(key = unspecified){
 				if(key === unspecified){
@@ -176,16 +177,12 @@ export class StorageRewrite extends Rewrite {
 				key = String(key);
 				value = String(value);
 
-				const { responseText } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
+				const { rawArrayBuffer } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
 					func: 'setItem',
 					args: JSON.stringify([ that.is_session(this), key, value, that.client.base ]),
 				}));
 
-				if(responseText === ''){
-					return null;
-				}else{
-					return JSON.parse(responseText);
-				}
+				return that.parse_worker_storage(rawArrayBuffer);
 			}
 			constructor(){
 				throw new TypeError(`Illegal constructor`);
