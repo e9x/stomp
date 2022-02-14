@@ -4,7 +4,7 @@ import { SendGetCookies, SendSetCookies, SendBinary, SendForm, SendHTML, SendJS,
 import { openDB } from 'idb/with-async-ittr';
 import { create_db as create_cookie_db } from './Cookies.mjs';
 import { create_db as create_storage_db } from './Storage.mjs';
-import { SyncRequest } from './SyncRequest.mjs';
+import { SyncServer } from './SyncServer.mjs';
 
 export class Server {
 	session = Math.random();
@@ -13,7 +13,7 @@ export class Server {
 		this.request = this.request.bind(this);
 		this.ready = this.work();
 
-		this.sync_request = new SyncRequest(this);
+		this.sync_request = new SyncServer(this);
 		this.sync_request.work();
 	}
 	async work(){

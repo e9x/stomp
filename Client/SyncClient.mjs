@@ -2,6 +2,7 @@ import { decode_base64, encode_base64 } from '../Base64.mjs';
 import { global } from '../Global.mjs';
 import { engine } from '../Environment.mjs';
 import { Reflect } from './RewriteUtil.mjs';
+import { encode_cookie, decode_cookie } from '../EncodeCookies.mjs';
 
 const { Request } = global;
 
@@ -69,7 +70,7 @@ export class SyncClient {
 		const id = 'sync-request-' + Math.random().toString(16).slice(2);
 		const regex = new RegExp(`${id}=(.*?)(;|$)`);
 		
-		this.client.cookie.value = `${id}=${encodeURIComponent(JSON.stringify([ 'outgoing', args ]))}; path=${this.client.tomp.directory}; max-age=10`;
+		this.client.cookie.value = `${id}=${encode_cookie(JSON.stringify([ 'outgoing', args ]))}; path=${this.client.tomp.directory}; max-age=10`;
 		
 		let name;
 		let data;
@@ -88,11 +89,11 @@ export class SyncClient {
 		}
 
 		if(!cycles){
-			this.client.tomp.log.error('Used max cycles when requesting', url);
+			throw this.client.tomp.log.error('Used max cycles when requesting', url);
 		}
 		
 		this.client.cookie.value = `${id}=; path=${this.client.tomp.directory}; expires=${new Date(0)}`;
-
+		
 		return this.create_response(data);
 	}
 };
