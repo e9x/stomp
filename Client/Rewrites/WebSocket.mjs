@@ -21,8 +21,6 @@ export class WebSocketRewrite extends Rewrite {
 		const bare_ws = new URL(this.client.tomp.bare + 'v1/', this.client.host);
 		bare_ws.protocol = bare_ws.protocol == 'https:' ? 'wss:' : 'ws:';
 		
-		const bare_ws_meta = new URL(that.client.tomp.bare + 'v1/ws-meta', this.client.host);
-
 		const didnt_specify = Symbol();
 
 		const instances = new WeakSet();
@@ -40,7 +38,7 @@ export class WebSocketRewrite extends Rewrite {
 			#protocol = '';
 			#extensions = '';
 			#url = '';
-			#id = Math.random().toString(36).slice(2);
+			#id = '';
 			async #read_meta({ headers }){
 				const lower_headers = {};
 				
@@ -89,6 +87,13 @@ export class WebSocketRewrite extends Rewrite {
 				if(cookies.length > 0){
 					request_headers['Cookie'] = cookies.toString();
 				}
+
+				this.#id = await(await Reflect.apply(that.client.request.global_fetch, global, [
+					that.client.tomp.bare + 'v1/ws-new-meta',
+					{
+						method: 'GET',
+					}
+				])).text();
 				
 				this.#socket = new that.global(bare_ws, [
 					'bare',
@@ -112,7 +117,7 @@ export class WebSocketRewrite extends Rewrite {
 
 				this.#socket.addEventListener('open', async event => {
 					const meta = await(await Reflect.apply(that.client.request.global_fetch, global, [
-						bare_ws_meta,
+						that.client.tomp.bare + 'v1/ws-meta',
 						{
 							headers: {
 								'x-bare-id': this.#id,
