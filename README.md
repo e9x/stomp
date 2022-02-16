@@ -3,7 +3,7 @@
 This repository implements the proxy model found [here](https://github.com/tomphttp/specifications/blob/master/ProxyModel.md).
 
 - [Demo](https://tomp.sys32.dev/)
-- [Frontend](https://github.com/waterswat/toomanyproxies-frontend)
+- [Frontend](https://github.com/tomphttp/toomanyproxies-frontend)
 
 ## Usage
 
