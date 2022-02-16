@@ -66,7 +66,7 @@ export class WebSocketRewrite extends Rewrite {
 				Reflect.setPrototypeOf(request_headers, null);
 				
 				request_headers['Host'] = remote.host;
-				request_headers['Origin'] = that.client.base.origin;
+				request_headers['Origin'] = that.client.base.toOrigin();
 				request_headers['Pragma'] = 'no-cache';
 				request_headers['Cache-Control'] = 'no-cache';
 				request_headers['Upgrade'] = 'websocket';
