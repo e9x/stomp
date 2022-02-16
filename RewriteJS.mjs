@@ -436,4 +436,11 @@ export class RewriteJS extends Rewriter {
 
 		return generate(ast);
 	}
+	serve(serve, url, worker){
+		if(worker){
+			return super.serve(serve, url, 'worker:wjs');
+		}else{
+			return super.serve(serve, url);
+		}
+	}
 };

@@ -11,7 +11,7 @@ export class Rewriter {
 	get overwrites_unwrap(){
 		return this.unwrap !== Rewriter.prototype.unwrap;
 	}
-	serve(serve, url){
+	serve(serve, url, service = this.constructor.service){
 		serve = String(serve);
 		
 		if(serve.startsWith('data:')){
@@ -26,7 +26,7 @@ export class Rewriter {
 			return CreateDataURI(mime, wrapped, base64);
 		}
 
-		return this.tomp.url.wrap(serve, this.constructor.service);
+		return this.tomp.url.wrap(serve, service);
 	}
 	unwrap_serving(serving, url){
 		serving = String(serving);
