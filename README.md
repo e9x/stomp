@@ -13,7 +13,7 @@ For more features, specify the `--help` option when running the CLI.
 
 ## Wiki
 
-Documentation for components such as the Bootstrapper can be found on [the wiki](https://github.com/tomphttp/toomanyproxies/wiki).
+Documentation for components such as the Bootstrapper can be found in [the wiki](https://github.com/tomphttp/toomanyproxies/wiki).
 
 ### Quickstart
 
