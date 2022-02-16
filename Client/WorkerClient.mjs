@@ -19,7 +19,7 @@ export class WorkerClient extends Client {
 		*/
 		global.importScripts = wrap_function(global.importScripts, (target, that, scripts) => {
 			for(let i = 0; i < scripts.length; i++){
-				scripts[i] = this.tomp.url.wrap(new URL(scripts[i], this.location.proxy), this.location.proxy);
+				scripts[i] = this.tomp.js.serve(new URL(scripts[i], this.location.proxy), this.location.proxy, true);
 			}
 
 			return Reflect.apply(target, that, scripts);
