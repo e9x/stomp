@@ -335,7 +335,24 @@ export class RewriteElements {
 				{
 					name: 'href',
 					type: 'delete',
-					wrap: (value, url, element) => value,
+					wrap: (value, url, element) => {
+						let href;
+						
+						const resolved = new URL(href, url).href;
+						const as = element.attributes.get('as');
+						const rel = element.attributes.get('rel');
+						const wrapped = this.wrap_link(url, resolved, rel, as);
+
+						if(wrapped === undefined){
+							element.attributes.delete('href');
+						}else{
+							element.attributes.set('href', wrapped);
+						}
+
+						element.attributes.set('data-tomp-href', href);
+						
+						return value;
+					},
 				},
 				{
 					name: 'rel',
@@ -568,7 +585,7 @@ export class RewriteElements {
 					if(unwrapped_keys.includes(name)){
 						continue;
 					}
-					
+
 					if(!this.test_name(name, data.name)){
 						continue;
 					}
@@ -598,7 +615,7 @@ export class RewriteElements {
 						if(wrap){
 							element.attributes.set(`data-tomp-${name}`, value);
 						}
-
+						
 						element.attributes.set(name, changed);
 					}
 				}
