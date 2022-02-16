@@ -375,6 +375,8 @@ export class RewriteElements {
 		return (value, url, element) => {
 			let href;
 			
+			// console.log('run link');
+
 			if(name === 'href'){
 				href = value;
 			}else if(element.attributes.has('data-tomp-href')){
@@ -382,6 +384,7 @@ export class RewriteElements {
 			}else if(element.attributes.has('href')){
 				href = element.attributes.get('href');
 			}else{
+				// console.log('where is href in', name);
 				return value;
 			}
 
@@ -407,6 +410,7 @@ export class RewriteElements {
 			}else if(element.attributes.has('rel')){
 				rel = element.attributes.get('rel');
 			}else{
+				// console.log('where is rel in', name);
 				return value;
 			}
 
@@ -416,7 +420,11 @@ export class RewriteElements {
 			if(wrapped === undefined){
 				element.attributes.delete('href');
 			}else{
-				element.attributes.set('href', wrapped);
+				if(name === 'href'){
+					value = wrapped;
+				}else{
+					element.attributes.set('href', wrapped);
+				}
 			}
 
 			element.attributes.set('data-tomp-href', href);
@@ -735,7 +743,7 @@ export class RewriteElements {
 				}
 
 				const changed = this.abstract_type(value, url, element, data, true);
-					
+				
 				/*
 				if:
 					not a class: node.getAttribute
