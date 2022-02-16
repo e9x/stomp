@@ -392,6 +392,7 @@ export class RewriteElements {
 	];
 	wrap_link(url, resolved, rel, as){
 		switch(rel){
+			case'prefetch':
 			case'preload':
 				switch(as){
 					case'style':
@@ -433,6 +434,9 @@ export class RewriteElements {
 		}
 
 		switch(data.type){
+			case'delete':
+				return null;
+				break;
 			case'css':
 				if(wrap){
 					return this.tomp.css.wrap(value, url, data.context);
@@ -473,7 +477,7 @@ export class RewriteElements {
 						}
 				}
 		}
-
+		
 		return value;
 	}
 	// persist is an object containing data usually stored once per page rewrite
@@ -515,6 +519,23 @@ export class RewriteElements {
 			element.attributes.set('target', persist.one_target);
 		}
 		
+		const unwrapped_keys = [];
+		
+		if(!wrap){
+			for(let name of [...element.attributes.keys()]){
+				if(name.startsWith('data-tomp-')){
+					const og_name = name.slice('data-tomp-'.length);
+		
+					element.attributes.set(og_name, element.attributes.get(name));
+					element.attributes.delete(name);
+		
+					unwrapped_keys.push(og_name);
+
+					continue;
+				}
+			}
+		}
+		
 		for(let ab of this.abstract){
 			if(!this.test_name(element.type, ab.name.tag))continue;
 			
@@ -544,23 +565,18 @@ export class RewriteElements {
 				}
 				
 				for(let name of [...element.attributes.keys()]){
+					if(unwrapped_keys.includes(name)){
+						continue;
+					}
+					
 					if(!this.test_name(name, data.name)){
 						continue;
 					}
 					
-					if(data.type === 'delete' && !wrap && element.attributes.has(`data-tomp-${name}`)){
-						element.attributes.set(name, element.attributes.get(`data-tomp-${name}`));
-						element.attributes.delete(`data-tomp-${name}`);
-					}
-					
-					if(!element.attributes.has(name)){
-						continue;
-					}
-
 					let value = element.attributes.get(name);
 
 					if(!value && !data.allow_empty){
-						return '';
+						continue;
 					}
 
 					if('condition' in data){
@@ -576,7 +592,9 @@ export class RewriteElements {
 					
 					const changed = this.abstract_type(value, url, element, data, wrap);
 					
-					if(changed !== undefined){
+					if(changed === null){
+						element.attributes.delete(`${name}`)
+					}else if(changed !== undefined){
 						if(wrap){
 							element.attributes.set(`data-tomp-${name}`, value);
 						}

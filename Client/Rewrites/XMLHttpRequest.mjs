@@ -40,7 +40,7 @@ export class XMLHttpRequestRewrite extends Rewrite {
 			#response_headers = new Headers();
 			#method = '';
 			#url = '';
-			#async = false;
+			#async = true;
 			#username = undefined;
 			#password = undefined;
 			#responseType = '';
@@ -150,6 +150,11 @@ export class XMLHttpRequestRewrite extends Rewrite {
 
 				this.#readyState = DONE;
 				this.#response = buffer;
+
+				if(!response){
+					console.trace(response);
+					debugger;
+				}
 
 				this.#dispatch_readyState();
 

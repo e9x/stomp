@@ -3,6 +3,7 @@ import { global } from '../Global.mjs';
 import { engine } from '../Environment.mjs';
 import { Reflect } from './RewriteUtil.mjs';
 import { encode_cookie, decode_cookie } from '../EncodeCookies.mjs';
+import { status_empty } from '../Worker/TOMPFetch.mjs';
 
 const { Request } = global;
 
@@ -21,7 +22,13 @@ export class SyncClient {
 		
 		const { buffer: rawArrayBuffer } = decode_base64(base64ArrayBuffer);
 
-		const response = new Response(rawArrayBuffer, init);
+		let response;
+		
+		if(status_empty.includes(init.status)){
+			response = new Response(undefined, init);
+		}else{
+			response = new Response(rawArrayBuffer, init);
+		}
 
 		response.rawArrayBuffer = rawArrayBuffer;
 
@@ -44,7 +51,7 @@ export class SyncClient {
 			options.headers = {};
 		}
 
-		let body;
+		let body = undefined;
 
 		if(init.body instanceof ArrayBuffer){
 			body = encode_base64(init.body);
@@ -89,7 +96,7 @@ export class SyncClient {
 		}
 
 		if(!cycles){
-			throw this.client.tomp.log.error('Used max cycles when requesting', url);
+			throw new RangeError('Used max cycles when requesting', url);
 		}
 		
 		this.client.cookie.value = `${id}=; path=${this.client.tomp.directory}; expires=${new Date(0)}`;
