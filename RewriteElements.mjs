@@ -1,5 +1,7 @@
 import { parseSrcset, stringifySrcset } from 'srcset';
 
+const attribute_original = 'data-tomp-value-';
+
 export class TOMPElement {
 	attributes = new Map();
 	detach(){
@@ -96,79 +98,106 @@ export class RewriteElements {
 			element.attributes.set('target', persist.one_target);
 		}
 		
-		const original_restored = [];
-
-		if(!wrap){
-			for(let [name,value] of [...element.attributes]){
-				const match = name.match(/^data-tomp-value-(.*?)$/);
-				
-				if(!match){
-					continue;
-				}
-
+		for(let [name,value] of [...element.attributes]){
+			let context;
+			
+			if(wrap){
+				context = this.set_attribute(name, value, element, url);
+			}else{
+				context = this.get_attribute(name, value, element, url);
+			}
+			
+			if(context.deleted){
 				element.attributes.delete(name);
-
-				const [, original_name] = match;
-
-				element.attributes.set(original_name, value);
-
-				original_restored.push(original_name);
+			}else{
+				element.attributes.set(name, context.value);
 			}
 		}
-
-		const rewrites = [
-			{
-				name: {
-					tag: 'a',
-					class: 'a',
-				},
-				attributes: [
-					{
-						name: {
-							tag: 'href',
-							class: 'href',
-						},
-						wrap: (name, value, element, url, context) => {
-							context.value = this.tomp.html.serve(new URL(value, url), url).toString();
-							context.modified = true;
-						},
-						unwrap: (name, value, element, url, context) => {
-							context.value = this.tomp.html.unwrap_serving(value, url).toString();
-							context.modified = true;
-						},
+	}
+	rewrites = [
+		{
+			name: {
+				tag: 'a',
+				class: 'a',
+			},
+			attributes: [
+				{
+					name: {
+						tag: 'href',
+						class: 'href',
 					},
-				],
-			}
-		];
-		
-		for(let rewrite of rewrites){
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.html.serve(new URL(value, url), url).toString();
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.html.unwrap_serving(value, url).toString();
+						context.modified = true;
+					},
+				},
+			],
+		}
+	];
+	get_attribute(name, value, element, url){
+		if(name.startsWith(attribute_original)){
+			return {
+				deleted: true,
+			};
+		}
+
+		if(element.attributes.has(attribute_original + name)){
+			return {
+				value: element.attributes.get(attribute_original + name),
+			};
+		}
+
+		for(let rewrite of this.rewrites){
 			if(rewrite.name.tag == element.type){
 				for(let [name,value] of [...element.attributes]){
-					if(!wrap && original_restored.includes(name)){
-						continue;
-					}
-
 					for(let attr of rewrite.attributes){
 						const context = {};
-
-						if(wrap){
-							attr.wrap(name, value, element, url, context);
-						}else{
-							attr.unwrap(name, value, element, url, context);
-						}
 						
-						if(context.deleted){
-							element.attributes.delete(name);
-						}else if(context.modified){
-							element.attributes.set(name, context.value);
-
-							if(wrap){
-								element.attributes.set(`data-tomp-value-${name}`, value);
-							}
-						}
+						attr.unwrap(name, value, element, url, context);
+						
+						return context;
 					}
 				}
 			}
 		}
+
+		return { value };
+	}
+	set_attribute(name, value, element, url){
+		if(name.startsWith(attribute_original)){
+			return {
+				deleted: true,
+			};
+		}
+
+		if(element.attributes.has(attribute_original + name)){
+			return {
+				value: element.attributes.get(attribute_original + name),
+			};
+		}
+
+		for(let rewrite of this.rewrites){
+			if(rewrite.name.tag == element.type){
+				for(let [name,value] of [...element.attributes]){
+					for(let attr of rewrite.attributes){
+						const context = {};
+						
+						attr.wrap(name, value, element, url, context);
+						
+						if(context.modified){
+							element.attributes.set(attribute_original + name, value);
+						}
+
+						return context;
+					}
+				}
+			}
+		}
+
+		return { value };
 	}
 };
