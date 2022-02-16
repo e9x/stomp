@@ -96,7 +96,7 @@ export class SyncClient {
 		}
 
 		if(!cycles){
-			throw new RangeError('Used max cycles when requesting', url);
+			throw new RangeError(`Used max cycles when requesting ${url}`);
 		}
 		
 		this.client.cookie.value = `${id}=; path=${this.client.tomp.directory}; expires=${new Date(0)}`;
