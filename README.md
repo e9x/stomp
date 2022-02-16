@@ -11,7 +11,6 @@ We provide a command-line interface for compiling the code.
 
 For more features, specify the `--help` option when running the CLI.
 
-
 ## Wiki
 
 Documentation for components such as the Bootstrapper can be found on [the wiki](https://github.com/tomphttp/toomanyproxies/wiki).
