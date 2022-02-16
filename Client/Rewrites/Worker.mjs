@@ -18,7 +18,7 @@ export class WorkerRewrite extends Rewrite {
 				url = new URL(url, that.client.base);
 				
 				if(url.origin != that.client.base.toOrigin()){
-					throw new DOMException(`Failed to construct 'Worker': Script at'${url}' cannot be accessed from origin '${that.client.base.toOrigin()}'.`);
+					// throw new DOMException(`Failed to construct 'Worker': Script at '${url}' cannot be accessed from origin '${that.client.base.toOrigin()}'.`);
 				}
 				
 				this.#worker = new _Worker(that.client.tomp.js.serve(url, that.client.base, true), options);

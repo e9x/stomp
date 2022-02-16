@@ -86,7 +86,7 @@ export class RewriteHTML extends Rewriter {
 				childNodes: [
 					{
 						nodeName: '#text',
-						value: `${global_client}(${JSON.stringify(this.tomp)})`,
+						value: `if(typeof ${global_client}==='function')${global_client}(${JSON.stringify(this.tomp)})`,
 					}
 				],
 				attrs: [

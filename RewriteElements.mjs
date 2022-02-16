@@ -649,6 +649,14 @@ export class RewriteElements {
 	}
 	// todo: form action
 	get_attribute(element, url, name, use_class, value, class_name){
+		// data.type === 'delete' && 
+		// data-tomp- is the get/setAttribute value
+		
+		if(/*!use_class && */element.attributes.has(`data-tomp-${name}`)){
+			return element.attributes.get(`data-tomp-${name}`);
+		}
+
+		//  further operations require a value
 		if(value == undefined)return undefined;
 
 		for(let ab of this.abstract){
@@ -675,12 +683,6 @@ export class RewriteElements {
 				
 				if(!value && !data.allow_empty){
 					return '';
-				}
-				
-				// data.type === 'delete' && 
-				// data-tomp- is the get/setAttribute value
-				if((data.type === 'delete' || !use_class) && element.attributes.has(`data-tomp-${name}`)){
-					return element.attributes.get(`data-tomp-${name}`);
 				}
 				
 				if(!use_class && !element.attributes.has(name) && !data.allow_notexist){
