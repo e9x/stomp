@@ -104,9 +104,6 @@ export class StorageRewrite extends Rewrite {
 	is_session(target){
 		return target === this.sessionStorageTarget;
 	}
-	constructor(client){
-		super(client);
-	}
 	work(){
 		this.worker_storage = `${this.client.tomp.directory}worker:storage/?`;
 

@@ -43,6 +43,7 @@ export class PageClient extends Client {
 		delete global.CookieStore;
 		delete global.cookieStore;
 		delete global.CookieStoreManager;
+		delete global.CookieChangeEvent;
 		delete global.ServiceWorker;
 		delete global.ServiceWorkerContainer;
 		delete global.ServiceWorkerRegistration;

@@ -118,6 +118,26 @@ export async function SendSetCookies(server, server_request){
 	});
 }
 
+import * as CookieStore from './CookieStore.mjs';
+
+export async function SendCookieStore(server, server_request){
+	const url = new URL(server_request.url);
+	const func = url.searchParams.get('func');
+	const args = JSON.parse(url.searchParams.get('args'));
+	
+	if(!(func in CookieStore)){
+		console.warn('Unknown function:', func);
+		return server.json(400);
+	}
+
+	try{
+		return server.json(200, await CookieStore[func](server, ...args));
+	}catch(err){
+		console.error(err);
+		return server.json(500, { message: err.message });
+	}
+}
+
 import * as Storage from './Storage.mjs';
 
 export async function SendStorage(server, server_request){
