@@ -335,53 +335,17 @@ export class RewriteElements {
 				{
 					name: 'href',
 					type: 'delete',
-					wrap: (value, url, element) => {
-						let href;
-						
-						const resolved = new URL(href, url).href;
-						const as = element.attributes.get('as');
-						const rel = element.attributes.get('rel');
-						const wrapped = this.wrap_link(url, resolved, rel, as);
-
-						if(wrapped === undefined){
-							element.attributes.delete('href');
-						}else{
-							element.attributes.set('href', wrapped);
-						}
-
-						element.attributes.set('data-tomp-href', href);
-						
-						return value;
-					},
+					wrap: this.link_wrap('href'),
 				},
 				{
 					name: 'rel',
 					type: 'delete',
-					wrap: (value, url, element) => {
-						let href;
-						
-						if(element.attributes.has('data-tomp-href')){
-							href = element.attributes.get('data-tomp-href');
-						}else if(element.attributes.has('href')){
-							href = element.attributes.get('href');
-						}else{
-							return value;
-						}
-
-						const resolved = new URL(href, url).href;
-						const as = element.attributes.get('as');
-						const wrapped = this.wrap_link(url, resolved, value, as);
-
-						if(wrapped === undefined){
-							element.attributes.delete('href');
-						}else{
-							element.attributes.set('href', wrapped);
-						}
-
-						element.attributes.set('data-tomp-href', href);
-						
-						return value;
-					},
+					wrap: this.link_wrap('rel'),
+				},
+				{
+					name: 'as',
+					type: 'delete',
+					wrap: this.link_wrap('as'),
 				},
 			],
 		},
@@ -407,6 +371,59 @@ export class RewriteElements {
 			],
 		},
 	];
+	link_wrap(name){
+		return (value, url, element) => {
+			let href;
+			
+			if(name === 'href'){
+				href = value;
+			}else if(element.attributes.has('data-tomp-href')){
+				href = element.attributes.get('data-tomp-href');
+			}else if(element.attributes.has('href')){
+				href = element.attributes.get('href');
+			}else{
+				return value;
+			}
+
+			let as;
+			
+			if(name === 'as'){
+				as = value;
+			}else if(element.attributes.has('data-tomp-as')){
+				as = element.attributes.get('data-tomp-as');
+			}else if(element.attributes.has('as')){
+				as = element.attributes.get('as');
+			}else{
+				// return value;
+				as = undefined;
+			}
+
+			let rel;
+			
+			if(name === 'rel'){
+				rel = value;
+			}else if(element.attributes.has('data-tomp-rel')){
+				rel = element.attributes.get('data-tomp-rel');
+			}else if(element.attributes.has('rel')){
+				rel = element.attributes.get('rel');
+			}else{
+				return value;
+			}
+
+			const resolved = new URL(href, url).href;
+			const wrapped = this.wrap_link(url, resolved, rel, as);
+
+			if(wrapped === undefined){
+				element.attributes.delete('href');
+			}else{
+				element.attributes.set('href', wrapped);
+			}
+
+			element.attributes.set('data-tomp-href', href);
+			
+			return value;
+		};
+	}
 	wrap_link(url, resolved, rel, as){
 		switch(rel){
 			case'prefetch':
