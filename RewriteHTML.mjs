@@ -141,14 +141,17 @@ export class RewriteHTML extends Rewriter {
 	// excellent resource
 	// https://web.archive.org/web/20210514140514/https://www.otsukare.info/2015/03/26/refresh-http-header
 	wrap_http_refresh(value, url){
-		const urlstart = value.indexOf('url=');
-		if(urlstart == -1)return value;
+		const urlstart = value.toLowerCase().indexOf('url=');
+		
+		if(urlstart == -1){
+			return value;
+		}
 
 		var urlend = value.indexOf(';', urlstart);
 		if(urlend == -1)urlend = value.indexOf(',', urlstart);
 		if(urlend == -1)urlend = value.length;
 		
 		const resolved = new URL(value.slice(urlstart + 4, urlend), url).href;
-		return value.slice(0, urlstart) + this.serve(resolved, url) + value.slice(urlend);
+		return value.slice(0, urlstart) + 'url=' + this.serve(resolved, url) + value.slice(urlend);
 	}
 };
