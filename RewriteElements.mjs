@@ -256,6 +256,16 @@ export class RewriteElements {
 						context.modified = true;
 					},
 				},
+				{
+					name: new TargetName('integrity'),
+					mock: true,
+					wrap: (name, value, element, url, context) => {
+						context.deleted = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						throw new Error('because this is a mock, getting it will always return the original attribute value');
+					},
+				},
 			],
 			// condition could be in attribute or content
 			// for scripts, if the type isnt a valid js mime then its ignored
@@ -299,6 +309,112 @@ export class RewriteElements {
 					context.modified = true;
 				},
 			},
+		},
+		{
+			name: new TargetName('img', 'HTMLImageElement'),
+			attributes: [
+				{
+					name: new TargetName(false, 'currentSrc'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.serve(new URL(value, url), url).toString();
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.unwrap_serving(value, url).toString();
+						context.modified = true;
+					},
+				},
+				{
+					name: new TargetName('lowsrc'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.serve(new URL(value, url), url).toString();
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.unwrap_serving(value, url).toString();
+						context.modified = true;
+					},
+				},
+			],
+		},
+		{
+			name: new TargetName(/^(video|audio)$/, 'HTMLMediaElement'),
+			attributes: [
+				{
+					name: new TargetName('src'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.serve(new URL(value, url), url).toString();
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.unwrap_serving(value, url).toString();
+						context.modified = true;
+					},
+				},
+			],
+		},
+		{
+			name: new TargetName('video', 'HTMLVideoElement'),
+			attributes: [
+				{
+					name: new TargetName('poster'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.serve(new URL(value, url), url).toString();
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.unwrap_serving(value, url).toString();
+						context.modified = true;
+					},
+				},
+				{
+					name: new TargetName('src'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.serve(new URL(value, url), url).toString();
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.unwrap_serving(value, url).toString();
+						context.modified = true;
+					},
+				},
+			],
+		},
+		{
+			name: new TargetName('input', 'HTMLInputElement'),
+			attributes: [
+				{
+					name: new TargetName('src'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.serve(new URL(value, url), url).toString();
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.unwrap_serving(value, url).toString();
+						context.modified = true;
+					},
+				},
+			],
+		},
+		{
+			name: new TargetName(/^(img|source)$/, /^(HTMLImageElement|HTMLSourceElement)$/),
+			attributes: [
+				// delete as in move to data-tomp-srcset, create attribute named srcset and set value to result of wrap
+				{
+					name: new TargetName('srcset'),
+					wrap: (value, url, element) => {
+						const parsed = parseSrcset(value);
+						
+						for(let src of parsed){
+							const resolved = new URL(src.url, url).href;
+							src.url = this.tomp.binary.serve(resolved, url);
+						}
+
+						return stringifySrcset(parsed);
+					},
+				},
+				{ name: 'src', type: 'url', service: 'binary' },
+			],
 		},
 	];
 	constructor(tomp){
@@ -441,6 +557,15 @@ export class RewriteElements {
 		return { value };
 	}
 	// attribute
+	unwrap_mock(name, value, element, url, context){
+		if(element.attributes.has(attribute_original + name)){
+			context.value = element.attributes.get(attribute_original + name);
+			context.modified = true;
+		}else{
+			context.deleted = true;
+			context.modified = true;
+		}
+	}
 	get_attribute(name, value, element, url){
 		if(name.startsWith(attribute_original)){
 			return {
@@ -459,18 +584,20 @@ export class RewriteElements {
 				continue;
 			}
 
-			for(let [aname,value] of [...element.attributes]){
-				for(let attr of ab.attributes){
-					if(!attr.name.test_tag(name)){
-						continue;
-					}
-					
-					const context = {};
-					
-					attr.unwrap(name, value, element, url, context);
-
-					return context;
+			for(let attr of ab.attributes){
+				if(!attr.name.test_tag(name)){
+					continue;
 				}
+				
+				const context = {};
+				
+				if(attr.mock){
+					this.unwrap_mock(name, value, element, url, context);
+				}else{
+					attr.unwrap(name, value, element, url, context);
+				}
+
+				return context;
 			}
 		}
 
@@ -511,7 +638,7 @@ export class RewriteElements {
 						
 						if(context.deleted){
 							element.attributes.delete(name);
-						}else{
+						}else if(context.modified){
 							element.attributes.set(name, context.value);
 						}
 
