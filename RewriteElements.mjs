@@ -645,7 +645,6 @@ export class RewriteElements {
 			}
 			
 			if('attributes' in ab){
-				// for(let [name,value] of [...element.attributes]){
 				for(let attr of ab.attributes){
 					
 					if(!attr.name.test_tag(name)){
@@ -667,7 +666,6 @@ export class RewriteElements {
 					}
 
 					return context;
-					// }
 				}
 			}
 		}
