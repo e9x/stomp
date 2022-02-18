@@ -66,9 +66,48 @@ export class TargetName {
 	}
 };
 
+function element_is_type(element, types){
+	let type;
+
+	if(element.attributes.has('type')){
+		type = element.attributes.get('type');
+	}else{
+		type = '';
+	}
+
+	return types.includes(get_mime(type).toLowerCase());
+}
+
 export class RewriteElements {
 	// no unwrap() === always use the original value
 	abstractions = [
+		{
+			name: new TargetName(true, 'HTMLElement'), // /HTML.*?Element/
+			attributes: [
+				{
+					name: new TargetName('style'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.css.wrap(value, url, 'declarationList');
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.css.unwrap(value, url, 'declarationList');
+						context.modified = true;
+					},
+				},
+				{
+					name: new TargetName(/^on.*?/, false),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.js.wrap(value, url);
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.js.unwrap(value, url);
+						context.modified = true;
+					},
+				},
+			],
+		},
 		{
 			name: new TargetName('iframe', 'HTMLIFrameElement'),
 			attributes: [
@@ -203,6 +242,64 @@ export class RewriteElements {
 				}
 			],
 		},
+		{
+			name: new TargetName('script', 'HTMLScriptElement'),
+			attributes: [
+				{
+					name: new TargetName('src'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.js.serve(new URL(value, url), url).toString();
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.js.unwrap_serving(value, url).toString();
+						context.modified = true;
+					},
+				},
+			],
+			// condition could be in attribute or content
+			// for scripts, if the type isnt a valid js mime then its ignored
+			content: {
+				wrap: (value, element, url, context) => {
+					if(!element_is_type(element, js_types)){
+						return;
+					}
+
+					context.value = this.tomp.js.wrap(value, url);
+					context.modified = true;
+				},
+				unwrap: (value, element, url, context) => {
+					if(!element_is_type(element, js_types)){
+						return;
+					}
+
+					context.value = this.tomp.js.unwrap(value, url);
+					context.modified = true;
+				},
+			},
+		},
+		{
+			name: new TargetName('style', 'HTMLStyleElement'),
+			// <style> is strictly content-only
+			content: {
+				wrap: (value, element, url, context) => {
+					if(!element_is_type(element, css_types)){
+						return;
+					}
+
+					context.value = this.tomp.css.wrap(value, url);
+					context.modified = true;
+				},
+				unwrap: (value, element, url, context) => {
+					if(!element_is_type(element, css_types)){
+						return;
+					}
+
+					context.value = this.tomp.css.unwrap(value, url);
+					context.modified = true;
+				},
+			},
+		},
 	];
 	constructor(tomp){
 		this.tomp = tomp;
@@ -265,6 +362,21 @@ export class RewriteElements {
 			original_names.push(original_name);
 		}
 
+		const text = element.text;
+
+		if(text){
+			if(wrap){
+				this.set_text(text, element, url);
+			}else{
+				const context = this.get_text(text, element, url);
+				
+				if(context.modified){
+					element.text = context.value;
+				}
+			}
+		}
+		
+
 		for(let [name,value] of [...element.attributes]){
 			if(wrap){
 				this.set_attribute(name, value, element, url);
@@ -289,6 +401,46 @@ export class RewriteElements {
 			console.log('no original', name, element.attributes);
 		}
 	}
+	// text
+	get_text(value, element, url){
+		for(let ab of this.abstractions){
+			if(!ab.name.test_tag(element.type)){
+				continue;
+			}
+			
+			if('content' in ab){
+				const context = {};
+
+				ab.content.unwrap(value, element, url, context);
+				
+				return context;
+			}
+		}
+
+		return { value };
+	}
+	set_text(value, element, url){
+		for(let ab of this.abstractions){
+			if(!ab.name.test_tag(element.type)){
+				continue;
+			}
+			
+			if('content' in ab){
+				const context = {};
+
+				ab.content.wrap(value, element, url, context);
+				
+				if(context.modified){
+					element.text = context.value;
+				}
+
+				return context;
+			}
+		}
+
+		return { value };
+	}
+	// attribute
 	get_attribute(name, value, element, url){
 		if(name.startsWith(attribute_original)){
 			return {
@@ -314,14 +466,7 @@ export class RewriteElements {
 					}
 					
 					const context = {};
-
-					/*
-					if(!attr.unwrap){
-						this.unwrap_original(name, value, element, url, context);
-					}else{
-						attr.unwrap(name, value, element, url, context);
-					}*/
-
+					
 					attr.unwrap(name, value, element, url, context);
 
 					return context;
@@ -344,32 +489,34 @@ export class RewriteElements {
 			};
 		}
 
-		for(let rewrite of this.abstractions){
-			if(!rewrite.name.test_tag(element.type)){
+		for(let ab of this.abstractions){
+			if(!ab.name.test_tag(element.type)){
 				continue;
 			}
+			
+			if('attributes' in ab){
+				for(let [name,value] of [...element.attributes]){
+					for(let attr of ab.attributes){
+						if(!attr.name.test_tag(name)){
+							continue;
+						}
 
-			for(let [name,value] of [...element.attributes]){
-				for(let attr of rewrite.attributes){
-					if(!attr.name.test_tag(name)){
-						continue;
-					}
+						const context = {};
+						
+						attr.wrap(name, value, element, url, context);
+						
+						if(context.modified || context.deleted){
+							element.attributes.set(attribute_original + name, value);
+						}
+						
+						if(context.deleted){
+							element.attributes.delete(name);
+						}else{
+							element.attributes.set(name, context.value);
+						}
 
-					const context = {};
-					
-					attr.wrap(name, value, element, url, context);
-					
-					if(context.modified || context.deleted){
-						element.attributes.set(attribute_original + name, value);
+						return context;
 					}
-					
-					if(context.deleted){
-						element.attributes.delete(name);
-					}else{
-						element.attributes.set(name, context.value);
-					}
-
-					return context;
 				}
 			}
 		}
