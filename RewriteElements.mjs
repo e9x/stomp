@@ -106,6 +106,29 @@ export class RewriteElements {
 						context.modified = true;
 					},
 				},
+				/*{
+					name: /[]/,
+					class_name: 'innerText',
+					type: 'custom',
+					wrap: (value, url, element) => this.wrap_textContent(value, url, element, true),
+					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
+				},
+				{
+					name: /[]/,
+					class_name: 'outerText',
+					type: 'custom',
+					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
+				},
+				// see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/nonce
+				*/
+				{
+					name: new TargetName('nonce'),
+					wrap: (name, value, element, url, context) => {
+						context.deleted = true;
+						context.modified = true;
+					},
+					unwrap: this.unwrap_mock,
+				},
 			],
 		},
 		{
@@ -142,6 +165,7 @@ export class RewriteElements {
 					name: new TargetName('name'),
 					wrap: (name, value, element, url, context) => {
 						context.deleted = true;
+						context.modified = true;
 					},
 				}
 			],
@@ -236,6 +260,7 @@ export class RewriteElements {
 								break;
 							default:	
 								context.deleted = true;
+								context.modified = true;
 								break;
 						}
 					},
@@ -260,6 +285,7 @@ export class RewriteElements {
 					name: new TargetName('integrity'),
 					wrap: (name, value, element, url, context) => {
 						context.deleted = true;
+						context.modified = true;
 					},
 					unwrap: this.unwrap_mock,
 				},
@@ -410,7 +436,17 @@ export class RewriteElements {
 						return stringifySrcset(parsed);
 					},
 				},
-				{ name: 'src', type: 'url', service: 'binary' },
+				{
+					name: new TargetName('src'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.serve(new URL(value, url), url).toString();
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.unwrap_serving(value, url).toString();
+						context.modified = true;
+					},	
+				},
 			],
 		},
 	];
@@ -500,18 +536,12 @@ export class RewriteElements {
 				
 				const context = this.get_attribute(name, value, element, url);
 				
-				if(context.modified){
+				if(context.deleted){
+					element.attributes.delete(name);
+				}else if(context.modified){
 					element.attributes.set(name, context.value);
 				}
 			}
-		}
-	}
-	unwrap_original(name, value, element, url, context){
-		if(element.attributes.has(attribute_original + name)){
-			context.value = element.attributes.get(attribute_original);
-			context.modified = true;				
-		}else{
-			console.log('no original', name, element.attributes);
 		}
 	}
 	// text
@@ -580,7 +610,7 @@ export class RewriteElements {
 			if(!ab.name.test_tag(element.type)){
 				continue;
 			}
-
+			
 			for(let attr of ab.attributes){
 				if(!attr.name.test_tag(name)){
 					continue;
@@ -615,28 +645,29 @@ export class RewriteElements {
 			}
 			
 			if('attributes' in ab){
-				for(let [name,value] of [...element.attributes]){
-					for(let attr of ab.attributes){
-						if(!attr.name.test_tag(name)){
-							continue;
-						}
-
-						const context = {};
-						
-						attr.wrap(name, value, element, url, context);
-						
-						if(context.modified || context.deleted){
-							element.attributes.set(attribute_original + name, value);
-						}
-						
-						if(context.deleted){
-							element.attributes.delete(name);
-						}else if(context.modified){
-							element.attributes.set(name, context.value);
-						}
-
-						return context;
+				// for(let [name,value] of [...element.attributes]){
+				for(let attr of ab.attributes){
+					
+					if(!attr.name.test_tag(name)){
+						continue;
 					}
+					
+					const context = {};
+					
+					attr.wrap(name, value, element, url, context);
+					
+					if(context.modified || context.deleted){
+						element.attributes.set(attribute_original + name, value);
+					}
+					
+					if(context.deleted){
+						element.attributes.delete(name);
+					}else if(context.modified){
+						element.attributes.set(name, context.value);
+					}
+
+					return context;
+					// }
 				}
 			}
 		}
