@@ -258,13 +258,10 @@ export class RewriteElements {
 				},
 				{
 					name: new TargetName('integrity'),
-					mock: true,
 					wrap: (name, value, element, url, context) => {
 						context.deleted = true;
 					},
-					unwrap: (name, value, element, url, context) => {
-						throw new Error('because this is a mock, getting it will always return the original attribute value');
-					},
+					unwrap: this.unwrap_mock,
 				},
 			],
 			// condition could be in attribute or content
@@ -591,12 +588,8 @@ export class RewriteElements {
 				
 				const context = {};
 				
-				if(attr.mock){
-					this.unwrap_mock(name, value, element, url, context);
-				}else{
-					attr.unwrap(name, value, element, url, context);
-				}
-
+				attr.unwrap(name, value, element, url, context);
+				
 				return context;
 			}
 		}
