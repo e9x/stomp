@@ -363,6 +363,8 @@ export class DOMRewrite extends Rewrite {
 				console.assert(typeof context.value === 'string', `Context value wasn't a string.`);
 				return context.value;
 			}
+
+			return null;
 		});
 
 		Element.prototype.setAttribute = wrap_function(Element.prototype.setAttribute, (target, that, args) => {

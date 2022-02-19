@@ -79,6 +79,22 @@ function element_is_type(element, types){
 }
 
 export class RewriteElements {
+	// attribute
+	unwrap_mock = fallback => (name, value, element, url, context) => {
+		if(element.attributes.has(attribute_original + name)){
+			context.value = element.attributes.get(attribute_original + name);
+			context.modified = true;
+		}else{
+			// not so much of a fallback
+			// rather a property handler
+			if(typeof fallback === 'function'){
+				fallback(name, value, element, url, context);
+			}else{
+				context.deleted = true;
+				context.modified = true;
+			}
+		}
+	}
 	// no unwrap() === always use the original value
 	abstractions = [
 		{
@@ -234,7 +250,7 @@ export class RewriteElements {
 						context.deleted = true;
 						context.modified = true;
 					},
-					unwrap: this.unwrap_mock,
+					unwrap: this.unwrap_mock(),
 				},
 			],
 		},
@@ -395,7 +411,7 @@ export class RewriteElements {
 						context.deleted = true;
 						context.modified = true;
 					},
-					unwrap: this.unwrap_mock,
+					unwrap: this.unwrap_mock(),
 				},
 			],
 			// condition could be in attribute or content
@@ -574,7 +590,10 @@ export class RewriteElements {
 						context.value = this.tomp.form.serve(new URL(value, url), url).toString();
 						context.modified = true;
 					},
-					unwrap: this.unwrap_mock,
+					unwrap: this.unwrap_mock((name, value, element, url, context) => {
+						context.value = this.tomp.form.unwrap_serving(value, url).toString();
+						context.modified = true;
+					}),
 				},
 				{
 					name: new TargetName('integrity'),
@@ -582,7 +601,7 @@ export class RewriteElements {
 						context.deleted = true;
 						context.modified = true;
 					},
-					unwrap: this.unwrap_mock,
+					unwrap: this.unwrap_mock(),
 				},
 			],
 		},
@@ -742,16 +761,6 @@ export class RewriteElements {
 
 		return { value };
 	}
-	// attribute
-	unwrap_mock(name, value, element, url, context){
-		if(element.attributes.has(attribute_original + name)){
-			context.value = element.attributes.get(attribute_original + name);
-			context.modified = true;
-		}else{
-			context.deleted = true;
-			context.modified = true;
-		}
-	}
 	has_attribute(name, element, url){
 		if(name.startsWith(attribute_original)){
 			return false;
@@ -773,6 +782,10 @@ export class RewriteElements {
 			};
 		}
 
+		if(value === null || value === undefined){
+			return { modified: false };
+		}
+
 		for(let ab of this.abstractions){
 			if(!ab.name.test_tag(element.type)){
 				continue;
@@ -791,7 +804,7 @@ export class RewriteElements {
 			}
 		}
 
-		return { value };
+		return { modified: false };
 	}
 	//following functions will modify the element
 	remove_attribute(name, element, url){
@@ -807,7 +820,7 @@ export class RewriteElements {
 				deleted: true,
 			};
 		}
-		
+
 		for(let ab of this.abstractions){
 			if(!ab.name.test_tag(element.type)){
 				continue;
@@ -833,6 +846,10 @@ export class RewriteElements {
 	}
 	// property
 	get_property(name, value, element, url, class_tag){
+		if(value === null || value === undefined){
+			return { modified: false };
+		}
+
 		for(let ab of this.abstractions){
 			if(!ab.name.test_class(class_tag)){
 				continue;
