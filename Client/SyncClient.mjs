@@ -3,7 +3,7 @@ import { global } from '../Global.mjs';
 import { engine } from '../Environment.mjs';
 import { Reflect } from './RewriteUtil.mjs';
 import { encode_cookie, decode_cookie } from '../EncodeCookies.mjs';
-import { status_empty } from '../Worker/TOMPFetch.mjs';
+import { status_empty } from '../Worker/Bare.mjs';
 
 const { Request } = global;
 

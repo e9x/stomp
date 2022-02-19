@@ -1,12 +1,19 @@
 // Implements the protocol for requesting bare data from a server
 // See ../Server/Send.mjs
-import TOMPError from '../TOMPError.mjs';
 
 const forbids_body = ['GET','HEAD'];
 
 export const status_empty = [101,204,205,304];
 
-export default async function TOMPFetch(server, url, server_request, request_headers){
+export class BareError extends Error {
+	constructor(status, body){
+		super(body.message);
+		this.status = status;
+		this.body = body;
+	}
+};
+
+export default async function BareFetch(server, url, server_request, request_headers){
 	if(url.protocol.startsWith('blob:')){
 		const response = await fetch(`blob:${location.origin}${url.path}`);
 		response.json_headers = Object.fromEntries(response.headers.entries());
@@ -39,7 +46,7 @@ export default async function TOMPFetch(server, url, server_request, request_hea
 	const response = await fetch(request);
 
 	if(!response.ok){
-		throw new TOMPError(400, {
+		throw new BareError(400, {
 			message: 'An error occured when retrieving data from the bare server. Verify your bare server is running and the configuration points to it.', 
 			received: {
 				status: response.status,

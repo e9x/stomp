@@ -1,7 +1,6 @@
 import { MapHeaderNamesFromArray } from './HeaderUtil.mjs'
 import { html_types, get_mime } from '../RewriteElements.mjs';
-import TOMPError from '../TOMPError.mjs';
-import TOMPFetch, { status_empty } from './TOMPFetch.mjs';
+import BareFetch, { BareError, status_empty } from './Bare.mjs';
 import { load_setcookies, get_cookies } from './Cookies.mjs';
 
 const remove_general_headers = [
@@ -227,7 +226,7 @@ export async function SendBinary(server, server_request, field){
 	try{
 		response = await TOMPFetch(server, url, server_request, exact_request_headers);
 	}catch(err){
-		if(err instanceof TOMPError)return server.json(err.status, err.message);
+		if(err instanceof BareError)return server.json(err.status, err.message);
 		else throw err;
 	}
 	const response_headers = await handle_common_response(server.tomp.binary, server, server_request, url, response);
@@ -261,7 +260,7 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	try{
 		response = await TOMPFetch(server, url, server_request, request_headers);
 	}catch(err){
-		if(err instanceof TOMPError)return server.json(err.status, err.body);
+		if(err instanceof BareError)return server.json(err.status, err.body);
 		else throw err;
 	}
 	
@@ -305,7 +304,7 @@ export async function SendHTML(server, server_request, field){
 	try{
 		response = await TOMPFetch(server, url, server_request, request_headers);
 	}catch(err){
-		if(err instanceof TOMPError)return server.json(err.status, err.body);
+		if(err instanceof BareError)return server.json(err.status, err.body);
 		else throw err;
 	}
 	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, response);

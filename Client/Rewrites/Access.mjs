@@ -102,7 +102,7 @@ export class AccessRewrite extends Rewrite {
 		else return desc;
 	}
 	set2(target, key, operate, righthand){
-		// key = this.normalize_key(key);
+		key = this.normalize_key(key);
 		// possibly a context
 		
 		if(typeof key === 'string'){
@@ -115,7 +115,7 @@ export class AccessRewrite extends Rewrite {
 				return target[global_client].access.set2(target, key, operate);
 			}
 		}
-		
+
 		return operate(this.get(target, key), key, righthand);
 	}
 	/*assign(righthand, assignments, member_assignments){
@@ -132,7 +132,7 @@ export class AccessRewrite extends Rewrite {
 	// identifier = value; identifier += value; identifier++;
 	// location = set2(location, 'location', proxy => proxy += 'test')
     set1(target, name, operate, set, righthand){
-		// name = this.normalize_key(name);
+		name = this.normalize_key(name);
 		const proxy = this.get(target, name);
 
 		const property = Symbol();
@@ -152,11 +152,11 @@ export class AccessRewrite extends Rewrite {
 		return result;
 	}
 	new2(target, key, args){
-		// key = this.normalize_key(key);
+		key = this.normalize_key(key);
 		return Reflect.construct(this.get(target[key], key), args);
 	}
 	call2(target, key, args){
-		// key = this.normalize_key(key);
+		key = this.normalize_key(key);
 		return Reflect.apply(this.get(target[key], key), target, args);
 	}
 	normalize_key(key){
@@ -167,7 +167,7 @@ export class AccessRewrite extends Rewrite {
 		}
 	}
 	get2(target, key){
-		// key = this.normalize_key(key);
+		key = this.normalize_key(key);
 		return this.get(target[key], key);
 	}
 	get(obj, key){

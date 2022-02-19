@@ -187,14 +187,14 @@ export class RewriteJS extends Rewriter {
 							ctx.node.object,
 							property_argument,
 							b.arrayExpression(ctx.parent.node.arguments),
-							b.literal(generate(ctx.node)),
+							b.literal(generate(ctx.parent.node)),
 						]));
 					}else if(ctx.parent.type === 'CallExpression' && ctx.parent_key === 'callee'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('call2')), [
 							ctx.node.object,
 							property_argument,
 							b.arrayExpression(ctx.parent.node.arguments),
-							b.literal(generate(ctx.node)),
+							b.literal(generate(ctx.parent.node)),
 						]));
 					}else if(ctx.parent.type === 'UpdateExpression' || ctx.parent.type === 'AssignmentExpression' && ctx.parent_key === 'left'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set2')), [
