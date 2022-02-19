@@ -96,8 +96,7 @@ export class RewriteElements {
 					},
 				},
 				{
-					name: /[]/,
-					class_name: 'textContent',
+					name: new TargetName(false, 'textContent'),
 					type: 'custom',
 					wrap: (value, url, element) => this.wrap_textContent(value, url, element, true),
 					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
