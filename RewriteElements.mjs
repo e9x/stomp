@@ -746,38 +746,38 @@ export class RewriteElements {
 	}
 	// text
 	get_text(value, element, url){
+		const context = {};
+
 		for(let ab of this.abstractions){
 			if(!ab.name.test_tag(element.type)){
 				continue;
 			}
 			
 			if('content' in ab){
-				const context = {};
-
 				ab.content.unwrap(value, element, url, context);
 
 				return context;
 			}
 		}
 
-		return { value };
+		return context;
 	}
 	set_text(value, element, url){
+		const context = {};
+
 		for(let ab of this.abstractions){
 			if(!ab.name.test_tag(element.type)){
 				continue;
 			}
 			
 			if('content' in ab){
-				const context = {};
-
 				ab.content.wrap(value, element, url, context);
 				
 				return context;
 			}
 		}
 
-		return { value };
+		return context;
 	}
 	has_attribute(name, element, url){
 		if(name.startsWith(attribute_original)){
@@ -787,34 +787,31 @@ export class RewriteElements {
 		return true;
 	}
 	get_attribute(name, value, element, url){
+		const context = {};
+		
 		if(name.startsWith(attribute_original)){
-			return {
-				deleted: true,
-			};
+			context.deleted = true;
+			return context;
 		}
 
 		if(element.attributes.has(attribute_original + name)){
-			return {
-				value: element.attributes.get(attribute_original + name),
-				modified: true,
-			};
+			context.value = element.attributes.get(attribute_original + name);
+			context.modified = true;
+			return context;
 		}
 
 		if(value === null || value === undefined){
-			return { modified: false };
+			return context;
 		}
-
+		
 		for(let ab of this.abstractions){
 			if(!ab.name.test_tag(element.type)){
 				continue;
 			}
-			
 			for(let attr of ab.attributes){
 				if(!attr.name.test_tag(name)){
 					continue;
 				}
-				
-				const context = {};
 				
 				attr.unwrap(name, value, element, url, context);
 				
@@ -822,7 +819,7 @@ export class RewriteElements {
 			}
 		}
 
-		return { modified: false };
+		return context;
 	}
 	//following functions will modify the element
 	remove_attribute(name, element, url){
@@ -833,10 +830,11 @@ export class RewriteElements {
 		return true;
 	}
 	set_attribute(name, value, element, url){
+		const context = {};
+		
 		if(name.startsWith(attribute_original)){
-			return {
-				deleted: true,
-			};
+			context.deleted = true;
+			return context;
 		}
 
 		for(let ab of this.abstractions){
@@ -851,8 +849,6 @@ export class RewriteElements {
 						continue;
 					}
 					
-					const context = {};
-					
 					attr.wrap(name, value, element, url, context);
 					
 					return context;
@@ -860,12 +856,14 @@ export class RewriteElements {
 			}
 		}
 
-		return { value };
+		return context;
 	}
 	// property
 	get_property(name, value, element, url, class_tag){
+		const context = {};
+		
 		if(value === null || value === undefined){
-			return { modified: false };
+			return context;
 		}
 
 		for(let ab of this.abstractions){
@@ -878,29 +876,17 @@ export class RewriteElements {
 					continue;
 				}
 				
-				const context = {};
-				
 				attr.unwrap(name, value, element, url, context);
 				
 				return context;
 			}
 		}
 
-		return { value };
+		return context;
 	}
 	set_property(name, value, element, url, class_tag){
-		if(name.startsWith(attribute_original)){
-			return {
-				deleted: true,
-			};
-		}
-
-		if(element.attributes.has(attribute_original + name)){
-			return {
-				value: element.attributes.get(attribute_original + name),
-			};
-		}
-
+		const context = {};
+		
 		for(let ab of this.abstractions){
 			if(!ab.name.test_class(class_tag)){
 				continue;
@@ -913,8 +899,6 @@ export class RewriteElements {
 						continue;
 					}
 					
-					const context = {};
-					
 					attr.wrap(name, value, element, url, context);
 					
 					return context;
@@ -922,6 +906,6 @@ export class RewriteElements {
 			}
 		}
 
-		return { value };
+		return context;
 	}
 };
