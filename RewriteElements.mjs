@@ -1,6 +1,6 @@
 import { parseSrcset, stringifySrcset } from 'srcset';
 
-const attribute_original = 'data-tomp-value-';
+export const attribute_original = 'data-tomp-value-';
 
 export class TOMPElement {
 	attributes = new Map();
@@ -299,6 +299,7 @@ export class RewriteElements {
 				{
 					name: new TargetName('href'),
 					wrap: (name, value, element, url, context) => {
+						console.log(value, url);
 						context.value = this.tomp.html.serve(new URL(value, url), url).toString();
 						context.modified = true;
 					},
@@ -768,6 +769,7 @@ export class RewriteElements {
 		if(element.attributes.has(attribute_original + name)){
 			return {
 				value: element.attributes.get(attribute_original + name),
+				modified: true,
 			};
 		}
 
@@ -805,13 +807,7 @@ export class RewriteElements {
 				deleted: true,
 			};
 		}
-
-		if(element.attributes.has(attribute_original + name)){
-			return {
-				value: element.attributes.get(attribute_original + name),
-			};
-		}
-
+		
 		for(let ab of this.abstractions){
 			if(!ab.name.test_tag(element.type)){
 				continue;
@@ -821,6 +817,64 @@ export class RewriteElements {
 				for(let attr of ab.attributes){
 					
 					if(!attr.name.test_tag(name)){
+						continue;
+					}
+					
+					const context = {};
+					
+					attr.wrap(name, value, element, url, context);
+					
+					return context;
+				}
+			}
+		}
+
+		return { value };
+	}
+	// property
+	get_property(name, value, element, url, class_tag){
+		for(let ab of this.abstractions){
+			if(!ab.name.test_class(class_tag)){
+				continue;
+			}
+			
+			for(let attr of ab.attributes){
+				if(!attr.name.test_class(name)){
+					continue;
+				}
+				
+				const context = {};
+				
+				attr.unwrap(name, value, element, url, context);
+				
+				return context;
+			}
+		}
+
+		return { value };
+	}
+	set_property(name, value, element, url, class_tag){
+		if(name.startsWith(attribute_original)){
+			return {
+				deleted: true,
+			};
+		}
+
+		if(element.attributes.has(attribute_original + name)){
+			return {
+				value: element.attributes.get(attribute_original + name),
+			};
+		}
+
+		for(let ab of this.abstractions){
+			if(!ab.name.test_class(class_tag)){
+				continue;
+			}
+			
+			if('attributes' in ab){
+				for(let attr of ab.attributes){
+					
+					if(!attr.name.test_class(name)){
 						continue;
 					}
 					

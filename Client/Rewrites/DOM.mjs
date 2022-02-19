@@ -3,7 +3,7 @@ import { global as g } from '../../Global.mjs';
 // https://github.com/webpack/webpack/issues/12960
 const global = g;
 import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect, wrap_function } from '../RewriteUtil.mjs';
-import { TOMPElement } from '../../RewriteElements.mjs';
+import { attribute_original, TOMPElement } from '../../RewriteElements.mjs';
 import { global_client } from '../../RewriteJS.mjs';
 
 const { getAttribute, setAttribute, hasAttribute, removeAttribute, getAttributeNames } = global?.Element?.prototype || {};
@@ -51,14 +51,20 @@ class TOMPElementDOM extends TOMPElement {
 	constructor(node){
 		super();
 		this.#node = node;
-		if(!(this.#node instanceof Element)){
-			this.attributes = new Map();
-		}else{
+		this.is_html = this.#node instanceof HTMLElement;
+
+		if(this.is_html){
 			this.attributes = new TOMPElementDOMAttributes(this.#node);
+		}else{
+			this.attributes = new Map();
 		}
 	}
 	get type(){
-		return Reflect.apply(localName.get, this.#node, []);
+		if(this.is_html){
+			return Reflect.apply(localName.get, this.#node, []);
+		}else{
+			return '';
+		}
 	}
 	set type(value){
 		this.node.remove();
@@ -269,8 +275,8 @@ export class DOMRewrite extends Rewrite {
 		this.domparser_work();
 		
 		for(let key of Reflect.ownKeys(global)){
-			for(let ab of this.client.tomp.elements.abstract){
-				if(!this.client.tomp.elements.test_name(key, ab.name.class)){
+			for(let ab of this.client.tomp.elements.abstractions){
+				if(!ab.name.test_class(key)){
 					continue;
 				}
 
@@ -283,23 +289,55 @@ export class DOMRewrite extends Rewrite {
 
 				if('attributes' in ab)for(let data of ab.attributes){
 					for(let name of Reflect.ownKeys(cls.prototype)){
-						if(!this.client.tomp.elements.test_name(name, data.class_name || data.name)){
+						if(!data.name.test_class(name)){
 							continue;
 						}
 						
 						const desc = Reflect.getOwnPropertyDescriptor(cls.prototype, name);
 						
 						Reflect.defineProperty(cls.prototype, name, {
+							enumerable: true,
+							configurable: true,
 							get: desc.get ? wrap_function(desc.get, (target, that, args) => {
-								let result = Reflect.apply(target, that, args);
-								if(result instanceof CSSStyleDeclaration)return this.style_proxy(result);
-								result = this.process_get_attribute(that, name, true, result, key);
-								return result;
+								const value = Reflect.apply(target, that, args);
+
+								if(value instanceof CSSStyleDeclaration){
+									return this.style_proxy(value);
+								}
+
+								const element = new TOMPElementDOM(that);
+								const context = this.client.tomp.elements.get_property(name, value, element, this.client.base, key);
+								
+								if(context.deleted){
+									return '';
+								}else if(context.modified){
+									console.assert(typeof context.value === 'string', `Context value wasn't a string.`);
+									return context.value;
+								}else{
+									console.error('no data in context');
+									return value;
+								}
 							}) : undefined,
 							set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
 								value = String(value);
-								value = this.process_set_attribute(that, name, true, value, key);
-								return Reflect.apply(target, that, [ value ]);
+								
+								const element = new TOMPElementDOM(that);
+								const context = this.client.tomp.elements.set_attribute(name, value, element, this.client.base);
+								
+								if(context.modified){
+									element.attributes.set(attribute_original + name, value);
+								}
+								
+								if(context.deleted){
+									Reflect.deleteProperty(that, [ name ]);
+								}else if(context.modified){
+									console.assert(typeof context.value === 'string', `Context value wasn't a string.`);
+									Reflect.apply(target, that, [ context.value ]);
+								}else{
+									console.error('no data in context');
+								}
+								
+								return value;
 							}) : undefined,
 						});
 					}
@@ -307,18 +345,52 @@ export class DOMRewrite extends Rewrite {
 			}
 		}
 		
-		Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, [ attribute ]) => {
-			attribute = String(attribute).toLowerCase();
-			let result = Reflect.apply(target, that, [ attribute ]);
-			result = this.process_get_attribute(that, attribute, false, result, Reflect.getPrototypeOf(that)[Symbol.toStringTag]);
-			return result;
+		Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, args) => {
+			if(args.length < 1){
+				throw new TypeError(`Failed to execute 'getAttribute' on 'Element': 1 argument required, but only 0 present.`);
+			}
+
+			let [ name ] = args;
+			name = String(name);
+
+			const element = new TOMPElementDOM(that);
+			const value = Reflect.apply(target, that, [ name ]);
+			const context = this.client.tomp.elements.get_attribute(name, value, element, this.client.base);
+			
+			if(context.deleted){
+				return null;
+			}else if(context.modified){
+				console.assert(typeof context.value === 'string', `Context value wasn't a string.`);
+				return context.value;
+			}
 		});
 
-		Element.prototype.setAttribute = wrap_function(Element.prototype.setAttribute, (target, that, [ attribute, value ]) => {
-			attribute = String(attribute).toLowerCase();
+		Element.prototype.setAttribute = wrap_function(Element.prototype.setAttribute, (target, that, args) => {
+			if(args.length < 1){
+				throw new TypeError(`Failed to execute 'setAttribute' on 'Element': 2 argument required, but only 0 present.`);
+			}
+			
+			let [ name, value ] = args;
+			name = String(name);
 			value = String(value);
-			value = this.process_set_attribute(that, attribute, false, value, Reflect.getPrototypeOf(that)[Symbol.toStringTag]);
-			Reflect.apply(target, that, [ attribute, value ]);
+			
+			const element = new TOMPElementDOM(that);
+			const context = this.client.tomp.elements.set_attribute(name, value, element, this.client.base);
+			
+			if(context.modified){
+				element.attributes.set(attribute_original + name, value);
+			}
+			
+			if(context.deleted){
+				element.attributes.delete(name);
+			}else if(context.modified){
+				element.attributes.set(name, context.value);
+			}else{
+				// console.log(context, 'no data');
+				element.attributes.set(name, value);
+			}
+			
+			return undefined;
 		});
 	}
 	process_get_attribute(node, name, use_class, value, class_name){
