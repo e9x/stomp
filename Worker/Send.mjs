@@ -224,11 +224,12 @@ export async function SendBinary(server, server_request, field){
 	let response;
 	
 	try{
-		response = await TOMPFetch(server, url, server_request, exact_request_headers);
+		response = await BareFetch(server, url, server_request, exact_request_headers);
 	}catch(err){
 		if(err instanceof BareError)return server.json(err.status, err.message);
 		else throw err;
 	}
+	
 	const response_headers = await handle_common_response(server.tomp.binary, server, server_request, url, response);
 	
 	let exact_response_headers = Object.fromEntries([...response_headers.entries()]);
@@ -258,7 +259,7 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	let response;
 
 	try{
-		response = await TOMPFetch(server, url, server_request, request_headers);
+		response = await BareFetch(server, url, server_request, request_headers);
 	}catch(err){
 		if(err instanceof BareError)return server.json(err.status, err.body);
 		else throw err;
@@ -302,7 +303,7 @@ export async function SendHTML(server, server_request, field){
 	let response;
 
 	try{
-		response = await TOMPFetch(server, url, server_request, request_headers);
+		response = await BareFetch(server, url, server_request, request_headers);
 	}catch(err){
 		if(err instanceof BareError)return server.json(err.status, err.body);
 		else throw err;
