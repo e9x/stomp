@@ -221,14 +221,7 @@ export async function SendBinary(server, server_request, field){
 		delete exact_request_headers['x-tomp-impl-names'];
 	}
 	
-	let response;
-	
-	try{
-		response = await BareFetch(server, url, server_request, exact_request_headers);
-	}catch(err){
-		if(err instanceof BareError)return server.json(err.status, err.message);
-		else throw err;
-	}
+	const response = await BareFetch(server, url, server_request, exact_request_headers);
 	
 	const response_headers = await handle_common_response(server.tomp.binary, server, server_request, url, response);
 	
@@ -256,14 +249,7 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
-	let response;
-
-	try{
-		response = await BareFetch(server, url, server_request, request_headers);
-	}catch(err){
-		if(err instanceof BareError)return server.json(err.status, err.body);
-		else throw err;
-	}
+	const response = await BareFetch(server, url, server_request, request_headers);
 	
 	const response_headers = await handle_common_response(rewriter, server, server_request, url, response, ...args);
 	
@@ -300,14 +286,7 @@ export async function SendHTML(server, server_request, field){
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
-	let response;
-
-	try{
-		response = await BareFetch(server, url, server_request, request_headers);
-	}catch(err){
-		if(err instanceof BareError)return server.json(err.status, err.body);
-		else throw err;
-	}
+	const response = await BareFetch(server, url, server_request, request_headers);
 	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, response);
 
 	let send = new Uint8Array();

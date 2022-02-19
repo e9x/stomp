@@ -46,13 +46,7 @@ export default async function BareFetch(server, url, server_request, request_hea
 	const response = await fetch(request);
 
 	if(!response.ok){
-		throw new BareError(400, {
-			message: 'An error occured when retrieving data from the bare server. Verify your bare server is running and the configuration points to it.', 
-			received: {
-				status: response.status,
-				body: await response.text(),
-			},
-		});
+		throw new BareError(response.status, await response.json());
 	}
 
 	const status = response.headers.get('x-bare-status');
