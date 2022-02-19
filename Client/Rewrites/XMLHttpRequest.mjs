@@ -234,6 +234,7 @@ export class XMLHttpRequestRewrite extends Rewrite {
 				this.#fetch(that.client.tomp.binary.serve(new URL(this.#url, that.client.base), that.client.base), {
 					method: this.#method,
 					headers: this.#headers,
+					body,
 				});
 			}
 			getResponseHeader(header){
