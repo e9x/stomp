@@ -651,7 +651,11 @@ export class RewriteElements {
 
 		if(text){
 			if(wrap){
-				this.set_text(text, element, url);
+				const context = this.set_text(text, element, url);
+
+				if(context.modified){
+					element.text = context.value;
+				}
 			}else{
 				const context = this.get_text(text, element, url);
 				
@@ -664,7 +668,17 @@ export class RewriteElements {
 
 		for(let [name,value] of [...element.attributes]){
 			if(wrap){
-				this.set_attribute(name, value, element, url);
+				const context = this.set_attribute(name, value, element, url);
+
+				if(context.modified){
+					element.attributes.set(attribute_original + name, value);
+				}
+				
+				if(context.deleted){
+					element.attributes.delete(name);
+				}else if(context.modified){
+					element.attributes.set(name, context.value);
+				}
 			}else{
 				if(original_names.includes(name)){
 					continue;
@@ -710,7 +724,7 @@ export class RewriteElements {
 
 		return { value };
 	}
-	set_text(value, element, url, apply_changes = true /* if element text should be set */){
+	set_text(value, element, url){
 		for(let ab of this.abstractions){
 			if(!ab.name.test_tag(element.type)){
 				continue;
@@ -721,10 +735,6 @@ export class RewriteElements {
 
 				ab.content.wrap(value, element, url, context);
 				
-				if(context.modified && apply_changes){
-					element.text = context.value;
-				}
-
 				return context;
 			}
 		}
@@ -818,16 +828,6 @@ export class RewriteElements {
 					
 					attr.wrap(name, value, element, url, context);
 					
-					if(context.modified){
-						element.attributes.set(attribute_original + name, value);
-					}
-					
-					if(context.deleted){
-						element.attributes.delete(name);
-					}else if(context.modified){
-						element.attributes.set(name, context.value);
-					}
-
 					return context;
 				}
 			}
