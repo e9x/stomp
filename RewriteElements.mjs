@@ -114,8 +114,22 @@ export class RewriteElements {
 				{
 					name: new TargetName(false, 'textContent'),
 					type: 'custom',
-					wrap: (value, url, element) => this.wrap_textContent(value, url, element, true),
-					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
+					wrap: (name, value, element, url, context) => {
+						const text_context = this.get_text(value, element, url);
+						
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}
+					},
+					unwrap: (name, value, element, url, context) => {
+						const text_context = this.set_text(value, element, url);
+						
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}
+					},
 				},
 			],
 		},
