@@ -322,7 +322,7 @@ export class DOMRewrite extends Rewrite {
 								value = String(value);
 								
 								const element = new TOMPElementDOM(that);
-								const context = this.client.tomp.elements.set_attribute(name, value, element, this.client.base);
+								const context = this.client.tomp.elements.set_property(name, value, element, this.client.base, key);
 								
 								if(context.modified){
 									element.attributes.set(attribute_original + name, value);
@@ -334,6 +334,7 @@ export class DOMRewrite extends Rewrite {
 									console.assert(typeof context.value === 'string', `Context value wasn't a string.`);
 									Reflect.apply(target, that, [ context.value ]);
 								}else{
+									Reflect.apply(target, that, [ value ]);
 									// console.error('no data in context');
 								}
 								

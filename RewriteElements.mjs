@@ -125,10 +125,13 @@ export class RewriteElements {
 				{
 					name: new TargetName(false, 'innerHTML'),
 					wrap: (name, value, element, url, context) => {
-						const text_context = get_text(value, element, url);
-
+						const text_context = this.get_text(value, element, url);
+						
 						if(text_context.modified){
 							context.value = text_context.value;
+							context.modified = true;
+						}else{
+							context.value = this.tomp.html.wrap(value, url, true);
 							context.modified = true;
 						}
 					},
@@ -138,18 +141,35 @@ export class RewriteElements {
 						if(text_context.modified){
 							context.value = text_context.value;
 							context.modified = true;
+						}else{
+							context.value = this.tomp.html.unwrap(value, url, true);
+							context.modified = true;
 						}
 					},
 				},
 				{
 					name: new TargetName(false, 'outerHTML'),
 					wrap: (name, value, element, url, context) => {
-						context.value = this.tomp.html.wrap(value, url, true);
-						context.modified = true;
+						const text_context = this.get_text(value, element, url);
+						
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}else{
+							context.value = this.tomp.html.wrap(value, url, true);
+							context.modified = true;
+						}
 					},
 					unwrap: (name, value, element, url, context) => {
-						context.value = this.tomp.html.unwrap(value, url, true);
-						context.modified = true;
+						const text_context = this.set_text(value, element, url);
+						
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}else{
+							context.value = this.tomp.html.unwrap(value, url, true);
+							context.modified = true;
+						}
 					},
 				},
 			],
@@ -159,11 +179,9 @@ export class RewriteElements {
 			attributes: [
 				{
 					name: new TargetName(false, 'text'),
-					class_name: 'text',
-					type: 'custom',
 					wrap: (name, value, element, url, context) => {
-						const text_context = get_text(value, element, url);
-
+						const text_context = this.get_text(value, element, url);
+						
 						if(text_context.modified){
 							context.value = text_context.value;
 							context.modified = true;
@@ -208,8 +226,8 @@ export class RewriteElements {
 				{
 					name: new TargetName(false, 'innerText'),
 					wrap: (name, value, element, url, context) => {
-						const text_context = get_text(value, element, url);
-
+						const text_context = this.get_text(value, element, url);
+						
 						if(text_context.modified){
 							context.value = text_context.value;
 							context.modified = true;
@@ -227,8 +245,8 @@ export class RewriteElements {
 				{
 					name: new TargetName(false, 'outerText'),
 					wrap: (name, value, element, url, context) => {
-						const text_context = get_text(value, element, url);
-
+						const text_context = this.get_text(value, element, url);
+						
 						if(text_context.modified){
 							context.value = text_context.value;
 							context.modified = true;
@@ -737,7 +755,7 @@ export class RewriteElements {
 				const context = {};
 
 				ab.content.unwrap(value, element, url, context);
-				
+
 				return context;
 			}
 		}
