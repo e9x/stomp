@@ -194,7 +194,7 @@ export class XMLHttpRequestRewrite extends Rewrite {
 				this.#abort.abort();
 				this.dispatchEvent(new ProgressEvent('abort'));
 			}
-			open(method, url, async, username, password){
+			open(method, url, async = true, username, password){
 				this.#readyState = OPENED;
 				this.#method = String(method);
 				
