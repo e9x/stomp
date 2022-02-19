@@ -482,6 +482,15 @@ export class DOMRewrite extends Rewrite {
 			return undefined;
 		});
 
+		/*const attributes = Reflect.getOwnPropertyDescriptor(Element.prototype, 'attributes');
+
+		Reflect.defineProperty(Element.prototype, 'attributes', {
+			configurable: true,
+			enumerable: truee,
+			get: wrap_function(attributes.get, (target, that, args) => {
+
+			}),
+		});*/
 		
 		Element.prototype.getAttributeNodeNS = this.get_attribute_node_ns;
 		Element.prototype.getAttributeNS = this.get_attribute_ns;
