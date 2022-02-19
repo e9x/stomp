@@ -413,6 +413,8 @@ export class RewriteJS extends Rewriter {
 									break;
 								case'get2':
 								case'set2':
+								case'call2':
+								case'new2':
 									ctx.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
 									ctx.remove_descendants_from_stack();
 									break;
