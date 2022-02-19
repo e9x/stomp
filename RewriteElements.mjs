@@ -424,6 +424,19 @@ export class RewriteElements {
 			],
 		},
 		{
+			name: new TargetName(/^(script|link)$/, /^(HTMLScriptElement|HTMLLinkElement)$/),
+			attributes: [
+				{
+					name: new TargetName('integrity'),
+					wrap: (name, value, element, url, context) => {
+						context.deleted = true;
+						context.modified = true;
+					},
+					unwrap: this.unwrap_mock(),
+				},
+			],
+		},
+		{
 			name: new TargetName('script', 'HTMLScriptElement'),
 			attributes: [
 				{
@@ -436,14 +449,6 @@ export class RewriteElements {
 						context.value = this.tomp.js.unwrap_serving(value, url).toString();
 						context.modified = true;
 					},
-				},
-				{
-					name: new TargetName('integrity'),
-					wrap: (name, value, element, url, context) => {
-						context.deleted = true;
-						context.modified = true;
-					},
-					unwrap: this.unwrap_mock(),
 				},
 			],
 			// condition could be in attribute or content
@@ -626,14 +631,6 @@ export class RewriteElements {
 						context.value = this.tomp.form.unwrap_serving(value, url).toString();
 						context.modified = true;
 					}),
-				},
-				{
-					name: new TargetName('integrity'),
-					wrap: (name, value, element, url, context) => {
-						context.deleted = true;
-						context.modified = true;
-					},
-					unwrap: this.unwrap_mock(),
 				},
 			],
 		},
