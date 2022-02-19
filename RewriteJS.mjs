@@ -146,7 +146,10 @@ export class RewriteJS extends Rewriter {
 					if(ctx.node[this.prevent_rewrite]) break;
 				
 					if(ctx.node.computed){
-						rewrite = true;
+						// not Uint8Array[1000]
+						if(ctx.node.property.type !== 'Literal' || typeof ctx.node.property.value !== 'number'){
+							rewrite = true;
+						}
 					}else switch(ctx.node.property.type) {
 						case'Identifier':
 							if(!undefinable.includes(ctx.node.property.name)){
@@ -171,7 +174,13 @@ export class RewriteJS extends Rewriter {
 					// if not computed (object.property), make property a string
 					// computed is object[property]
 					
-					const property_argument = !ctx.node.computed && ctx.node.property.type === 'Identifier' ? b.literal(ctx.node.property.name) : ctx.node.property;
+					let property_argument;
+					
+					if(ctx.node.computed){
+						property_argument = ctx.node.property;
+					}else if(ctx.node.property.type === 'Identifier'){
+						property_argument = b.literal(ctx.node.property.name);
+					}
 
 					if(ctx.parent.type === 'NewExpression' && ctx.parent_key === 'callee'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('new2')), [

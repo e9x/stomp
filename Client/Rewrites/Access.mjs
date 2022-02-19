@@ -1,7 +1,15 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { Reflect, wrap_function } from '../RewriteUtil.mjs';
+import { hasOwnProperty, Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { undefinable, global_client } from '../../RewriteJS.mjs';
+
+const undefinable_object = {};
+
+for(let entry of undefinable){
+	undefinable_object[entry] = true;
+}
+
+Reflect.setPrototypeOf(undefinable_object, null);
 
 export const global_proxy = 'tompcgp$';
 export const global_name = 'tompcgn$';
@@ -44,18 +52,24 @@ export class AccessRewrite extends Rewrite {
 		global.Object.getOwnPropertyDescriptors = wrap_function(global.Object.getOwnPropertyDescriptors, (target, that, [ obj ]) => {
 			const result = Reflect.apply(target, that, [ obj ]);
 
-			for(let key of undefinable)if(key in result){
-				result[key] = this.get_desc(result[key]);
+			for(let key of undefinable){
+				if(key in result){
+					result[key] = this.get_desc(result[key]);
+				}
 			}
-			
+
 			return result;
 		});
 
 		const entries = global.Object.entries = wrap_function(global.Object.entries, (target, that, [ obj ]) => {
 			const result = Reflect.apply(target, that, [ obj ]);
 
-			for(let pair of result)if(undefinable.includes(pair[0]))pair[1] = this.get(pair[1], pair[0]);
-			
+			for(let pair of result){
+				if(undefinable.includes(pair[0])){
+					pair[1] = this.get(pair[1], pair[0]);
+				}
+			}
+
 			return result;
 		});
 		
@@ -92,11 +106,11 @@ export class AccessRewrite extends Rewrite {
 		
 		if(this.client.type === 'page'){
 			if(target === global){
-				if(key == 'location'){
+				if(key === 'location'){
 					target = this.client.location.proxy;
 					key = 'href';
 				}
-			}else if(typeof target === 'object' && target !== null && global_client in target){
+			}else if(typeof target === 'object' && target !== null && hasOwnProperty(target, global_client)){
 				return target[global_client].access.set2(target, key, operate);
 			}
 		}
@@ -144,15 +158,17 @@ export class AccessRewrite extends Rewrite {
 	get2(target, key){
 		return this.get(target[key], key);
 	}
-	get(obj, key, check_parent = true /* only specified by and in this function */){
-		if(undefinable.includes(key) && (typeof obj === 'function' || typeof obj =='object') && obj !== null){
-			if(global_proxy in obj){
-				return obj[global_proxy];
-			}
+	get(obj, key){
+		/*if(!undefinable.includes(key)){
+			return obj;
+		}*/
+
+		if(typeof key === 'string' && undefinable_object[key] === true && (typeof obj === 'object' || typeof obj === 'function') && obj !== null && hasOwnProperty(obj, global_proxy)){
+			return obj[global_proxy];
 		}
 		
 		return obj;
-    }
+	  }
 	pattern(target, destructor){
 		const stack = [
 			[ target, destructor ],
