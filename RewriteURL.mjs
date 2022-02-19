@@ -10,17 +10,26 @@ export class ParsedRewrittenURL {
 		this.path = path;
 	}
 	get port_string(){
-		if(default_ports.includes(this.port)){
+		if(this.protocol === 'about:'){
+			return '';
+		}else if(default_ports.includes(this.port)){
 			return '';
 		}else{
 			return `:${this.port}`;
 		}
 	}
+	get slash(){
+		if(this.protocol === 'about:'){
+			return '';
+		}else{
+			return '//';
+		}
+	}
 	toString(){
-		return `${this.protocol}//${this.host}${this.port_string}${this.path}`;
+		return `${this.protocol}${this.slash}${this.host}${this.port_string}${this.path}`;
 	}
 	toOrigin(){
-		return `${this.protocol}//${this.host}${this.port_string}`;
+		return `${this.protocol}${this.slash}${this.host}${this.port_string}`;
 	}
 };
 
@@ -50,12 +59,13 @@ export class RewriteURL {
 		if(blob){
 			obj.protocol = 'blob:' + obj.protocol;
 		}
-
+		
 		return new ParsedRewrittenURL(obj);
 	}
 	wrap(url, service){
 		url = String(url);
-		
+		const input_url = url;
+
 		let hash = '';
 		
 		{
@@ -72,8 +82,8 @@ export class RewriteURL {
 		const protoi = protocols.indexOf(url.protocol);
 		
 		// android-app, ios-app, mailto, many other non-browser protocols
-		if(protoi == -1){
-			return url.toString();
+		if(protoi === -1){
+			return input_url;
 		}
 		
 		// throw new RangeError(`Unsupported protocol '${url.protocol}'`);
@@ -95,7 +105,7 @@ export class RewriteURL {
 
 		const port = meta >> 4;
 		const protocol = protocols[meta & 0xF];
-
+		
 		const path = decodeURIComponent(field.slice(metai + 1));
 		
 		return new ParsedRewrittenURL({
