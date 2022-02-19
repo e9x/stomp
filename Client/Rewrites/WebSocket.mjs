@@ -205,10 +205,12 @@ export class WebSocketRewrite extends Rewrite {
 			}
 			close(code, reason){
 				if(typeof code !== 'undefined'){
-					if(typeof code != 'string')code = 0;
-					
-					if(code != 1000 && (code < 3000 || code > 4999)){
-						throw new DOMException(`Failed to execute 'close' on 'WebSocket': The code must be either 1000, or between 3000 and 4999. 0 is neither.`);
+					if(typeof code !== 'number'){
+						code = 0;
+					}
+
+					if(code !== 1000 && (code < 3000 || code > 4999)){
+						throw new DOMException(`Failed to execute 'close' on 'WebSocket': The code must be either 1000, or between 3000 and 4999. ${code} is neither.`);
 					}
 				}
 
