@@ -160,10 +160,10 @@ export class AccessRewrite extends Rewrite {
 		return Reflect.apply(this.get(target[key], key), target, args);
 	}
 	normalize_key(key){
-		if(typeof key === 'symbol'){
-			return key;
-		}else{
+		if(typeof key === 'object' || typeof key === 'function'){
 			return String(key);
+		}else{
+			return key;
 		}
 	}
 	get2(target, key){
