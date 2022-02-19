@@ -88,21 +88,21 @@ export class RewriteJS extends Rewriter {
 					break;
 				case'Identifier':
 
-					if(ctx.parent.type == 'MemberExpression' && ctx.parent_key == 'property')break; // window.location;
-					if(ctx.parent.type == 'LabeledStatement')break; // { location: null, };
-					if(ctx.parent.type == 'VariableDeclarator' && ctx.parent_key == 'id')break;
-					if(ctx.parent.type == 'Property' && ctx.parent_key == 'key')break;
-					if(ctx.parent.type == 'MethodDefinition')break;
-					if(ctx.parent.type == 'ClassDeclaration')break;
-					if(ctx.parent.type == 'RestElement')break;
-					if(ctx.parent.type == 'ExportSpecifier')break;
-					if(ctx.parent.type == 'ImportSpecifier')break;
-					if((ctx.parent.type == 'FunctionDeclaration' || ctx.parent.type == 'FunctionExpression' || ctx.parent.type == 'ArrowFunctionExpression') && ctx.parent_key == 'params')break;
-					if((ctx.parent.type == 'FunctionDeclaration' || ctx.parent.type == 'FunctionExpression') && ctx.parent_key == 'id')break;
-					if(ctx.parent.type == 'AssignmentPattern' && ctx.parent_key == 'left') break;
+					if(ctx.parent.type === 'MemberExpression' && ctx.parent_key === 'property')break; // window.location;
+					if(ctx.parent.type === 'LabeledStatement')break; // { location: null, };
+					if(ctx.parent.type === 'VariableDeclarator' && ctx.parent_key === 'id')break;
+					if(ctx.parent.type === 'Property' && ctx.parent_key === 'key')break;
+					if(ctx.parent.type === 'MethodDefinition')break;
+					if(ctx.parent.type === 'ClassDeclaration')break;
+					if(ctx.parent.type === 'RestElement')break;
+					if(ctx.parent.type === 'ExportSpecifier')break;
+					if(ctx.parent.type === 'ImportSpecifier')break;
+					if((ctx.parent.type === 'FunctionDeclaration' || ctx.parent.type === 'FunctionExpression' || ctx.parent.type === 'ArrowFunctionExpression') && ctx.parent_key === 'params')break;
+					if((ctx.parent.type === 'FunctionDeclaration' || ctx.parent.type === 'FunctionExpression') && ctx.parent_key === 'id')break;
+					if(ctx.parent.type === 'AssignmentPattern' && ctx.parent_key === 'left') break;
 					if(!undefinable.includes(ctx.node.name))break;
 					
-					if(ctx.parent.type == 'UpdateExpression' || ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
+					if(ctx.parent.type === 'UpdateExpression' || ctx.parent.type === 'AssignmentExpression' && ctx.parent_key === 'left'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set1')), [
 							ctx.node,
 							b.literal(ctx.node.name),
@@ -111,7 +111,7 @@ export class RewriteJS extends Rewriter {
 								b.identifier('tomp$target'),
 								b.identifier('tomp$prop'),
 								b.identifier('tomp$value'),
-							], ctx.parent.type == 'UpdateExpression' ? b.updateExpression(
+							], ctx.parent.type === 'UpdateExpression' ? b.updateExpression(
 								ctx.parent.node.operator,
 								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop'), true),
 								ctx.parent.node.prefix,
@@ -128,7 +128,7 @@ export class RewriteJS extends Rewriter {
 								ctx.node,
 								b.identifier('tomp$value'),
 							)),
-							ctx.parent.type == 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
+							ctx.parent.type === 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
 							b.literal(generate(ctx.parent.node)),
 						]));
 					}else{
@@ -140,30 +140,34 @@ export class RewriteJS extends Rewriter {
 					
 					break;
 				case'MemberExpression':
-					
+				
 					let rewrite = false;
-					if(ctx.parent.type == 'UnaryExpression' && ctx.parent.node.operator == 'delete')break;
-					if(ctx.parent.type == 'NewExpression' && ctx.parent_key == 'callee')break;
-					if(ctx.parent.type === 'CallExpression' && ctx.parent_key == 'callee')break;
+					if(ctx.parent.type === 'UnaryExpression' && ctx.parent.node.operator === 'delete')break;
+					// only function is window.eval
+					// dont worry about this value
+					
+					// if(ctx.parent.type === 'NewExpression' && ctx.parent_key === 'callee')break;
+					// if(ctx.parent.type === 'CallExpression' && ctx.parent_key === 'callee')break;
 					if(ctx.node[this.prevent_rewrite]) break;
-
-					switch(ctx.node.property.type) {
+				
+					if(ctx.node.computed){
+						rewrite = true;
+					}else switch(ctx.node.property.type) {
 						case'Identifier':
-							if(ctx.node.computed)rewrite = true;
-							
-							if(!undefinable.includes(ctx.node.property.name))break;
+							if(!undefinable.includes(ctx.node.property.name)){
+								break;
+							}
 
 							rewrite = true;
 							
 							break;
 						case'Literal':
-							if(undefinable.includes(ctx.node.property.value))rewrite = true;
+							if(undefinable.includes(ctx.node.property.value)){
+								rewrite = true;
+							}
 							break;
 						case'TemplateLiteral':
 							rewrite = true;
-							break;
-						default:
-							if(ctx.node.computed)rewrite = true;
 							break;
 					};
 
@@ -172,9 +176,9 @@ export class RewriteJS extends Rewriter {
 					// if not computed (object.property), make property a string
 					// computed is object[property]
 					
-					const property_argument = !ctx.node.computed && ctx.node.property.type == 'Identifier' ? b.literal(ctx.node.property.name) : ctx.node.property;
+					const property_argument = !ctx.node.computed && ctx.node.property.type === 'Identifier' ? b.literal(ctx.node.property.name) : ctx.node.property;
 
-					if(ctx.parent.type == 'UpdateExpression' || ctx.parent.type == 'AssignmentExpression' && ctx.parent_key == 'left'){
+					if(ctx.parent.type === 'UpdateExpression' || ctx.parent.type === 'AssignmentExpression' && ctx.parent_key === 'left'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set2')), [
 							ctx.node.object,
 							property_argument,
@@ -182,7 +186,7 @@ export class RewriteJS extends Rewriter {
 								b.identifier('tomp$target'),
 								b.identifier('tomp$prop'),
 								b.identifier('tomp$value'),
-							], ctx.parent.type == 'UpdateExpression' ? b.updateExpression(
+							], ctx.parent.type === 'UpdateExpression' ? b.updateExpression(
 								ctx.parent.node.operator,
 								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop'), true),
 								ctx.parent.node.prefix,
@@ -191,7 +195,7 @@ export class RewriteJS extends Rewriter {
 								b.memberExpression(b.identifier('tomp$target'), b.identifier('tomp$prop'), true),
 								b.identifier('tomp$value'),
 							)),
-							ctx.parent.type == 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
+							ctx.parent.type === 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
 							b.literal(generate(ctx.parent.node)),
 						]));
 					}else{
@@ -247,7 +251,7 @@ export class RewriteJS extends Rewriter {
 		const { test, wrapped } = tompc$.access.pattern(window, [ { window: { location: 'test' }, location: 'wrapped' } ]);
 		*/
 		
-		const pattern_root = ctx.type == 'ObjectPattern' ? b.objectExpression([]) : b.arrayExpression([]);
+		const pattern_root = ctx.type === 'ObjectPattern' ? b.objectExpression([]) : b.arrayExpression([]);
 		const declare = [];
 		const stack = [
 			[
@@ -261,7 +265,7 @@ export class RewriteJS extends Rewriter {
 
 			let list;
 
-			if(pattern.type == 'ArrayPattern'){
+			if(pattern.type === 'ArrayPattern'){
 				list = pattern.elements;
 			}else if(pattern.type === 'ObjectPattern'){
 				list = pattern.properties;
@@ -273,7 +277,7 @@ export class RewriteJS extends Rewriter {
 				
 				let part = list[i];
 				
-				if(pattern.type == 'ArrayPattern'){
+				if(pattern.type === 'ArrayPattern'){
 					value = part;
 				}else if(pattern.type === 'ObjectPattern'){
 					({value,key} = part);
@@ -282,7 +286,7 @@ export class RewriteJS extends Rewriter {
 				// console.log(result.type, value.type);
 
 				if(value === null){
-					if(result.type == 'ArrayExpression'){
+					if(result.type === 'ArrayExpression'){
 						result.elements.push(null);
 					}
 
@@ -292,7 +296,7 @@ export class RewriteJS extends Rewriter {
 				if(value.type === 'ArrayPattern'){
 					const expr = b.arrayExpression([]);
 
-					if(result.type == 'ArrayExpression'){
+					if(result.type === 'ArrayExpression'){
 						result.elements.push(expr);
 					}else if(result.type === 'ObjectExpression'){
 						result.properties.push(b.property('init', key, expr));
@@ -303,7 +307,7 @@ export class RewriteJS extends Rewriter {
 				}else if(value.type === 'ObjectPattern'){
 					const expr = b.objectExpression([]);
 					
-					if(result.type == 'ArrayExpression'){
+					if(result.type === 'ArrayExpression'){
 						result.elements.push(expr);
 					}else if(result.type === 'ObjectExpression'){
 						result.properties.push(b.property('init', key, expr));
@@ -312,10 +316,10 @@ export class RewriteJS extends Rewriter {
 					// console.log('ObjectPattern value:', value);
 					stack.push([ expr, value ]);
 				}else if(value.type === 'Identifier'){
-					if(result.type == 'ArrayExpression'){
+					if(result.type === 'ArrayExpression'){
 						declare.push({ ...b.property('init', value, value), shorthand: true });
 						result.elements.push(b.literal(value.name));
-					}else if(result.type == 'ObjectExpression'){
+					}else if(result.type === 'ObjectExpression'){
 						declare.push({ ...b.property('init', value, value), shorthand: true });
 						result.properties.push(b.property('init', key, b.literal(value.name)));
 					}else{
@@ -376,7 +380,7 @@ export class RewriteJS extends Rewriter {
 				case'CallExpression':
 					
 					// void function tompc$_main(){if(!("tompc$" in this))importScripts("/client.js")}();
-					if(ctx.node.callee.type == 'FunctionExpression' && ctx.node.callee.id?.name == `${global_client}_main`){
+					if(ctx.node.callee.type === 'FunctionExpression' && ctx.node.callee.id?.name === `${global_client}_main`){
 						ctx.remove_descendants_from_stack();
 						ctx.parent.parent.detach();
 
@@ -400,12 +404,12 @@ export class RewriteJS extends Rewriter {
 									break;
 								case'get2':
 								case'set2':
-									ctx.parent.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
-									ctx.parent.remove_descendants_from_stack();
+									ctx.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
+									ctx.remove_descendants_from_stack();
 									break;
 								case'set1':
-									ctx.parent.parent.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
-									ctx.parent.parent.remove_descendants_from_stack();
+									ctx.parent.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
+									ctx.parent.remove_descendants_from_stack();
 									break;
 								case'pattern':
 									ctx.replace_with(ctx.node.arguments[0]);

@@ -22,19 +22,25 @@ export class PageRequestRewrite extends Rewrite {
 				origin: this.client.base.toOrigin(),
 			};
 
+			console.log(global, that, global === that);
+
 			return Reflect.apply(target, that, [ message, this.client.host.toOrigin(), transfer ]);
 		});
 
 		const message_data = new WeakMap();
 
+		const { data, origin } = getOwnPropertyDescriptors(MessageEvent.prototype);
+		
 		global.addEventListener('message', 	event => {
-			if(typeof event.data === 'object' && event.data !== undefined && event.data[is_tomp]){
-				message_data.set(event, event.data);
+			const event_data = Reflect.apply(data.get, event, []);
+
+			if(typeof event_data === 'object' && event_data !== undefined && event_data[is_tomp]){
+				message_data.set(event, event_data);
+			}else{
+				console.warn('Unknown message', event_data);
 			}
 		});
 
-		const { data, origin } = getOwnPropertyDescriptors(MessageEvent.prototype);
-		
 		Reflect.defineProperty(MessageEvent.prototype, 'origin', {
 			configurable: true,
 			enumerable: true,
