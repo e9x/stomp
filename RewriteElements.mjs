@@ -82,6 +82,90 @@ export class RewriteElements {
 	// no unwrap() === always use the original value
 	abstractions = [
 		{
+			name: new TargetName(false, 'Node'),
+			attributes: [
+				{
+					name: new TargetName(false, 'baseURI'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.html.serve(new URL(value, url), url).toString();
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.html.unwrap_serving(value, url).toString();
+						context.modified = true;
+					},
+				},
+				{
+					name: /[]/,
+					class_name: 'textContent',
+					type: 'custom',
+					wrap: (value, url, element) => this.wrap_textContent(value, url, element, true),
+					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
+				},
+			],
+		},
+		{
+			name: new TargetName(false, 'Element'),
+			attributes: [
+				{
+					name: new TargetName(false, 'innerHTML'),
+					wrap: (name, value, element, url, context) => {
+						const text_context = get_text(value, element, url);
+
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}
+					},
+					unwrap: (name, value, element, url, context) => {
+						const text_context = this.set_text(value, element, url);
+						
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}
+					},
+				},
+				{
+					name: new TargetName(false, 'outerHTML'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.html.wrap(value, url, true);
+						context.modified = true;
+					},
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.html.unwrap(value, url, true);
+						context.modified = true;
+					},
+				},
+			],
+		},
+		{
+			name: new TargetName(false, /^HTML.*?Element$/),
+			attributes: [
+				{
+					name: new TargetName(false, 'text'),
+					class_name: 'text',
+					type: 'custom',
+					wrap: (name, value, element, url, context) => {
+						const text_context = get_text(value, element, url);
+
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}
+					},
+					unwrap: (name, value, element, url, context) => {
+						const text_context = this.set_text(value, element, url);
+						
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}
+					},
+				},
+			],
+		},
+		{
 			name: new TargetName(true, 'HTMLElement'), // /HTML.*?Element/
 			attributes: [
 				{
@@ -106,21 +190,45 @@ export class RewriteElements {
 						context.modified = true;
 					},
 				},
-				/*{
-					name: /[]/,
-					class_name: 'innerText',
-					type: 'custom',
-					wrap: (value, url, element) => this.wrap_textContent(value, url, element, true),
-					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
+				{
+					name: new TargetName(false, 'innerText'),
+					wrap: (name, value, element, url, context) => {
+						const text_context = get_text(value, element, url);
+
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}
+					},
+					unwrap: (name, value, element, url, context) => {
+						const text_context = this.set_text(value, element, url);
+						
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}
+					},
 				},
 				{
-					name: /[]/,
-					class_name: 'outerText',
-					type: 'custom',
-					unwrap: (value, url, element) => this.wrap_textContent(value, url, element, false),
+					name: new TargetName(false, 'outerText'),
+					wrap: (name, value, element, url, context) => {
+						const text_context = get_text(value, element, url);
+
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}
+					},
+					unwrap: (name, value, element, url, context) => {
+						const text_context = this.set_text(value, element, url);
+						
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}
+					},
 				},
 				// see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/nonce
-				*/
 				{
 					name: new TargetName('nonce'),
 					wrap: (name, value, element, url, context) => {
@@ -562,7 +670,7 @@ export class RewriteElements {
 
 		return { value };
 	}
-	set_text(value, element, url){
+	set_text(value, element, url, apply_changes = true /* if element text should be set */){
 		for(let ab of this.abstractions){
 			if(!ab.name.test_tag(element.type)){
 				continue;
@@ -573,7 +681,7 @@ export class RewriteElements {
 
 				ab.content.wrap(value, element, url, context);
 				
-				if(context.modified){
+				if(context.modified && apply_changes){
 					element.text = context.value;
 				}
 
