@@ -314,7 +314,7 @@ export class DOMRewrite extends Rewrite {
 									console.assert(typeof context.value === 'string', `Context value wasn't a string.`);
 									return context.value;
 								}else{
-									console.error('no data in context');
+									// console.error('no data in context');
 									return value;
 								}
 							}) : undefined,
@@ -334,7 +334,7 @@ export class DOMRewrite extends Rewrite {
 									console.assert(typeof context.value === 'string', `Context value wasn't a string.`);
 									Reflect.apply(target, that, [ context.value ]);
 								}else{
-									console.error('no data in context');
+									// console.error('no data in context');
 								}
 								
 								return value;
