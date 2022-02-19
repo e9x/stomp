@@ -36,24 +36,6 @@ export const js_types = ['text/javascript','application/javascript','',...js_mod
 export const css_types = ['text/css',''];
 export const html_types = ['image/svg+xml', 'text/html',''];
 
-export class TagName {
-	constructor(tag){
-		this.value = tag;
-	}
-	toString(){
-		return this.value;
-	}
-};
-
-export class ClassName {
-	constructor(class_tag){
-		this.value = class_tag;
-	}
-	toString(){
-		return this.value;
-	}
-};
-
 export class TargetName {
 	constructor(tag, class_tag = tag){
 		this.tag = tag;
@@ -75,13 +57,6 @@ export class TargetName {
 		}
 
 		return false;
-	}
-	test(match){
-		if(match instanceof TagName){
-			return this.test_tag(match.toString());
-		}else if(match instanceof ClassName){
-			return this.test_tag(match.toString());
-		}
 	}
 	test_tag(match){
 		return this.#test(this.tag, match);
@@ -134,7 +109,7 @@ export class RewriteElements {
 				{
 					name: new TargetName(false, 'innerHTML'),
 					wrap: (name, value, element, url, context) => {
-						const text_context = get_text(value, new TagName(element.type), element, url);
+						const text_context = get_text(value, element, url);
 
 						if(text_context.modified){
 							context.value = text_context.value;
@@ -171,7 +146,7 @@ export class RewriteElements {
 					class_name: 'text',
 					type: 'custom',
 					wrap: (name, value, element, url, context) => {
-						const text_context = get_text(value, new TagName(element.type), element, url);
+						const text_context = get_text(value, element, url);
 
 						if(text_context.modified){
 							context.value = text_context.value;
@@ -217,7 +192,7 @@ export class RewriteElements {
 				{
 					name: new TargetName(false, 'innerText'),
 					wrap: (name, value, element, url, context) => {
-						const text_context = get_text(value, new TagName(element.type), element, url);
+						const text_context = get_text(value, element, url);
 
 						if(text_context.modified){
 							context.value = text_context.value;
@@ -236,7 +211,7 @@ export class RewriteElements {
 				{
 					name: new TargetName(false, 'outerText'),
 					wrap: (name, value, element, url, context) => {
-						const text_context = get_text(value, new TagName(element.type), element, url);
+						const text_context = get_text(value, element, url);
 
 						if(text_context.modified){
 							context.value = text_context.value;
@@ -676,13 +651,13 @@ export class RewriteElements {
 
 		if(text){
 			if(wrap){
-				const context = this.set_text(text, new TagName(element.type), element, url);
+				const context = this.set_text(text, element, url);
 
 				if(context.modified){
 					element.text = context.value;
 				}
 			}else{
-				const context = this.get_text(text, new TagName(element.type), element, url);
+				const context = this.get_text(text, element, url);
 				
 				if(context.modified){
 					element.text = context.value;
@@ -693,7 +668,7 @@ export class RewriteElements {
 
 		for(let [name,value] of [...element.attributes]){
 			if(wrap){
-				const context = this.set_attribute(name, value, new TagName(element.type), element, url);
+				const context = this.set_attribute(name, value, element, url);
 
 				if(context.modified){
 					element.attributes.set(attribute_original + name, value);
@@ -709,7 +684,7 @@ export class RewriteElements {
 					continue;
 				}
 				
-				const context = this.get_attribute(name, value, new TagName(element.type), element, url);
+				const context = this.get_attribute(name, value, element, url);
 				
 				if(context.deleted){
 					element.attributes.delete(name);
@@ -720,7 +695,7 @@ export class RewriteElements {
 		}
 
 		for(let ab of this.abstractions){
-			if(!ab.name.test(element.type)){
+			if(!ab.name.test_tag(element.type)){
 				continue;
 			}
 			
@@ -732,9 +707,9 @@ export class RewriteElements {
 		}
 	}
 	// text
-	get_text(value, type, element, url){
+	get_text(value, element, url){
 		for(let ab of this.abstractions){
-			if(!ab.name.test(type)){
+			if(!ab.name.test_tag(element.type)){
 				continue;
 			}
 			
@@ -747,11 +722,11 @@ export class RewriteElements {
 			}
 		}
 
-		return { value };test_tag(element.type)
+		return { value };
 	}
-	set_text(value, type, element, url){
+	set_text(value, element, url){
 		for(let ab of this.abstractions){
-			if(!ab.name.test(type)){
+			if(!ab.name.test_tag(element.type)){
 				continue;
 			}
 			
@@ -783,7 +758,7 @@ export class RewriteElements {
 
 		return true;
 	}
-	get_attribute(name, value, type, element, url){
+	get_attribute(name, value, element, url){
 		if(name.startsWith(attribute_original)){
 			return {
 				deleted: true,
@@ -797,7 +772,7 @@ export class RewriteElements {
 		}
 
 		for(let ab of this.abstractions){
-			if(!ab.name.test_tag(type)){
+			if(!ab.name.test_tag(element.type)){
 				continue;
 			}
 			
@@ -824,7 +799,7 @@ export class RewriteElements {
 
 		return true;
 	}
-	set_attribute(name, value, type, element, url){
+	set_attribute(name, value, element, url){
 		if(name.startsWith(attribute_original)){
 			return {
 				deleted: true,
@@ -838,14 +813,14 @@ export class RewriteElements {
 		}
 
 		for(let ab of this.abstractions){
-			if(!ab.name.test(type)){
+			if(!ab.name.test_tag(element.type)){
 				continue;
 			}
 			
 			if('attributes' in ab){
 				for(let attr of ab.attributes){
 					
-					if(!attr.name.test(name)){
+					if(!attr.name.test_tag(name)){
 						continue;
 					}
 					
