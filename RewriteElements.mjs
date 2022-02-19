@@ -557,6 +557,35 @@ export class RewriteElements {
 				},
 			],
 		},
+
+		{
+			name: new TargetName('form', 'HTMLFormElement'),
+			// after wrapping a series of elements/removing an attribute
+			wrap_done: (element, url) => {
+				// shouldnt have data-tomp-value-action because attributes forbids that
+				if(!element.attributes.has('action')){
+					element.attributes.set('action', this.tomp.html.serve(url, url));
+				}
+			},
+			attributes: [
+				{
+					name: new TargetName('action'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.form.serve(new URL(value, url), url).toString();
+						context.modified = true;
+					},
+					unwrap: this.unwrap_mock,
+				},
+				{
+					name: new TargetName('integrity'),
+					wrap: (name, value, element, url, context) => {
+						context.deleted = true;
+						context.modified = true;
+					},
+					unwrap: this.unwrap_mock,
+				},
+			],
+		},
 	];
 	constructor(tomp){
 		this.tomp = tomp;
@@ -649,6 +678,18 @@ export class RewriteElements {
 				}else if(context.modified){
 					element.attributes.set(name, context.value);
 				}
+			}
+		}
+
+		for(let ab of this.abstractions){
+			if(!ab.name.test_tag(element.type)){
+				continue;
+			}
+			
+			if(wrap && 'wrap_done' in ab){
+				ab.wrap_done(element, url);
+			}else if(!wrap && 'unwrap_done' in ab){
+				ab.unwrap_done(element, url);
 			}
 		}
 	}
