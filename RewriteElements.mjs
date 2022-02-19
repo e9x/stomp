@@ -596,7 +596,7 @@ export class RewriteElements {
 			name: new TargetName('form', 'HTMLFormElement'),
 			// after wrapping a series of elements/removing an attribute
 			wrap_done: (element, url) => {
-				// shouldnt have data-tomp-value-action because attributes forbids that
+				// wont have data-tomp-value-action because attributes forbids that
 				if(!element.attributes.has('action')){
 					element.attributes.set('action', this.tomp.html.serve(url, url));
 				}
@@ -623,6 +623,71 @@ export class RewriteElements {
 				},
 			],
 		},
+		{
+			name: new TargetName('link', 'HTMLLinkElement'),
+			attributes: [
+				{
+					name: new TargetName('href'),
+					wrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.serve(new URL(value, url), url).toString();
+						context.modified = true;
+					},
+					// unwrap serving can be a member of anything
+					// tomp.js,tomp.css
+					unwrap: (name, value, element, url, context) => {
+						context.value = this.tomp.binary.unwrap_serving(value, url).toString();
+						context.modified = true;
+					},
+				},
+			],
+			wrap_done: (element, url) => {
+				// will have data-tomp-value-href
+				if(element.attributes.has('data-tomp-value-href')){
+					const href = element.attributes.get('data-tomp-value-href');
+					const resolved = new URL(href, url);
+					let serve;
+					
+					switch(element.attributes.get('rel')){
+						case'prefetch':
+						case'preload':
+							switch(element.attributes.get('as')){
+								case'style':
+									serve = this.tomp.css.serve(resolved, url);
+									break;
+								case'worker':
+								case'script':
+									serve = this.tomp.js.serve(resolved, url);
+									break;
+								case'object':
+								case'document':
+									serve = this.tomp.html.serve(resolved, url);
+									break;
+								default:
+									serve = this.tomp.binary.serve(resolved, url);
+									break;
+							}
+							break;
+						case'manifest':
+							serve = this.tomp.manifest.serve(resolved, url);
+							break;
+						case'alternate':
+						case'amphtml':
+						// case'profile':
+							serve = this.tomp.html.serve(resolved, url);
+							break;
+						case'stylesheet':
+							serve = this.tomp.css.serve(resolved, url);
+							break;
+						default:
+							// this.tomp.log.warn('unknown rel', element.attributes.get('rel'));
+							serve = this.tomp.binary.serve(resolved, url);
+							break;
+					}
+					
+					element.attributes.set('href', serve);
+				}
+			},
+		}
 	];
 	constructor(tomp){
 		this.tomp = tomp;
@@ -732,6 +797,9 @@ export class RewriteElements {
 			}
 		}
 
+		this.done_wrapping(wrap, element, url);
+	}
+	done_wrapping(wrap, element, url){
 		for(let ab of this.abstractions){
 			if(!ab.name.test_tag(element.type)){
 				continue;
@@ -779,7 +847,7 @@ export class RewriteElements {
 
 		return context;
 	}
-	has_attribute(name, element, url){
+	has_attribute(name, value, element, url){
 		if(name.startsWith(attribute_original)){
 			return false;
 		}
@@ -850,7 +918,7 @@ export class RewriteElements {
 					}
 					
 					attr.wrap(name, value, element, url, context);
-					
+										
 					return context;
 				}
 			}

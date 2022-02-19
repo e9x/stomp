@@ -338,6 +338,8 @@ export class DOMRewrite extends Rewrite {
 									// console.error('no data in context');
 								}
 								
+								this.client.tomp.elements.done_wrapping(true, element, this.client.base);
+
 								return value;
 							}) : undefined,
 						});
@@ -345,7 +347,22 @@ export class DOMRewrite extends Rewrite {
 				}
 			}
 		}
-		
+
+		// removeAttribute
+
+		Element.prototype.hasAttribute = wrap_function(Element.prototype.hasAttribute, (target, that, args) => {
+			if(args.length < 1){
+				throw new TypeError(`Failed to execute 'hasAttribute' on 'Element': 1 argument required, but only 0 present.`);
+			}
+
+			let [ name ] = args;
+			name = String(name);
+
+			const element = new TOMPElementDOM(that);
+			const value = Reflect.apply(target, that, [ name ]);
+			return this.client.tomp.elements.has_attribute(name, value, element, this.client.base);	
+		});
+
 		Element.prototype.getAttribute = wrap_function(Element.prototype.getAttribute, (target, that, args) => {
 			if(args.length < 1){
 				throw new TypeError(`Failed to execute 'getAttribute' on 'Element': 1 argument required, but only 0 present.`);
@@ -393,6 +410,8 @@ export class DOMRewrite extends Rewrite {
 				element.attributes.set(name, value);
 			}
 			
+			this.client.tomp.elements.done_wrapping(true, element, this.client.base);
+
 			return undefined;
 		});
 	}
