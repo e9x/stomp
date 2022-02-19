@@ -938,6 +938,10 @@ export class RewriteElements {
 	}
 	// property
 	get_property(name, value, element, url, class_tag){
+		if(value === ''){
+			return value;
+		}
+		
 		const context = {};
 		
 		if(value === null || value === undefined){
