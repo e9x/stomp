@@ -102,16 +102,16 @@ export class AccessRewrite extends Rewrite {
 		else return desc;
 	}
 	set2(target, key, operate, righthand){
-		key = this.normalize_key(key);
+		// key = this.normalize_key(key);
 		// possibly a context
 		
-		if(this.client.type === 'page'){
+		if(typeof key === 'string'){
 			if(target === global){
 				if(key === 'location'){
 					target = this.client.location.proxy;
 					key = 'href';
 				}
-			}else if(typeof target === 'object' && target !== null && hasOwnProperty(target, global_client)){
+			}else if((typeof target === 'object' && target !== null || typeof target === 'function') && hasOwnProperty(target, global_client)){
 				return target[global_client].access.set2(target, key, operate);
 			}
 		}
@@ -132,7 +132,7 @@ export class AccessRewrite extends Rewrite {
 	// identifier = value; identifier += value; identifier++;
 	// location = set2(location, 'location', proxy => proxy += 'test')
     set1(target, name, operate, set, righthand){
-		name = this.normalize_key(name);
+		// name = this.normalize_key(name);
 		const proxy = this.get(target, name);
 
 		const property = Symbol();
@@ -152,26 +152,26 @@ export class AccessRewrite extends Rewrite {
 		return result;
 	}
 	new2(target, key, args){
-		key = this.normalize_key(key);
+		// key = this.normalize_key(key);
 		return Reflect.construct(this.get(target[key], key), args);
 	}
 	call2(target, key, args){
-		key = this.normalize_key(key);
+		// key = this.normalize_key(key);
 		return Reflect.apply(this.get(target[key], key), target, args);
 	}
 	normalize_key(key){
-		if(typeof key === 'object' || typeof key === 'function'){
+		if(typeof key === 'object' && key !== null|| typeof key === 'function'){
 			return String(key);
 		}else{
 			return key;
 		}
 	}
 	get2(target, key){
-		key = this.normalize_key(key);
+		// key = this.normalize_key(key);
 		return this.get(target[key], key);
 	}
 	get(obj, key){
-		if(undefinable_object[key] === true && (typeof obj === 'object' || typeof obj === 'function') && obj !== null && hasOwnProperty(obj, global_proxy)){
+		if(typeof key === 'string' && undefinable_object[key] === true && (typeof obj === 'object' && obj !== null || typeof obj === 'function') && hasOwnProperty(obj, global_proxy)){
 			return obj[global_proxy];
 		}
 		
