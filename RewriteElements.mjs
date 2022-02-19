@@ -741,6 +741,13 @@ export class RewriteElements {
 			context.modified = true;
 		}
 	}
+	has_attribute(name, element, url){
+		if(name.startsWith(attribute_original)){
+			return false;
+		}
+
+		return true;
+	}
 	get_attribute(name, value, element, url){
 		if(name.startsWith(attribute_original)){
 			return {
@@ -773,6 +780,14 @@ export class RewriteElements {
 		}
 
 		return { value };
+	}
+	//following functions will modify the element
+	remove_attribute(name, element, url){
+		if(name.startsWith(attribute_original)){
+			return false;
+		}
+
+		return true;
 	}
 	set_attribute(name, value, element, url){
 		if(name.startsWith(attribute_original)){
