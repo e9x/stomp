@@ -818,7 +818,7 @@ export class RewriteElements {
 					
 					attr.wrap(name, value, element, url, context);
 					
-					if(context.modified || context.deleted){
+					if(context.modified){
 						element.attributes.set(attribute_original + name, value);
 					}
 					
