@@ -143,11 +143,6 @@ export class RewriteJS extends Rewriter {
 				
 					let rewrite = false;
 					if(ctx.parent.type === 'UnaryExpression' && ctx.parent.node.operator === 'delete')break;
-					// only function is window.eval
-					// dont worry about this value
-					
-					// if(ctx.parent.type === 'NewExpression' && ctx.parent_key === 'callee')break;
-					// if(ctx.parent.type === 'CallExpression' && ctx.parent_key === 'callee')break;
 					if(ctx.node[this.prevent_rewrite]) break;
 				
 					if(ctx.node.computed){
@@ -178,7 +173,21 @@ export class RewriteJS extends Rewriter {
 					
 					const property_argument = !ctx.node.computed && ctx.node.property.type === 'Identifier' ? b.literal(ctx.node.property.name) : ctx.node.property;
 
-					if(ctx.parent.type === 'UpdateExpression' || ctx.parent.type === 'AssignmentExpression' && ctx.parent_key === 'left'){
+					if(ctx.parent.type === 'NewExpression' && ctx.parent_key === 'callee'){
+						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('new2')), [
+							ctx.node.object,
+							property_argument,
+							b.arrayExpression(ctx.parent.node.arguments),
+							b.literal(generate(ctx.node)),
+						]));
+					}else if(ctx.parent.type === 'CallExpression' && ctx.parent_key === 'callee'){
+						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('call2')), [
+							ctx.node.object,
+							property_argument,
+							b.arrayExpression(ctx.parent.node.arguments),
+							b.literal(generate(ctx.node)),
+						]));
+					}else if(ctx.parent.type === 'UpdateExpression' || ctx.parent.type === 'AssignmentExpression' && ctx.parent_key === 'left'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set2')), [
 							ctx.node.object,
 							property_argument,

@@ -135,6 +135,12 @@ export class AccessRewrite extends Rewrite {
 
 		return result;
 	}
+	new2(target, key, args){
+		return Reflect.construct(this.get(target[key], key), args);
+	}
+	call2(target, key, args){
+		return Reflect.apply(this.get(target[key], key), target, args);
+	}
 	get2(target, key){
 		return this.get(target[key], key);
 	}
