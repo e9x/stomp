@@ -347,7 +347,6 @@ export class RewriteElements {
 				{
 					name: new TargetName('href'),
 					wrap: (name, value, element, url, context) => {
-						console.log(value, url);
 						context.value = this.tomp.html.serve(new URL(value, url), url).toString();
 						context.modified = true;
 					},
