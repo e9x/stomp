@@ -22,8 +22,6 @@ export class PageRequestRewrite extends Rewrite {
 				origin: this.client.base.toOrigin(),
 			};
 
-			console.log(global, that, global === that);
-
 			return Reflect.apply(target, that, [ message, this.client.host.toOrigin(), transfer ]);
 		});
 
@@ -67,7 +65,8 @@ export class PageRequestRewrite extends Rewrite {
 
 		AudioWorklet.prototype.addModule = wrap_function(AudioWorklet.prototype.addModule, (target, that, [ url, options ]) => {
 			url = new URL(url, this.client.base);
-			url = this.client.tomp.js.serve(url, this.client.base);
+			// worklets have little to no apis relevant to the dom/page
+			url = this.client.tomp.binary.serve(url, this.client.base);
 			// not a worker, worklet
 			// worklets dont contain location etc
 			// todo: rewrite MessageEvent.prototype.origin inside worklet
