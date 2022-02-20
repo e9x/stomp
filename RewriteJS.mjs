@@ -1,4 +1,4 @@
-import { parseScript } from 'meriyah';
+import { parse, parseScript } from 'meriyah';
 import { generate } from '@javascript-obfuscator/escodegen';
 import { AcornIterator } from './IterateAcorn.mjs';
 import { builders as b } from 'ast-types';
@@ -12,6 +12,13 @@ export const providers = ['window','document'];
 export const undefinable = ['eval','location'];
 // only eval and location are of interest
 
+const parse_options = { 
+	ecmaVersion: 2022,
+	module: true,
+	webcompat: true,
+	globalReturn: true,
+	next: true,
+};
 
 export class RewriteJS extends Rewriter {
 	static service = 'worker:js';
@@ -130,7 +137,7 @@ export class RewriteJS extends Rewriter {
 								b.identifier('tomp$value'),
 							)),
 							ctx.parent.type === 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
-							b.literal(JSON.stringify(ctx.parent.node)),
+							b.literal(generate(ctx.parent.node)),
 						]));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
@@ -188,14 +195,14 @@ export class RewriteJS extends Rewriter {
 							ctx.node.object,
 							property_argument,
 							b.arrayExpression(ctx.parent.node.arguments),
-							b.literal(JSON.stringify(ctx.parent.node)),
+							b.literal(generate(ctx.parent.node)),
 						]));
 					}else if(ctx.parent.type === 'CallExpression' && ctx.parent_key === 'callee'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('call2')), [
 							ctx.node.object,
 							property_argument,
 							b.arrayExpression(ctx.parent.node.arguments),
-							b.literal(JSON.stringify(ctx.parent.node)),
+							b.literal(generate(ctx.parent.node)),
 						]));
 					}else if(ctx.parent.type === 'UpdateExpression' || ctx.parent.type === 'AssignmentExpression' && ctx.parent_key === 'left'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set2')), [
@@ -215,13 +222,13 @@ export class RewriteJS extends Rewriter {
 								b.identifier('tomp$value'),
 							)),
 							ctx.parent.type === 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
-							b.literal(JSON.stringify(ctx.parent.node)),
+							b.literal(generate(ctx.parent.node)),
 						]));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get2')), [
 							ctx.node.object,
 							property_argument,
-							b.literal(JSON.stringify(ctx.node)),
+							b.literal(generate(ctx.node)),
 						]));
 					}
 
@@ -355,7 +362,7 @@ export class RewriteJS extends Rewriter {
 		ctx.parent.replace_with(b.variableDeclarator(b.objectPattern(declare), b.callExpression(b.memberExpression(global_access, b.identifier('pattern')), [
 			ctx.parent.node.init,
 			pattern_root,
-			b.literal(JSON.stringify(ctx.parent.node)),
+			b.literal(generate(ctx.parent.node)),
 		])));
 	}
 	unwrap(code, url){
@@ -364,13 +371,7 @@ export class RewriteJS extends Rewriter {
 		let ast;
 
 		try{
-			ast = parseScript(code, { 
-				ecmaVersion: 2022,
-				module: true,
-				webcompat: true,
-				globalReturn: true,
-				next: true,
-			});
+			ast = parseScript(code, parse_options);
 		}catch(err){
 			if(err instanceof SyntaxError){
 				return `throw new SyntaxError(${JSON.stringify(err.message)})`;
@@ -413,14 +414,12 @@ export class RewriteJS extends Rewriter {
 					
 					const parts = [ ctx.node.callee.object.object.name, ctx.node.callee.object.property.name, ctx.node.callee.property.name ];
 					
-					if(parts[0] != global_client)continue;
-
 					switch(parts[1]){
 						case'access':
 							switch(parts[2]){
 								case'get':{
 									const id = ctx.node.arguments[0].value;
-									ctx.replace_with(JSON.parse(id));
+									ctx.replace_with(parseScript(id, parse_options));
 								} break;
 								case'get2':
 								case'set2':
@@ -428,13 +427,13 @@ export class RewriteJS extends Rewriter {
 								case'new2': {
 									const id = ctx.node.arguments[ctx.node.arguments.length - 1].value;
 
-									ctx.replace_with(JSON.parse(id));
+									ctx.replace_with(parseScript(id, parse_options));
 									ctx.remove_descendants_from_stack();
 								} break;
 								case'set1': {
 									const id = ctx.node.arguments[ctx.node.arguments.length - 1].value;
 
-									ctx.parent.replace_with(JSON.parse(id));
+									ctx.parent.replace_with(parseScript(id, parse_options));
 									ctx.parent.remove_descendants_from_stack();
 								} break;
 								case'pattern':
