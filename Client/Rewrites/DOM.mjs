@@ -121,7 +121,7 @@ export class DOMRewrite extends Rewrite {
 			getOwnPropertyDescriptor: (target, prop) => {
 				const desc = Reflect.getOwnPropertyDescriptor(target, prop);
 
-				if(typeof desc.value == 'string'){
+				if(typeof desc === 'object' && desc !== null && typeof desc.value == 'string'){
 					desc.value = this.client.tomp.css.wrap(desc.value, this.client.base, 'value');
 				}
 
