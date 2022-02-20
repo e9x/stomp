@@ -6,7 +6,7 @@ import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect
 import { attribute_original, TOMPElement } from '../../RewriteElements.mjs';
 import { global_client } from '../../RewriteJS.mjs';
 
-const { getAttribute, setAttribute, hasAttribute, removeAttribute, getAttributeNames } = global?.Element?.prototype || {};
+const { getAttribute, setAttribute, hasAttribute, hasAttributeNS, removeAttribute, getAttributeNames } = global?.Element?.prototype || {};
 const { localName } = getOwnPropertyDescriptors(global?.Element?.prototype || {});
 
 class TOMPElementDOMAttributes {
@@ -97,6 +97,12 @@ class TOMPElementDOM extends TOMPElement {
 		return new TOMPElementDOM(this.parentNode);
 	}
 };
+
+function test_args(target, args, length, class_name){
+	if(args.length < length){
+		throw new TypeError(`Failed to execute '${target.name}' on '${class_name}': ${length} arguments required, but only ${args.length} present.`);
+	}
+}
 
 export class DOMRewrite extends Rewrite {
 	style_proxy(style){
@@ -340,14 +346,19 @@ export class DOMRewrite extends Rewrite {
 			}
 		}
 
-		this.remove_attribute = wrap_function(Element.prototype.removeAttribute, (target, that, args) => {
-			if(args.length < 1){
-				throw new TypeError(`Failed to execute 'removeAttribute' on 'Element': 1 argument required, but only ${args.length} present.`);
+		this.remove_attribute = (is_namespace, target) => wrap_function(target, (target, that, args) => {
+			let suffix = [];
+
+			if(is_namespace){
+				test_args(target, args, 2, 'Element');
+				suffix = args.splice(0, 1);
+			}else{
+				test_args(target, args, 1, 'Element');
 			}
 
 			let [ name ] = args;
 			
-			const has = Reflect.apply(this.has_attribute, that, [ name ]);
+			const has = Reflect.apply(this.has_attribute(is_namespace, is_namespace ? hasAttributeNS : hasAttribute), that, [ ...suffix, name ]);
 			
 			if(has){
 				if(Reflect.apply(hasAttribute, that, [ attribute_original + name ])){
@@ -363,41 +374,30 @@ export class DOMRewrite extends Rewrite {
 			}
 		});
 		
-		Element.prototype.getAttributeNode = wrap_function(Element.prototype.getAttributeNode, (target, that, args) => {
-			if(args.length < 1){
-				throw new TypeError(`Failed to execute 'getAttributeNode' on 'Element': 1 argument required, but only ${args.length} present.`);
+		Element.prototype.getAttributeNode = (is_namespace, target) => wrap_function(target, (target, that, args) => {
+			let suffix = [];
+
+			if(is_namespace){
+				test_args(target, args, 2, 'Element');
+				suffix = args.splice(0, 1);
+			}else{
+				test_args(target, args, 1, 'Element');
 			}
 
 			let [ name ] = args;
 			
-			const has = Reflect.apply(this.has_attribute, that, [ name ]);
+			const has = Reflect.apply(this.has_attribute(is_namespace, is_namespace ? hasAttributeNS : hasAttribute), that, [ ...suffix, name ]);
 			
 			if(has){
-				return Reflect.apply(target, that, [ name ]);;
+				return Reflect.apply(target, that, [ ...suffix, name ]);
 			}else{
 				return null;
 			}
 		});
 
-		this.get_attribute_node_ns = wrap_function(Element.prototype.getAttributeNodeNS, (target, that, args) => {
+		this.has_attribute = (is_namespace, target) => wrap_function(Element.prototype.hasAttribute, (target, that, args) => {
 			if(args.length < 1){
-				throw new TypeError(`Failed to execute 'getAttributeNodeNS' on 'Element': 2 arguments required, but only ${args.length} present.`);
-			}
-
-			let [ namespace, name ] = args;
-			
-			const has = Reflect.apply(this.has_attribute, that, [ name ]);
-			
-			if(has){
-				return Reflect.apply(target, that, [ namespace, name ]);
-			}else{
-				return null;
-			}
-		});
-
-		this.has_attribute = wrap_function(Element.prototype.hasAttribute, (target, that, args) => {
-			if(args.length < 1){
-				throw new TypeError(`Failed to execute 'hasAttribute' on 'Element': 1 argument required, but only ${args.length} present.`);
+				throw new TypeError(`Failed to execute '${target.name}' on 'Element': 1 argument required, but only ${args.length} present.`);
 			}
 
 			let [ name ] = args;
@@ -408,16 +408,21 @@ export class DOMRewrite extends Rewrite {
 			return this.client.tomp.elements.has_attribute(name, value, element, this.client.base);	
 		});
 
-		this.get_attribute = wrap_function(Element.prototype.getAttribute, (target, that, args) => {
-			if(args.length < 1){
-				throw new TypeError(`Failed to execute 'getAttribute' on 'Element': 1 argument required, but only ${args.length} present.`);
+		this.get_attribute = (is_namespace, target) => wrap_function(target, (target, that, args) => {
+			let suffix = [];
+
+			if(is_namespace){
+				test_args(target, args, 2, 'Element');
+				suffix = args.splice(0, 1);
+			}else{
+				test_args(target, args, 1, 'Element');
 			}
 
 			let [ name ] = args;
 			name = String(name);
 
 			const element = new TOMPElementDOM(that);
-			const value = Reflect.apply(target, that, [ name ]);
+			const value = Reflect.apply(target, that, [ ...suffix, name ]);
 			const context = this.client.tomp.elements.get_attribute(name, value, element, this.client.base);
 			
 			if(context.deleted){
@@ -430,33 +435,16 @@ export class DOMRewrite extends Rewrite {
 			}
 		});
 
-		this.get_attribute_ns = wrap_function(Element.prototype.getAttributeNS, (target, that, args) => {
-			if(args.length < 1){
-				throw new TypeError(`Failed to execute 'getAttributeNS' on 'Element': 2 arguments required, but only ${args.length} present.`);
-			}
+		this.set_attribute = (is_namespace, target) => wrap_function(target, (target, that, args) => {
+			let suffix = [];
 
-			let [ namespace, name ] = args;
-			name = String(name);
-
-			const element = new TOMPElementDOM(that);
-			const value = Reflect.apply(target, that, [ namespace, name ]);
-			const context = this.client.tomp.elements.get_attribute(name, value, element, this.client.base);
-			
-			if(context.deleted){
-				return null;
-			}else if(context.modified){
-				console.assert(typeof context.value === 'string', `Context value wasn't a string.`);
-				return context.value;
+			if(is_namespace){
+				test_args(target, args, 3, 'Element');
+				suffix = args.splice(0, 1);
 			}else{
-				return value;
+				test_args(target, args, 2, 'Element');
 			}
-		});
 
-		this.set_attribute = wrap_function(Element.prototype.setAttribute, (target, that, args) => {
-			if(args.length < 1){
-				throw new TypeError(`Failed to execute 'setAttribute' on 'Element': 2 arguments required, but only ${args.length} present.`);
-			}
-			
 			let [ name, value ] = args;
 			name = String(name);
 			value = String(value);
@@ -465,16 +453,16 @@ export class DOMRewrite extends Rewrite {
 			const context = this.client.tomp.elements.set_attribute(name, value, element, this.client.base);
 			
 			if(context.modified){
-				element.attributes.set(attribute_original + name, value);
+				Reflect.apply(target, that, [...suffix, attribute_original + name, value]);
 			}
 			
 			if(context.deleted){
 				element.attributes.delete(name);
 			}else if(context.modified){
-				element.attributes.set(name, context.value);
+				Reflect.apply(target, that, [...suffix, name, context.value]);
 			}else{
 				// console.log(context, 'no data');
-				element.attributes.set(name, value);
+				Reflect.apply(target, that, [...suffix, name, value]);
 			}
 			
 			this.client.tomp.elements.done_wrapping(true, element, this.client.base);
@@ -492,11 +480,16 @@ export class DOMRewrite extends Rewrite {
 			}),
 		});*/
 		
-		Element.prototype.getAttributeNodeNS = this.get_attribute_node_ns;
-		Element.prototype.getAttributeNS = this.get_attribute_ns;
-		Element.prototype.removeAttribute = this.remove_attribute;
-		Element.prototype.hasAttribute = this.has_attribute;
-		Element.prototype.getAttribute = this.get_attribute;
-		Element.prototype.setAttribute = this.set_attribute;
+		Element.prototype.getAttribute = this.get_attribute(false, Element.prototype.getAttribute);
+		Element.prototype.getAttributeNS = this.get_attribute(true, Element.prototype.getAttributeNS);
+
+		Element.prototype.setAttribute = this.set_attribute(false, Element.prototype.setAttribute);
+		Element.prototype.setAttributeNS = this.set_attribute(true, Element.prototype.setAttributeNS);
+
+		Element.prototype.hasAttribute = this.has_attribute(false, Element.prototype.hasAttribute);
+		Element.prototype.hasAttributeNS = this.has_attribute(true, Element.prototype.hasAttributeNS);
+
+		Element.prototype.removeAttribute = this.remove_attribute(false, Element.prototype.removeAttribute);
+		Element.prototype.removeAttributeNS = this.remove_attribute(true, Element.prototype.removeAttributeNS);
 	}
 };
