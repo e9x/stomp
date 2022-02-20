@@ -18,6 +18,7 @@ const parse_options = {
 	webcompat: true,
 	globalReturn: true,
 	next: true,
+	ranges: true,
 };
 
 export class RewriteJS extends Rewriter {
@@ -38,13 +39,7 @@ export class RewriteJS extends Rewriter {
 		let ast;
 
 		try{
-			ast = parseScript(code, { 
-				ecmaVersion: 2022,
-				module: true,
-				webcompat: true,
-				globalReturn: true,
-				next: true,
-			});
+			ast = parseScript(code, parse_options);
 		}catch(err){
 			if(err instanceof SyntaxError){
 				console.log(code, err);
@@ -137,7 +132,7 @@ export class RewriteJS extends Rewriter {
 								b.identifier('tomp$value'),
 							)),
 							ctx.parent.type === 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
-							b.literal(generate(ctx.parent.node)),
+							b.literal(this.generate_part(code, ctx.parent)),
 						]));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
@@ -195,14 +190,14 @@ export class RewriteJS extends Rewriter {
 							ctx.node.object,
 							property_argument,
 							b.arrayExpression(ctx.parent.node.arguments),
-							b.literal(generate(ctx.parent.node)),
+							b.literal(this.generate_part(code, ctx.parent)),
 						]));
 					}else if(ctx.parent.type === 'CallExpression' && ctx.parent_key === 'callee'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('call2')), [
 							ctx.node.object,
 							property_argument,
 							b.arrayExpression(ctx.parent.node.arguments),
-							b.literal(generate(ctx.parent.node)),
+							b.literal(this.generate_part(code, ctx.parent)),
 						]));
 					}else if(ctx.parent.type === 'UpdateExpression' || ctx.parent.type === 'AssignmentExpression' && ctx.parent_key === 'left'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set2')), [
@@ -222,13 +217,13 @@ export class RewriteJS extends Rewriter {
 								b.identifier('tomp$value'),
 							)),
 							ctx.parent.type === 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
-							b.literal(generate(ctx.parent.node)),
+							b.literal(this.generate_part(code, ctx.parent)),
 						]));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get2')), [
 							ctx.node.object,
 							property_argument,
-							b.literal(generate(ctx.node)),
+							b.literal(this.generate_part(code, ctx)),
 						]));
 					}
 
@@ -362,7 +357,7 @@ export class RewriteJS extends Rewriter {
 		ctx.parent.replace_with(b.variableDeclarator(b.objectPattern(declare), b.callExpression(b.memberExpression(global_access, b.identifier('pattern')), [
 			ctx.parent.node.init,
 			pattern_root,
-			b.literal(generate(ctx.parent.node)),
+			b.literal(this.generate_part(code, ctx.parent)),
 		])));
 	}
 	unwrap(code, url){
@@ -374,6 +369,7 @@ export class RewriteJS extends Rewriter {
 			ast = parseScript(code, parse_options);
 		}catch(err){
 			if(err instanceof SyntaxError){
+				console.log(code, err);
 				return `throw new SyntaxError(${JSON.stringify(err.message)})`;
 			}else throw err;
 		}
@@ -419,7 +415,7 @@ export class RewriteJS extends Rewriter {
 							switch(parts[2]){
 								case'get':{
 									const id = ctx.node.arguments[0].value;
-									ctx.replace_with(parseScript(id, parse_options));
+									ctx.replace_with(b.identifier(id));
 								} break;
 								case'get2':
 								case'set2':
@@ -427,13 +423,13 @@ export class RewriteJS extends Rewriter {
 								case'new2': {
 									const id = ctx.node.arguments[ctx.node.arguments.length - 1].value;
 
-									ctx.replace_with(parseScript(id, parse_options));
+									ctx.replace_with(b.identifier(id));
 									ctx.remove_descendants_from_stack();
 								} break;
 								case'set1': {
 									const id = ctx.node.arguments[ctx.node.arguments.length - 1].value;
 
-									ctx.parent.replace_with(parseScript(id, parse_options));
+									ctx.parent.replace_with(b.identifier(id));
 									ctx.parent.remove_descendants_from_stack();
 								} break;
 								case'pattern':
@@ -464,6 +460,15 @@ export class RewriteJS extends Rewriter {
 		}
 
 		return generate(ast);
+	}
+	generate_part(code, ctx){
+		let result = code.slice(ctx.node.range[0], ctx.node.range[1]);
+		
+		if(ctx.type.includes('Expression') && ctx.parent.type.includes('Expression')){
+			result = `(${result})`;
+		}
+
+		return result;
 	}
 	serve(serve, url, worker){
 		if(worker){
