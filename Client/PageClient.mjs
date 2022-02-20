@@ -7,11 +7,21 @@ import { PageRequestRewrite } from './Rewrites/PageRequest.mjs';
 import { SyncClient } from './SyncClient.mjs';
 import { global } from '../Global.mjs';
 import { XMLHttpRequestRewrite } from './Rewrites/XMLHttpRequest.mjs';
+import { Reflect } from './RewriteUtil.mjs';
+
+const baseURI = Reflect.getOwnPropertyDescriptor(Node.prototype, 'baseURI');
 
 export class PageClient extends Client {
 	static type = 'page';
-	base = this.tomp.url.parse_url(this.tomp.url.unwrap_ez(document.baseURI));
-	host = this.tomp.url.parse_url(document.baseURI);
+	get #baseURI(){
+		return Reflect.apply(baseURI.get, document, []);
+	}
+	get base(){
+		return this.tomp.url.parse_url(this.tomp.url.unwrap_ez(this.#baseURI));
+	}
+	get host(){
+		return this.tomp.url.parse_url(this.#baseURI);
+	}
 	constructor(config){
 		super(config);
 		
