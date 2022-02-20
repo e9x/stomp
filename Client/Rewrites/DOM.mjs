@@ -3,7 +3,7 @@ import { global as g } from '../../Global.mjs';
 // https://github.com/webpack/webpack/issues/12960
 const global = g;
 import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect, wrap_function } from '../RewriteUtil.mjs';
-import { attribute_original, TOMPElement } from '../../RewriteElements.mjs';
+import { attribute_original, get_mime, TOMPElement } from '../../RewriteElements.mjs';
 import { global_client } from '../../RewriteJS.mjs';
 
 const { getAttribute, setAttribute, hasAttribute, hasAttributeNS, removeAttribute, getAttributeNames } = global?.Element?.prototype || {};
@@ -255,8 +255,12 @@ export class DOMRewrite extends Rewrite {
 	}
 	domparser_work(){
 		DOMParser.prototype.parseFromString = wrap_function(DOMParser.prototype.parseFromString, (target, that, [ str, type ]) => {
-			str = this.client.tomp.html.wrap(str, this.tomp.bare);
-
+			if(get_mime(type) === 'image/svg+xml'){
+				str = this.client.tomp.svg.wrap(str, this.tomp.bare);
+			}else{
+				str = this.client.tomp.html.wrap(str, this.tomp.bare);
+			}
+			
 			return Reflect.apply(target, that, [ str, type ]);
 		});
 

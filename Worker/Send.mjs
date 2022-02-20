@@ -286,6 +286,10 @@ export async function SendManifest(server, server_request, field){
 	return await SendRewrittenScript(server.tomp.manifest, server, server_request, field);
 }
 
+export async function SendSVG(server, server_request, field){
+	return await SendRewrittenScript(server.tomp.svg, server, server_request, field);
+}
+
 export async function SendHTML(server, server_request, field){
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
@@ -315,7 +319,6 @@ export async function SendHTML(server, server_request, field){
 		statusText: response.statusText,
 	});
 }
-
 
 export async function SendForm(server, server_request, field){
 	const headers = new Headers();

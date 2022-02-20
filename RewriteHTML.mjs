@@ -6,7 +6,7 @@ import { Rewriter } from './Rewriter.mjs';
 
 const essential_nodes = ['#documentType','#document','#text','html','head','body'];
 
-class TOMPElementParse5 extends TOMPElement {
+export class TOMPElementParse5 extends TOMPElement {
 	#ctx = {};
 	constructor(ctx){
 		super();
@@ -118,9 +118,12 @@ export class RewriteHTML extends Rewriter {
 
 			const element = new TOMPElementParse5(ctx);
 			
-			if(wrap)this.tomp.elements.wrap(element, url, persist);
-			else this.tomp.elements.unwrap(element, url, persist);
-			
+			if(wrap){
+				this.tomp.elements.wrap(element, url, persist);
+			}else{
+				this.tomp.elements.unwrap(element, url, persist);
+			}
+
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)
 			// on the first non-essential node (not html,head,or body), insert the client script before it
 			if(!fragment && wrap && !element.detached && !inserted_script && !essential_nodes.includes(ctx.node.nodeName)){

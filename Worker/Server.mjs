@@ -1,6 +1,6 @@
 import { TOMP } from '../TOMP.mjs';
 import { Process } from './Process.mjs';
-import { SendCookieStore, SendGetCookies, SendSetCookies, SendBinary, SendForm, SendHTML, SendJS, SendCSS, SendManifest, SendStorage } from './Send.mjs';
+import { SendCookieStore, SendGetCookies, SendSetCookies, SendBinary, SendForm, SendHTML, SendSVG, SendJS, SendCSS, SendManifest, SendStorage } from './Send.mjs';
 import { openDB } from 'idb/with-async-ittr';
 import { create_db as create_cookie_db } from './Cookies.mjs';
 import { create_db as create_storage_db } from './Storage.mjs';
@@ -70,6 +70,9 @@ export class Server {
 					break;
 				case 'worker:html':
 					return await SendHTML(this, request, field);
+					break;
+				case 'worker:svg':
+					return await SendSVG(this, request, field);
 					break;
 				case 'worker:js':
 					return await SendJS(this, request, field);

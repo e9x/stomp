@@ -28,6 +28,7 @@ export class TOMPElement {
 };
 
 export function get_mime(content_type){
+	content_type = String(content_type);
 	return content_type.split(';')[0];
 }
 
@@ -374,22 +375,22 @@ export class RewriteElements {
 				{
 					name: new TargetName('href'),
 					wrap: (name, value, element, url, context) => {
-						context.value = this.tomp.html.serve(new URL(value, url), url).toString();
+						context.value = this.tomp.svg.serve(new URL(value, url), url).toString();
 						context.modified = true;
 					},
 					unwrap: (name, value, element, url, context) => {
-						context.value = this.tomp.html.unwrap_serving(value, url).toString();
+						context.value = this.tomp.svg.unwrap_serving(value, url).toString();
 						context.modified = true;
 					},
 				},
 				{
 					name: new TargetName('xlink:href', false),
 					wrap: (name, value, element, url, context) => {
-						context.value = this.tomp.html.serve(new URL(value, url), url).toString();
+						context.value = this.tomp.svg.serve(new URL(value, url), url).toString();
 						context.modified = true;
 					},
 					unwrap: (name, value, element, url, context) => {
-						context.value = this.tomp.html.unwrap_serving(value, url).toString();
+						context.value = this.tomp.svg.unwrap_serving(value, url).toString();
 						context.modified = true;
 					},
 				},

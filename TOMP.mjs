@@ -2,6 +2,7 @@ import { RewriteURL } from './RewriteURL.mjs';
 import { RewriteJS } from './RewriteJS.mjs';
 import { RewriteCSS } from './RewriteCSS.mjs';
 import { RewriteHTML } from './RewriteHTML.mjs';
+import { RewriteSVG } from './RewriteSVG.mjs';
 import { RewriteForm } from './RewriteForm.mjs';
 import { RewriteElements } from './RewriteElements.mjs';
 import { RewriteManifest } from './RewriteManifest.mjs';
@@ -47,6 +48,7 @@ export class TOMP {
 		this.css = new RewriteCSS(this);
 		this.html = new RewriteHTML(this);
 		this.binary = new RewriteBinary(this);
+		this.svg = new RewriteSVG(this);
 		this.form = new RewriteForm(this);
 		this.manifest = new RewriteManifest(this);
 		this.elements = new RewriteElements(this);
