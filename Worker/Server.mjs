@@ -141,6 +141,16 @@ export class Server {
 		<p>ID: ${json.id}</p>
 		<p>Message: ${err.message}</p>
 		${err.stack ? '<p>Stack trace:</p><pre>' + err.stack + '</pre>' : ''}
+		<script>
+const json = ${JSON.stringify(json)};
+const error = new Error(json.message);
+error.name = json.id;
+error.code = json.code;
+if(json.stack){
+	error.stack = json.stack;
+}
+console.error(error);
+		</script>
 	</body>
 </html>`, {
 					status,
