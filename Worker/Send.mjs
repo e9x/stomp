@@ -262,7 +262,11 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	}else{
 		for(let remove of remove_encoding_headers)response_headers.delete(remove);
 
-		return new Response(rewriter.wrap(await response.text(), url.toString(), ...args), {
+		const text = await response.text();
+
+		const wrapped = rewriter.wrap(text, url.toString(), ...args);
+
+		return new Response(wrapped, {
 			headers: response_headers,
 			status: response.status,
 			statusText: response.statusText,
