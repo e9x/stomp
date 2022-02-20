@@ -4,10 +4,6 @@ import { global_client } from '../RewriteJS.mjs';
 import { global } from '../Global.mjs';
 import { is_page, is_worker, is_serviceworker } from '../Environment.mjs';
 
-if(global_client in global){
-	throw new Error('TOMP client already loaded!');
-}
-
 function create_instance(...args){
 	let created;
 
@@ -29,4 +25,7 @@ function create_instance(...args){
 	});
 }
 
-global[global_client] = create_instance;
+// consider iframes
+if(!(global_client in global)){
+	global[global_client] = create_instance;
+}

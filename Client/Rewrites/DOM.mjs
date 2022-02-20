@@ -210,7 +210,11 @@ export class DOMRewrite extends Rewrite {
 
 				http.send();
 
-				window.eval(http.responseText);
+				let script = http.responseText;
+				
+				script = script.replace('//# sourceMappingURL=client.js.map', `//# sourceMappingURL=${this.client.host.toOrigin()}${this.client.tomp.directory}client.js.map`)
+
+				window.eval(script);
 				
 				window[global_client](this.client.tomp);
 			}
