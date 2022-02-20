@@ -9,12 +9,11 @@ import { global } from '../Global.mjs';
 import { XMLHttpRequestRewrite } from './Rewrites/XMLHttpRequest.mjs';
 import { Reflect } from './RewriteUtil.mjs';
 
-const baseURI = Reflect.getOwnPropertyDescriptor(Node.prototype, 'baseURI');
-
 export class PageClient extends Client {
 	static type = 'page';
+	#baseURI_desc = Reflect.getOwnPropertyDescriptor(Node.prototype, 'baseURI');
 	get #baseURI(){
-		return Reflect.apply(baseURI.get, document, []);
+		return Reflect.apply(this.#baseURI_desc.get, document, []);
 	}
 	get base(){
 		return this.tomp.url.parse_url(this.tomp.url.unwrap_ez(this.#baseURI));
