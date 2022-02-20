@@ -242,11 +242,12 @@ export class DOMRewrite extends Rewrite {
 		const value = Reflect.getOwnPropertyDescriptor(Attr.prototype, 'value');
 
 		Reflect.defineProperty(Attr.prototype, 'value', {
+			// Attr.prototype.namespaceURI....
 			get: wrap_function(value.get, (target, that, args) => {
-				return Reflect.apply(this.get_attribute, that.ownerElement, [ that.name ]);
+				return Reflect.apply(this.get_attribute(false, getAttribute), that.ownerElement, [ that.name ]);
 			}),
 			set: wrap_function(value.set, (target, that, [ value ]) => {
-				return Reflect.apply(this.set_attribute, that.ownerElement, [ that.name, value ]);
+				return Reflect.apply(this.get_attribute(false, getAttribute), that.ownerElement, [ that.name, value ]);
 			}),
 			enumerable: true,
 			configurable: true,
