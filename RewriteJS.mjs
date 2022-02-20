@@ -40,6 +40,7 @@ export class RewriteJS extends Rewriter {
 			});
 		}catch(err){
 			if(err instanceof SyntaxError){
+				console.log(code, err);
 				return `throw new SyntaxError(${JSON.stringify(err.message)})`;
 			}else throw err;
 		}
@@ -129,7 +130,7 @@ export class RewriteJS extends Rewriter {
 								b.identifier('tomp$value'),
 							)),
 							ctx.parent.type === 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
-							b.literal(generate(ctx.parent.node)),
+							b.literal(JSON.stringify(ctx.parent.node)),
 						]));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
@@ -187,14 +188,14 @@ export class RewriteJS extends Rewriter {
 							ctx.node.object,
 							property_argument,
 							b.arrayExpression(ctx.parent.node.arguments),
-							b.literal(generate(ctx.parent.node)),
+							b.literal(JSON.stringify(ctx.parent.node)),
 						]));
 					}else if(ctx.parent.type === 'CallExpression' && ctx.parent_key === 'callee'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('call2')), [
 							ctx.node.object,
 							property_argument,
 							b.arrayExpression(ctx.parent.node.arguments),
-							b.literal(generate(ctx.parent.node)),
+							b.literal(JSON.stringify(ctx.parent.node)),
 						]));
 					}else if(ctx.parent.type === 'UpdateExpression' || ctx.parent.type === 'AssignmentExpression' && ctx.parent_key === 'left'){
 						ctx.parent.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('set2')), [
@@ -214,13 +215,13 @@ export class RewriteJS extends Rewriter {
 								b.identifier('tomp$value'),
 							)),
 							ctx.parent.type === 'UpdateExpression' ? b.identifier('undefined') : ctx.parent.node.right,
-							b.literal(generate(ctx.parent.node)),
+							b.literal(JSON.stringify(ctx.parent.node)),
 						]));
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get2')), [
 							ctx.node.object,
 							property_argument,
-							b.literal(generate(ctx.node)),
+							b.literal(JSON.stringify(ctx.node)),
 						]));
 					}
 
@@ -354,7 +355,7 @@ export class RewriteJS extends Rewriter {
 		ctx.parent.replace_with(b.variableDeclarator(b.objectPattern(declare), b.callExpression(b.memberExpression(global_access, b.identifier('pattern')), [
 			ctx.parent.node.init,
 			pattern_root,
-			b.literal(generate(ctx.parent.node)),
+			b.literal(JSON.stringify(ctx.parent.node)),
 		])));
 	}
 	unwrap(code, url){
@@ -388,7 +389,7 @@ export class RewriteJS extends Rewriter {
 					break;
 				case 'VariableDeclarator':
 					
-					if(ctx.node.id.type != 'ObjectPattern' || !ctx.node.init)break;
+					if(ctx.node.id.type !== 'ObjectPattern' || !ctx.node.init)break;
 					
 					if(!ctx.node.init.arguments)continue;
 
@@ -407,8 +408,8 @@ export class RewriteJS extends Rewriter {
 
 					// console.log('call', code.slice(ctx.node.start, ctx.node.end));
 
-					if(ctx.node.callee.type != 'MemberExpression')continue;
-					if(ctx.node.callee.object.type != 'MemberExpression')continue;
+					if(ctx.node.callee.type !== 'MemberExpression')continue;
+					if(ctx.node.callee.object.type !== 'MemberExpression')continue;
 					
 					const parts = [ ctx.node.callee.object.object.name, ctx.node.callee.object.property.name, ctx.node.callee.property.name ];
 					
@@ -417,20 +418,25 @@ export class RewriteJS extends Rewriter {
 					switch(parts[1]){
 						case'access':
 							switch(parts[2]){
-								case'get':
-									ctx.replace_with(ctx.node.arguments[0]);
-									break;
+								case'get':{
+									const id = ctx.node.arguments[0].value;
+									ctx.replace_with(JSON.parse(id));
+								} break;
 								case'get2':
 								case'set2':
 								case'call2':
-								case'new2':
-									ctx.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
+								case'new2': {
+									const id = ctx.node.arguments[ctx.node.arguments.length - 1].value;
+
+									ctx.replace_with(JSON.parse(id));
 									ctx.remove_descendants_from_stack();
-									break;
-								case'set1':
-									ctx.parent.replace_with(b.identifier(ctx.node.arguments[ctx.node.arguments.length - 1].value));
+								} break;
+								case'set1': {
+									const id = ctx.node.arguments[ctx.node.arguments.length - 1].value;
+
+									ctx.parent.replace_with(JSON.parse(id));
 									ctx.parent.remove_descendants_from_stack();
-									break;
+								} break;
 								case'pattern':
 									ctx.replace_with(ctx.node.arguments[0]);
 									break;
@@ -442,7 +448,7 @@ export class RewriteJS extends Rewriter {
 						case'eval':
 							switch(parts[2]){
 								case'eval_scope':
-									ctx.parent.parent.replace_with(b.callExpression(b.identifier('eval'), ctx.node.arguments.slice(1)));
+									ctx.parent.replace_with(b.callExpression(b.identifier('eval'), ctx.node.arguments.slice(1)));
 									break;
 								case'import':
 									ctx.parent.replace_with(b.callExpression(b.identifier('import'), ctx.node.arguments.slice(1)));
