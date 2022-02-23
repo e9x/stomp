@@ -90,7 +90,7 @@ export class RewriteJS extends Rewriter {
 
 					break;
 				case'Identifier':
-
+					
 					if(ctx.parent.type === 'MemberExpression' && ctx.parent_key === 'property')break; // window.location;
 					if(ctx.parent.type === 'LabeledStatement')break; // { location: null, };
 					if(ctx.parent.type === 'VariableDeclarator' && ctx.parent_key === 'id')break;
@@ -149,23 +149,29 @@ export class RewriteJS extends Rewriter {
 					if(ctx.node[this.prevent_rewrite]) break;
 				
 					if(ctx.node.computed){
-						// not Uint8Array[1000]
-						if(ctx.node.property.type !== 'Literal' || typeof ctx.node.property.value !== 'number'){
+						if(ctx.node.object.type === 'Super'){
+							rewrite = false;
+						}else if(ctx.node.property.type === 'Literal' && typeof ctx.node.property.value === 'number'){ // Uint8Array[1000]
+							rewrite = false;
+						}else{
 							rewrite = true;
 						}
 					}else switch(ctx.node.property.type) {
 						case'Identifier':
 							if(!undefinable.includes(ctx.node.property.name)){
-								break;
+								rewrite = false;
+							}else{
+								rewrite = true;
 							}
-
-							rewrite = true;
 							
 							break;
 						case'Literal':
-							if(undefinable.includes(ctx.node.property.value)){
+							if(!undefinable.includes(ctx.node.property.value)){
+								rewrite = false;
+							}else{
 								rewrite = true;
 							}
+
 							break;
 						case'TemplateLiteral':
 							rewrite = true;
