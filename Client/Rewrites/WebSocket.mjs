@@ -111,6 +111,8 @@ export class WebSocketRewrite extends Rewrite {
 					})),
 				]);
 
+				this.#socket.binaryType = this.#binaryType;
+
 				this.#socket.addEventListener('message', event => {
 					this.dispatchEvent(new MessageEvent('message', event));
 				});
