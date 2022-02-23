@@ -31,6 +31,19 @@ export class Server {
 			},
 		});
 	}
+	on_message({ data }){
+		if(this.sync_request.message(data)){
+			return; // handled
+		}
+	}
+	message(event){
+		if(typeof event.data === 'object' && event.data.tomp === true){
+			this.on_message(event);
+			return true;
+		}else{
+			return false;
+		}
+	}
 	json(status, json){
 		// this.tomp.log.trace(json);
 		

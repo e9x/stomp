@@ -12,7 +12,10 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
 	const {request} = event;
 	
-	if(server.request(event))return; // handled 
+	if(server.request(event)){
+		// handled
+		return;
+	}
 });
 
 self.addEventListener('activate', event => {
@@ -21,4 +24,11 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('push', event => {
 	server.tomp.log.debug('Push', event.request.url);
+});
+
+self.addEventListener('message', event => {
+	if(server.message(event)){
+		// handled
+		return;
+	}
 });

@@ -1,11 +1,12 @@
 import { decode_base64, encode_base64 } from '../Base64.mjs';
 import { global } from '../Global.mjs';
 import { engine } from '../Environment.mjs';
-import { Reflect } from './RewriteUtil.mjs';
-import { encode_cookie, decode_cookie } from '../EncodeCookies.mjs';
+import { decode_cookie } from '../EncodeCookies.mjs';
 import { status_empty } from '../Worker/Bare.mjs';
 
 const { Request, XMLHttpRequest } = global;
+
+const { serviceWorker } = navigator;
 
 export class SyncClient {
 	constructor(client){
@@ -74,15 +75,15 @@ export class SyncClient {
 		
 		const id = 'sync-request-' + Math.random().toString(16).slice(2);
 		const regex = new RegExp(`${id}=(.*?)(;|$)`);
-		
-		this.client.cookie.value = `${id}=${encode_cookie(JSON.stringify([ 'outgoing', args ]))}; path=${this.client.tomp.directory}; max-age=10`;
-		
-		if(!this.client.cookie.value.includes(id)){
-			throw new Error('Cookie could not be set...');
-		}
 
-		let name;
-		let data;
+		serviceWorker.controller.postMessage({
+			tomp: true,
+			sync: true,
+			id,
+			args,
+		});
+
+		let cookie_count;
 		let cycles;
 
 		for(cycles = 1e5; cycles > 0; cycles--){
@@ -92,17 +93,35 @@ export class SyncClient {
 			
 			const [,value] = match;
 
-			[name,data] = JSON.parse(decodeURIComponent(value));
-			
-			if(name == 'incoming')break;
+			cookie_count = parseInt(value);
+
+			this.client.cookie.value = `${id}=; path=/; expires=${new Date(0)}`;
+		
+			break;
 		}
 
 		if(!cycles){
 			throw new RangeError(`Used max cycles when requesting ${url}`);
 		}
 		
-		this.client.cookie.value = `${id}=; path=${this.client.tomp.directory}; expires=${new Date(0)}`;
+		let data = '';
+
+		for(let i = 0; i < cookie_count; i++){
+			const regex = new RegExp(`${id}${i}=(.*?)(;|$)`);
+			const match = this.client.cookie.value.match(regex);
+			
+			if(!match){
+				console.warn(`Couldn't find chunk ${i}`);
+				continue;
+			}
+
+			this.client.cookie.value = `${id}${i}=; path=/; expires=${new Date(0)}`;
 		
-		return this.create_response(data);
+			const [,value] = match;
+
+			data += value;
+		}
+
+		return this.create_response(JSON.parse(decode_cookie(data)));
 	}
 };
