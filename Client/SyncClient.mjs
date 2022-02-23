@@ -77,6 +77,10 @@ export class SyncClient {
 		
 		this.client.cookie.value = `${id}=${encode_cookie(JSON.stringify([ 'outgoing', args ]))}; path=${this.client.tomp.directory}; max-age=10`;
 		
+		if(!this.client.cookie.value.includes(id)){
+			throw new Error('Cookie could not be set...');
+		}
+
 		let name;
 		let data;
 		let cycles;
