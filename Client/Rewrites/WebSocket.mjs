@@ -191,7 +191,7 @@ export class WebSocketRewrite extends Rewrite {
 			set binaryType(value){
 				this.#binaryType = value;
 
-				if(this.#ready){
+				if(this.#socket){
 					this.#socket.binaryType = value;
 				}
 
