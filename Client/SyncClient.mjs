@@ -5,9 +5,7 @@ import { Reflect } from './RewriteUtil.mjs';
 import { encode_cookie, decode_cookie } from '../EncodeCookies.mjs';
 import { status_empty } from '../Worker/Bare.mjs';
 
-const { Request } = global;
-
-const xml_open = XMLHttpRequest.prototype.open;
+const { Request, XMLHttpRequest } = global;
 
 export class SyncClient {
 	constructor(client){
@@ -68,7 +66,7 @@ export class SyncClient {
 		if(engine == 'gecko'){
 			const http = new XMLHttpRequest();
 
-			Reflect.apply(xml_open, http, [ 'POST', `${this.client.tomp.directory}worker:sync-request/`, false ]);
+			http.open('POST', `${this.client.tomp.directory}worker:sync-request/`, false);
 			http.send(JSON.stringify(args));
 			
 			return this.create_response(JSON.parse(http.responseText));
