@@ -14,8 +14,6 @@ export class SyncServer {
 		});
 	}
 	async on_message({ id, args }){
-		console.trace('work with', id, args);
-
 		const response = await this.process(JSON.parse(JSON.stringify(args)));
 		
 		const long = encode_cookie(JSON.stringify(response));
