@@ -586,11 +586,11 @@ export class RewriteElements {
 				// delete as in move to data-tomp-srcset, create attribute named srcset and set value to result of wrap
 				{
 					name: new TargetName('srcset'),
-					wrap: (value, url, element) => {
+					wrap: (name, value, element, url) => {
 						const parsed = parseSrcset(value);
 						
 						for(let src of parsed){
-							const resolved = new URL(src.url, url).href;
+							const resolved = new URL(src.url, url);
 							src.url = this.tomp.binary.serve(resolved, url);
 						}
 
