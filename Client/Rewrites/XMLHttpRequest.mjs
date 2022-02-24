@@ -231,11 +231,16 @@ export class XMLHttpRequestRewrite extends Rewrite {
 			send(body){
 				this.#readyState = OPENED;
 
-				this.#fetch(that.client.tomp.binary.serve(new URL(this.#url, that.client.base), that.client.base), {
+				const options = {
 					method: this.#method,
 					headers: this.#headers,
-					body,
-				});
+				};
+				
+				if(body !== undefined){
+					options.body = body;
+				}
+
+				this.#fetch(that.client.tomp.binary.serve(new URL(this.#url, that.client.base), that.client.base), options);
 			}
 			getResponseHeader(header){
 				return this.#response_headers.get(header);
