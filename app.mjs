@@ -2,8 +2,6 @@ import { Builder } from './Builder.mjs';
 import { program, Option } from 'commander';
 import { resolve } from 'node:path';
 
-const default_port = Symbol();
-
 program
 .addOption(new Option('-f, --folder <path>', 'folder to contain output').default('tompbuild'))
 .addOption(new Option('-w, --watch', 'if the script should poll the source for changes'))
