@@ -34,5 +34,5 @@ npm install
 
 3. Build to the `tompbuild` folder
 ```sh
-node ./Standalone.mjs --folder tompbuild
+node ./app.mjs --folder tompbuild
 ```
