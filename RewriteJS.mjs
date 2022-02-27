@@ -91,6 +91,7 @@ export class RewriteJS extends Rewriter {
 					break;
 				case'Identifier':
 					
+					if(ctx.parent.type === 'ArrayPattern' || ctx.parent.type === 'ObjectPattern')break;
 					if(ctx.parent.type === 'MemberExpression' && ctx.parent_key === 'property')break; // window.location;
 					if(ctx.parent.type === 'LabeledStatement')break; // { location: null, };
 					if(ctx.parent.type === 'VariableDeclarator' && ctx.parent_key === 'id')break;
@@ -144,10 +145,12 @@ export class RewriteJS extends Rewriter {
 					break;
 				case'MemberExpression':
 				
-					let rewrite = false;
+					if(ctx.parent.type === 'ArrayPattern' || ctx.parent.type === 'ObjectPattern')break;
 					if(ctx.parent.type === 'UnaryExpression' && ctx.parent.node.operator === 'delete')break;
-					if(ctx.node[this.prevent_rewrite]) break;
+					if(ctx.node[this.prevent_rewrite])break;
 				
+					let rewrite = false;
+					
 					if(ctx.node.computed){
 						if(ctx.node.object.type === 'Super'){
 							rewrite = false;
