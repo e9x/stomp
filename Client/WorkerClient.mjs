@@ -1,6 +1,7 @@
 import { Client } from './Client.mjs';
 import { Reflect, wrap_function } from './RewriteUtil.mjs';
 import { global } from '../Global.mjs';
+import { XMLHttpRequestRewrite } from './Rewrites/XMLHttpRequest.mjs';
 
 export class WorkerClient extends Client {
 	static type = 'worker';
@@ -8,11 +9,15 @@ export class WorkerClient extends Client {
 	host = this.tomp.url.parse_url(location.href);
 	constructor(config){
 		super(config);
+
+		this.xml = new XMLHttpRequestRewrite(this);
 		
 		this.work_modules();
 	}
 	work_modules(){
 		super.work_modules();
+
+		this.xml.work();
 
 		/* script url isnt relative to the imported script
 		relative to the creation url scope

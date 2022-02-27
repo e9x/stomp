@@ -8,6 +8,7 @@ import { AccessRewrite } from './Rewrites/Access.mjs';
 import { IDBRewrite } from './Rewrites/IndexedDB.mjs';
 import { WorkerRewrite } from './Rewrites/Worker.mjs';
 import { FunctionRewrite } from './Rewrites/Function.mjs';
+import { EventRewrite } from './Rewrites/Event.mjs';
 import { NativeHelper } from './NativeHelper.mjs';
 import { wrap_function, function_strings } from './RewriteUtil.mjs';
 
@@ -17,21 +18,23 @@ export class Client {
 	constructor(config){
 		this.tomp = new TOMP(config);
 		this.ready = this.work();
-	}
-	work_modules(){
+		
 		this.function = new FunctionRewrite(this);
 		this.websocket = new WebSocketRewrite(this);
 		this.idb = new IDBRewrite(this);
+		this.event = new EventRewrite(this);
 		this.worker = new WorkerRewrite(this);
 		this.request = new RequestRewrite(this);
 		this.eval = new EvalRewrite(this);
 		this.location = new LocationRewrite(this);
 		this.access = new AccessRewrite(this);
-		
+	}
+	work_modules(){
 		this.function.work();
 		this.websocket.work();
 		this.idb.work();
 		this.worker.work();
+		this.event.work();
 		
 		this.request.work();
 		this.eval.work();

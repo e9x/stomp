@@ -28,11 +28,6 @@ export class PageClient extends Client {
 			node.remove();
 		}
 
-		this.work_modules();
-	}
-	work_modules(){
-		super.work_modules();
-		
 		this.sync = new SyncClient(this);
 		this.history = new HistoryRewrite(this);
 		this.storage = new StorageRewrite(this);
@@ -41,6 +36,11 @@ export class PageClient extends Client {
 		this.page_request = new PageRequestRewrite(this);
 		this.xml = new XMLHttpRequestRewrite(this);
 
+		this.work_modules();
+	}
+	work_modules(){
+		super.work_modules();
+		
 		this.sync.work();
 		this.xml.work();
 		this.history.work();
