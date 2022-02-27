@@ -1,6 +1,7 @@
 import { decode_base64, encode_base64 } from '../Base64.mjs';
 import { encode_cookie } from '../EncodeCookies.mjs'
 import { engine } from '../Environment.mjs';
+import { status_redirect } from '../Worker/Bare.mjs';
 
 export class SyncServer {
 	constructor(server){
@@ -55,29 +56,46 @@ export class SyncServer {
 			options.body = decode_base64(body);
 		}
 
-		const request = new Request(url, options);
-		
+
+		let redirects = 15;
 		let response;
 
-		try{
-			response = await new Promise((resolve, reject) => {
-				const event = {
-					async respondWith(response){
-						resolve(await response);
-					},
-					request,
-				};
-	
-				if(!this.server.request(event)){
-					return reject('Declined');
-				}
-			});
-		}catch(error){
-			return [
-				error.message,
-			];
-		}
+		for(;;){
+			if(redirects-- <= 0){
+				return [
+					'too many redirects',
+				];
+			}
 
+			const request = new Request(url, options);
+			
+			try{
+				response = await new Promise((resolve, reject) => {
+					const event = {
+						async respondWith(response){
+							resolve(await response);
+						},
+						request,
+					};
+		
+					if(!this.server.request(event)){
+						return reject('Declined');
+					}
+				});
+			}catch(error){
+				return [
+					error.message,
+				];
+			}
+			
+			if(status_redirect.includes(response.status) && response.headers.has('location')){
+				url = new URL(response.headers.get('location'), url);
+				continue;
+			}
+
+			break;
+		}
+		
 		return [
 			undefined,
 			encode_base64(await response.arrayBuffer()),
@@ -85,8 +103,8 @@ export class SyncServer {
 				status: response.status,
 				statusText: response.statusText,
 				headers: Object.fromEntries(response.headers.entries()),
-				url: response.url,
 			},
+			response.url,
 		];
 	}
 	work(){}

@@ -3,6 +3,7 @@ import { global } from '../Global.mjs';
 import { engine } from '../Environment.mjs';
 import { decode_cookie } from '../EncodeCookies.mjs';
 import { status_empty } from '../Worker/Bare.mjs';
+import { Reflect } from './RewriteUtil.mjs';
 
 const { Request, XMLHttpRequest } = global;
 
@@ -14,7 +15,7 @@ export class SyncClient {
 	}
 	encoder = new TextEncoder('utf-8');
 	work(){}
-	create_response([ error, base64ArrayBuffer, init ]){
+	create_response([ error, base64ArrayBuffer, init, url ]){
 		if(error !== null){
 			throw new TypeError(error);
 		}
@@ -29,6 +30,9 @@ export class SyncClient {
 			response = new Response(rawArrayBuffer, init);
 		}
 
+		Reflect.defineProperty(response, 'url', {
+			value: url,
+		});
 		response.rawArrayBuffer = rawArrayBuffer;
 
 		return response;
