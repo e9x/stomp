@@ -154,8 +154,12 @@ export class RewriteJS extends Rewriter {
 					if(ctx.node.computed){
 						if(ctx.node.object.type === 'Super'){
 							rewrite = false;
-						}else if(ctx.node.property.type === 'Literal' && typeof ctx.node.property.value === 'number'){ // Uint8Array[1000]
-							rewrite = false;
+						}else if(ctx.node.property.type === 'Literal'){
+							if(undefinable.includes(ctx.node.property.value)){
+								rewrite = true;
+							}else{
+								rewrite = false;
+							}
 						}else{
 							rewrite = true;
 						}
