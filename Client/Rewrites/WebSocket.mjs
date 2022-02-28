@@ -88,12 +88,18 @@ export class WebSocketRewrite extends Rewrite {
 					request_headers['Cookie'] = cookies.toString();
 				}
 
-				this.#id = await(await Reflect.apply(that.client.request.global_fetch, global, [
+				const meta_req = await Reflect.apply(that.client.request.global_fetch, global, [
 					that.client.tomp.bare + 'v1/ws-new-meta',
 					{
 						method: 'GET',
 					}
-				])).text();
+				]);
+
+				if(meta_req.ok){
+					this.#id = await meta_req.text();
+				}else{
+					this.client.tomp.log.error('meta error:', meta_req.json());
+				}
 				
 				this.#socket = new that.global(bare_ws, [
 					'bare',
@@ -185,7 +191,11 @@ export class WebSocketRewrite extends Rewrite {
 				return this.#extensions;
 			}
 			get readyState(){
-				return this.socket ? this.socket.readyState : CONNECTING;
+				if(this.#socket){
+					return this.#socket.readyState;
+				}else{
+					return CONNECTING;
+				}
 			}
 			get binaryType(){
 				return this.#binaryType;
