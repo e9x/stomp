@@ -2,6 +2,7 @@ import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { wrap_function, Reflect } from '../RewriteUtil.mjs';
 import { EventTarget_on, TargetConstant, DOMObjectConstructor, mirror_class } from '../NativeUtil.mjs';
+import { forbids_body } from '../../Worker/Bare.mjs';
 
 export class XMLHttpRequestRewrite extends Rewrite {
 	global = global.XMLHttpRequest;
@@ -196,7 +197,7 @@ export class XMLHttpRequestRewrite extends Rewrite {
 			}
 			open(method, url, async = true, username, password){
 				this.#readyState = OPENED;
-				this.#method = String(method);
+				this.#method = String(method).toUpperCase();
 				
 				this.#url = String(url);
 				
@@ -236,7 +237,7 @@ export class XMLHttpRequestRewrite extends Rewrite {
 					headers: this.#headers,
 				};
 				
-				if(body !== undefined){
+				if(body !== undefined && body !== null && !forbids_body.includes(this.#method)){
 					options.body = body;
 				}
 
