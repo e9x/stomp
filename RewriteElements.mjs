@@ -442,10 +442,18 @@ export class RewriteElements {
 				{
 					name: new TargetName('src'),
 					wrap: (name, value, element, url, context) => {
+						if(!element_is_type(element, js_types)){
+							return;
+						}
+	
 						context.value = this.tomp.js.serve(new URL(value, url), url).toString();
 						context.modified = true;
 					},
 					unwrap: (name, value, element, url, context) => {
+						if(!element_is_type(element, js_types)){
+							return;
+						}
+	
 						context.value = this.tomp.js.unwrap_serving(value, url).toString();
 						context.modified = true;
 					},
