@@ -1,12 +1,12 @@
 import webpack from 'webpack';
 import Events from 'node:events';
-import path from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
-export class Builder {
+export default class Builder {
 	get_errors(error, stats){
 		const errors = [];
 		
@@ -27,9 +27,9 @@ export class Builder {
 			mode: 'development',
 			devtool: 'source-map',
 			entry: {
-				client: path.join(__dirname, 'Client', 'Entry.mjs'),
-				worker: path.join(__dirname, 'Worker', 'Entry.mjs'),
-				bootstrapper: path.join(__dirname, 'Bootstrapper', 'Entry.mjs'),
+				client: join(__dirname, 'Client', 'Entry.mjs'),
+				worker: join(__dirname, 'Worker', 'Entry.mjs'),
+				bootstrapper: join(__dirname, 'Bootstrapper', 'Entry.mjs'),
 			},
 			context: __dirname,
 			output: {
