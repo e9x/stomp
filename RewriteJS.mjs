@@ -42,7 +42,7 @@ export class RewriteJS extends Rewriter {
 			ast = parse(code, parse_options);
 		}catch(err){
 			if(err instanceof SyntaxError){
-				console.log(code, err);
+				this.tomp.log.trace(code, err);
 				return `throw new SyntaxError(${JSON.stringify(err.message)})`;
 			}else throw err;
 		}
@@ -382,7 +382,7 @@ export class RewriteJS extends Rewriter {
 			ast = parse(code, parse_options);
 		}catch(err){
 			if(err instanceof SyntaxError){
-				console.log(code, err);
+				this.tomp.log.trace(code, err);
 				return `throw new SyntaxError(${JSON.stringify(err.message)})`;
 			}else throw err;
 		}
