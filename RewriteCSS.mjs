@@ -40,7 +40,13 @@ export class RewriteCSS extends Rewriter {
 			}
 		});
 
-		return '@charset "UTF-8";' + generate(ast);
+		code = generate(ast);
+		
+		if(context === 'stylesheet'){
+			code = '@charset "UTF-8";' + code;
+		}
+		
+		return code;
 	}
 	unwrap(code, url, context = 'stylesheet'){
 		try{

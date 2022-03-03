@@ -140,9 +140,9 @@ export class DOMRewrite extends Rewrite {
 		return proxy;
 	}
 	style_work(){
-		const { cssText } = getOwnPropertyDescriptors(CSSStyleDeclaration.prototype);
-
 		bind_natives(CSSStyleDeclaration.prototype);
+
+		const { cssText } = getOwnPropertyDescriptors(CSSStyleDeclaration.prototype);
 
 		Reflect.defineProperty(CSSStyleDeclaration.prototype, 'cssText', {
 			get: wrap_function(cssText.get, (target, that, args) => {

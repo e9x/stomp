@@ -121,7 +121,7 @@ export function bind_natives(target){
 
 		let changed = false;
 
-		if(typeof desc.value == 'function'){
+		if(typeof desc.value === 'function'){
 			desc.value = wrap_function(desc.value, (target, that, args) => {
 				return Reflect.apply(target, resolve_native(that), args);
 			});
@@ -129,7 +129,7 @@ export function bind_natives(target){
 			changed = true;
 		}
 
-		if(typeof desc.get == 'function'){
+		if(typeof desc.get === 'function'){
 			desc.get = wrap_function(desc.get, (target, that, args) => {
 				return Reflect.apply(target, resolve_native(that), args);
 			});
@@ -137,7 +137,7 @@ export function bind_natives(target){
 			changed = true;
 		}
 
-		if(typeof desc.set == 'function'){
+		if(typeof desc.set === 'function'){
 			desc.set = wrap_function(desc.set, (target, that, args) => {
 				return Reflect.apply(target, resolve_native(that), args);
 			});
