@@ -5,7 +5,7 @@ import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 export class HistoryRewrite extends Rewrite {
 	global = global.History;
 	handler(target, that, args){
-		if(args.length <= 2){
+		if(args.length < 2){
 			throw new TypeError(`Failed to execute '${target.name}' on 'History': 2 arguments required, but only ${args.length} present.`);
 		}
 
