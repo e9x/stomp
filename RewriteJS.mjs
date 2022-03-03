@@ -1,4 +1,4 @@
-import { parse, parseScript } from 'meriyah';
+import { parse } from 'acorn';
 import { generate } from '@javascript-obfuscator/escodegen';
 import { AcornIterator } from './IterateAcorn.mjs';
 import { builders as b } from 'ast-types';
@@ -14,10 +14,10 @@ export const undefinable = ['eval','location'];
 
 const parse_options = { 
 	ecmaVersion: 2022,
-	module: true,
-	webcompat: true,
-	globalReturn: true,
-	next: true,
+	allowImportExportEverywhere: true,
+	allowAwaitOutsideFunction: true,
+	allowSuperOutsideMethod: true,
+	allowReturnOutsideFunction: true,
 	ranges: true,
 };
 
@@ -39,7 +39,7 @@ export class RewriteJS extends Rewriter {
 		let ast;
 
 		try{
-			ast = parseScript(code, parse_options);
+			ast = parse(code, parse_options);
 		}catch(err){
 			if(err instanceof SyntaxError){
 				console.log(code, err);
@@ -379,7 +379,7 @@ export class RewriteJS extends Rewriter {
 		let ast;
 
 		try{
-			ast = parseScript(code, parse_options);
+			ast = parse(code, parse_options);
 		}catch(err){
 			if(err instanceof SyntaxError){
 				console.log(code, err);

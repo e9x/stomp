@@ -1,44 +1,17 @@
-import { Builder } from './Builder.mjs';
 import { program, Option } from 'commander';
-import { resolve } from 'node:path';
+import build from './cli/build.mjs';
+import test from './cli/test.mjs';
 
-program
+program.command('build')
 .addOption(new Option('-f, --folder <path>', 'folder to contain output').default('tompbuild'))
 .addOption(new Option('-w, --watch', 'if the script should poll the source for changes'))
+.action(build)
+;
+
+program.command('test')
+.argument('<file>', 'Path to an HTML file to test')
+.option('-d, --dont-unwrap', 'If the test will be unwrapped')
+.action(test)
 ;
 
 program.parse(process.argv);
-
-const options = program.opts();
-
-const folder = resolve(process.cwd(), options.folder);
-
-const builder = new Builder(folder);
-console.info('Created builder on folder:', folder);
-
-if(options.watch){
-	const emitter = builder.watch();
-
-	emitter.on('error', errors => {
-		for(let error of errors){
-			console.error(error);
-		}
-
-		console.error('Failure building');
-	});
-
-	emitter.on('bulit', () => {
-		console.log('Successfully built');
-	});
-}else{
-	try{
-		await builder.build();
-		console.log('Success');
-	}catch(err){
-		for(let error of [].concat(err)){
-			console.error(error);	
-		}
-
-		console.error('Failure');
-	}
-}

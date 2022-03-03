@@ -15,20 +15,27 @@ export class RewriteCSS extends Rewriter {
 		const that = this;
 
 		walk(ast, function(node, item, list){
-			if (node.type === 'Url') {
-				let resolved;
+			if(node.type === 'Url')try{
+				const resolved = new URL(node.value, url);
 				
-				try{
-					resolved = new URL(node.value, url);
-				}catch(err){
-					// console.error(err);
-					return;
-				}
-				
-				if(this.atrule?.name == 'import'){
+				if(this.atrule?.name === 'import'){
 					node.value = that.tomp.css.serve(resolved, url);
 				}else{
 					node.value = that.tomp.binary.serve(resolved, url);
+				}
+			}catch(err){
+				// console.error(err);
+				return;
+			}
+			else if(node.name === 'import'){
+				const data = node?.prelude?.children?.tail?.data;
+
+				if(data !== undefined && data.type === 'String')try{
+					const resolved = new URL(data.value, url);
+					data.value = that.tomp.css.serve(resolved, url);
+				}catch(err){
+					// console.error(err);
+					return;
 				}
 			}
 		});
@@ -47,11 +54,24 @@ export class RewriteCSS extends Rewriter {
 		const that = this;
 
 		walk(ast, function(node, item, list){
-			if(node.type === 'Url'){
+			if(node.type === 'Url')try{
 				if(this.atrule?.name == 'import'){
 					node.value = that.tomp.css.unwrap_serving(node.value, url).toString();
 				}else{
 					node.value = that.tomp.binary.unwrap_serving(node.value, url).toString();
+				}
+			}catch(err){
+				// console.error(err);
+				return;
+			}
+			else if(node.name === 'import'){
+				const data = node?.prelude?.children?.tail?.data;
+
+				if(data !== undefined && data.type === 'String')try{
+					data.value = that.tomp.css.unwrap_serving(data.value, url).toString();
+				}catch(err){
+					// console.error(err);
+					return;
 				}
 			}
 		});
