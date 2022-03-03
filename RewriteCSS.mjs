@@ -40,7 +40,7 @@ export class RewriteCSS extends Rewriter {
 			}
 		});
 
-		return generate(ast);
+		return '@charset "UTF-8";' + generate(ast);
 	}
 	unwrap(code, url, context = 'stylesheet'){
 		try{
