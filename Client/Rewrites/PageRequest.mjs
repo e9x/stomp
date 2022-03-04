@@ -29,7 +29,7 @@ export class PageRequestRewrite extends Rewrite {
 
 		const { data, origin } = getOwnPropertyDescriptors(MessageEvent.prototype);
 		
-		global.addEventListener('message', 	event => {
+		global.addEventListener('message', event => {
 			const event_data = Reflect.apply(data.get, event, []);
 
 			if(typeof event_data === 'object' && event_data !== undefined && event_data[is_tomp]){
