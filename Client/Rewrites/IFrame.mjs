@@ -4,7 +4,6 @@ import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../RewriteUti
 
 export class IFrameRewrite extends Rewrite {
 	same_origin(frame_window){
-		console.log(this.client.tomp.url.parse_url(frame_window.location));
 		return this.client.tomp.url.parse_url(frame_window.location).toOrigin() === this.client.base.toOrigin();
 	}
 	work(){
