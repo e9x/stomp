@@ -8,6 +8,7 @@ import { SyncClient } from './SyncClient.mjs';
 import { global } from '../Global.mjs';
 import { XMLHttpRequestRewrite } from './Rewrites/XMLHttpRequest.mjs';
 import { Reflect } from './RewriteUtil.mjs';
+import { IFrameRewrite } from './Rewrites/IFrame.mjs';
 
 export class PageClient extends Client {
 	static type = 'page';
@@ -35,6 +36,7 @@ export class PageClient extends Client {
 		this.cookie = new DOMCookieRewrite(this);
 		this.page_request = new PageRequestRewrite(this);
 		this.xml = new XMLHttpRequestRewrite(this);
+		this.iframe = new IFrameRewrite(this);
 
 		this.work_modules();
 	}
@@ -48,6 +50,7 @@ export class PageClient extends Client {
 		this.dom.work();
 		this.cookie.work();
 		this.page_request.work();
+		this.iframe.work();
 
 		delete global.CookieStore;
 		delete global.cookieStore;

@@ -11,8 +11,13 @@ export class HistoryRewrite extends Rewrite {
 
 		let [data, title, url] = args;
 		
-		if(url != undefined){
-			url = String(url);
+		if(url !== undefined){
+			url = this.client.tomp.url.parse_url(url);
+
+			if(url.toOrigin() !== this.client.base.toOrigin()){
+				throw new TypeError(`Failed to execute '${target.name}' on 'History': A history state object with URL '${url.toOrigin()}' cannot be created in a document with origin '${this.client.base.toOrigin()}' and URL '${this.client.base.toString()}'.`);
+			}
+
 			url = this.client.tomp.html.serve(new URL(url, this.client.base), this.client.base);
 		}
 		
