@@ -1,6 +1,7 @@
 import Rewrite from '../../Rewrite.mjs';
 import global from '../../global.mjs';
 import { wrap_function, Reflect, getOwnPropertyDescriptors, context_this } from '../../RewriteUtil.mjs';
+import WindowRewrite from './Window.mjs';
 
 const beacon_protocols = ['http:','https:'];
 
@@ -19,7 +20,7 @@ export default class PageRequestRewrite extends Rewrite {
 				throw new TypeError(`Failed to execute 'postMessage' on 'Window': 1 argument required, but only ${args.length} present.`);
 			}
 	
-			return this.client.window.postMessage(context_this(that), ...args);
+			return this.client.get(WindowRewrite).postMessage(context_this(that), ...args);
 		});
 
 		const message_data = new WeakMap();

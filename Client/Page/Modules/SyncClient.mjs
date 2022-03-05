@@ -1,9 +1,10 @@
-import { decode_base64, encode_base64 } from '../Base64.mjs';
-import global from './global.mjs';
-import { engine } from './environment.mjs';
-import { decode_cookie } from '../EncodeCookies.mjs';
-import { status_empty } from '../Worker/bare.mjs';
-import { Reflect } from './RewriteUtil.mjs';
+import { decode_base64, encode_base64 } from '../../../Base64.mjs';
+import global from '../../global.mjs';
+import { engine } from '../../environment.mjs';
+import { decode_cookie } from '../../../EncodeCookies.mjs';
+import { status_empty } from '../../../Worker/bare.mjs';
+import { Reflect } from '../../RewriteUtil.mjs';
+import CookieRewrite from './Cookie.mjs'
 
 const { Request, XMLHttpRequest } = global;
 
@@ -96,7 +97,7 @@ export class SyncClient {
 		let cycles;
 
 		for(cycles = 1e5; cycles > 0; cycles--){
-			const match = this.client.cookie.value.match(regex);
+			const match = this.client.get(CookieRewrite).value.match(regex);
 			
 			if(!match)continue;
 			
@@ -104,7 +105,7 @@ export class SyncClient {
 
 			cookie_count = parseInt(value);
 
-			this.client.cookie.value = `${id}=; path=/; expires=${new Date(0)}`;
+			this.client.get(CookieRewrite).value = `${id}=; path=/; expires=${new Date(0)}`;
 		
 			break;
 		}
@@ -117,14 +118,14 @@ export class SyncClient {
 
 		for(let i = 0; i < cookie_count; i++){
 			const regex = new RegExp(`${id}${i}=(.*?)(;|$)`);
-			const match = this.client.cookie.value.match(regex);
+			const match = this.client.get(CookieRewrite).value.match(regex);
 			
 			if(!match){
 				console.warn(`Couldn't find chunk ${i}`);
 				continue;
 			}
 
-			this.client.cookie.value = `${id}${i}=; path=/; expires=${new Date(0)}`;
+			this.client.get(CookieRewrite).value = `${id}${i}=; path=/; expires=${new Date(0)}`;
 		
 			const [,value] = match;
 

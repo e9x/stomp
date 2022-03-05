@@ -1,10 +1,10 @@
-import { SyncClient } from '../SyncClient.mjs';
+import { SyncClient } from './Modules/SyncClient.mjs';
 import { Reflect } from '../RewriteUtil.mjs';
 import Client from '../Client.mjs';
 import HistoryRewrite from './Modules/History.mjs';
 import DOMRewrite from './Modules/DOM.mjs';
 import StorageRewrite from './Modules/Storage.mjs';
-import DOMCookieRewrite from './Modules/DOMCookie.mjs';
+import CookieRewrite from './Modules/Cookie.mjs';
 import PageRequestRewrite from './Modules/PageRequest.mjs';
 import IFrameRewrite from './Modules/IFrame.mjs';
 import WindowRewrite from './Modules/Window.mjs';
@@ -34,7 +34,7 @@ export default class PageClient extends Client {
 			HistoryRewrite,
 			StorageRewrite,
 			DOMRewrite,
-			DOMCookieRewrite,
+			CookieRewrite,
 			PageRequestRewrite,
 			WindowRewrite,
 			IFrameRewrite,

@@ -26,9 +26,9 @@ export default class RequestRewrite extends Rewrite {
 		}
 
 		global.URL.createObjectURL = wrap_function(global.URL.createObjectURL, (target, that, args) => {
-			let result = Reflect.apply(target, that, args);
-			result = result.replace(this.client.location.global.origin, this.client.location.proxy.origin);
-			return result;
+			let url = Reflect.apply(target, that, args);
+			url = url.replace(this.client.host.toOrigin(), this.client.base.toOrigin());
+			return url;
 		});
 
 		global.URL.revokeObjectURL = wrap_function(global.URL.revokeObjectURL, (target, that, args) => {
@@ -38,7 +38,7 @@ export default class RequestRewrite extends Rewrite {
 
 			let [ url ] = args;
 			url = String(url);
-			url = url.replace(this.client.location.proxy.origin, this.client.location.global.origin);
+			url = url.replace(this.client.base.toOrigin(), this.client.host.toOrigin());
 			Reflect.apply(target, that, [ url ]);
 		});
 

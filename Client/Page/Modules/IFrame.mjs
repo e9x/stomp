@@ -1,6 +1,7 @@
 import Rewrite from '../../Rewrite.mjs';
 import { global_client } from '../../../RewriteJS.mjs';
 import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../../RewriteUtil.mjs';
+import WindowRewrite from './Window.mjs';
 
 export default class IFrameRewrite extends Rewrite {
 	get_contentWindow(target, that, args){
@@ -39,7 +40,7 @@ export default class IFrameRewrite extends Rewrite {
 					return null;
 				}
 				
-				return this.client.window.restrict_window(window);
+				return this.client.get(WindowRewrite).restrict_window(window);
 			}),
 			enumerable: true,
 			configurable: true,
@@ -49,7 +50,7 @@ export default class IFrameRewrite extends Rewrite {
 			get: wrap_function(contentDocument.get, (target, that, args) => {
 				const window = this.get_contentWindow(contentWindow.get, that, []);
 
-				if(window === null || !this.client.window.same_origin(window)){
+				if(window === null || !this.client.get(WindowRewrite).same_origin(window)){
 					return null;
 				} 
 

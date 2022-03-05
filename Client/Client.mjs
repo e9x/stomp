@@ -35,7 +35,7 @@ export default class Client {
 		// this.modules.get(NativeHelper)[...]
 	}
 	get(Module){
-		return this.modules.get(Module);
+		return this.#modules.get(Module);
 	}
 	#modules = new Map();
 	load_modules(...Modules){

@@ -2,6 +2,7 @@ import Rewrite from '../../Rewrite.mjs';
 import global from '../../global.mjs';
 import { context_this, Reflect, wrap_function } from '../../RewriteUtil.mjs';
 import { mirror_class } from '../../NativeUtil.mjs';
+import { SyncClient } from './SyncClient.mjs';
 
 const decoder = new TextDecoder();
 
@@ -66,7 +67,7 @@ export default class StorageRewrite extends Rewrite {
 			return true;
 		},
 		has: (target, prop) => {
-			const { rawArrayBuffer } = this.client.sync.fetch(this.worker_storage + new URLSearchParams({
+			const { rawArrayBuffer } = this.client.get(SyncClient).fetch(this.worker_storage + new URLSearchParams({
 				func: 'hasItem',
 				args: JSON.stringify([ this.is_session(target), prop, this.client.base ]),
 			}));
@@ -74,7 +75,7 @@ export default class StorageRewrite extends Rewrite {
 			return this.parse_worker_storage(rawArrayBuffer);
 		},
 		ownKeys: target => {
-			const { rawArrayBuffer } = this.client.sync.fetch(this.worker_storage + new URLSearchParams({
+			const { rawArrayBuffer } = this.client.get(SyncClient).fetch(this.worker_storage + new URLSearchParams({
 				func: 'getKeys',
 				args: JSON.stringify([ this.is_session(target), this.client.base ]),
 			}));
@@ -113,7 +114,7 @@ export default class StorageRewrite extends Rewrite {
 
 		class StorageProxy {
 			clear(){
-				that.client.sync.fetch(that.worker_storage + new URLSearchParams({
+				that.client.get(SyncClient).fetch(that.worker_storage + new URLSearchParams({
 					func: 'clear',
 					args: JSON.stringify([ that.is_session(this), that.client.base ]),
 				}));
@@ -125,7 +126,7 @@ export default class StorageRewrite extends Rewrite {
 
 				key = String(key);
 				
-				const { rawArrayBuffer } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
+				const { rawArrayBuffer } = that.client.get(SyncClient).fetch(that.worker_storage + new URLSearchParams({
 					func: 'getItem',
 					args: JSON.stringify([ that.is_session(this), key, that.client.base ]),
 				}));
@@ -139,7 +140,7 @@ export default class StorageRewrite extends Rewrite {
 
 				keyNum = Number(keyNum);
 				
-				const { rawArrayBuffer } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
+				const { rawArrayBuffer } = that.client.get(SyncClient).fetch(that.worker_storage + new URLSearchParams({
 					func: 'getItem',
 					args: JSON.stringify([ that.is_session(this), keyNum, that.client.base ]),
 				}));
@@ -147,7 +148,7 @@ export default class StorageRewrite extends Rewrite {
 				return that.parse_worker_storage(rawArrayBuffer);
 			}
 			get length(){
-				const { rawArrayBuffer } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
+				const { rawArrayBuffer } = that.client.get(SyncClient).fetch(that.worker_storage + new URLSearchParams({
 					func: 'length',
 					args: JSON.stringify([ that.is_session(this), that.client.base ]),
 				}));
@@ -161,7 +162,7 @@ export default class StorageRewrite extends Rewrite {
 
 				key = String(key);
 
-				that.client.sync.fetch(that.worker_storage + new URLSearchParams({
+				that.client.get(SyncClient).fetch(that.worker_storage + new URLSearchParams({
 					func: 'removeItem',
 					args: JSON.stringify([ that.is_session(this), key, that.client.base ]),
 				}));
@@ -174,7 +175,7 @@ export default class StorageRewrite extends Rewrite {
 				key = String(key);
 				value = String(value);
 
-				const { rawArrayBuffer } = that.client.sync.fetch(that.worker_storage + new URLSearchParams({
+				const { rawArrayBuffer } = that.client.get(SyncClient).fetch(that.worker_storage + new URLSearchParams({
 					func: 'setItem',
 					args: JSON.stringify([ that.is_session(this), key, value, that.client.base ]),
 				}));

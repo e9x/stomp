@@ -3,6 +3,7 @@ import global from '../../global.mjs';
 import { global_client } from '../../../RewriteJS.mjs';
 import { Reflect, wrap_function } from '../../RewriteUtil.mjs';
 import { is_tomp } from './PageRequest.mjs';
+import NativeHelper from '../../Modules/NativeHelper.mjs';
 
 export default class WindowRewrite extends Rewrite {
 	global = global.postMessage;
@@ -14,7 +15,7 @@ export default class WindowRewrite extends Rewrite {
 		const restricted = () => {};
 		
 		restricted.toString = () => {
-			return this.client.native.left + this.client.native.right;
+			return this.client.get(NativeHelper).left + this.client.get(NativeHelper).right;
 		};
 
 		Reflect.defineProperty(restricted, 'name', {
@@ -236,7 +237,7 @@ export default class WindowRewrite extends Rewrite {
 			return null;
 		}
 
-		if(this.client.window.same_origin(window)){
+		if(this.same_origin(window)){
 			return window;
 		}
 		

@@ -1,9 +1,10 @@
 import Rewrite from '../../Rewrite.mjs';
 import { Reflect, wrap_function } from '../../RewriteUtil.mjs';
+import { SyncClient } from './SyncClient.mjs';
 
 const decoder = new TextDecoder();
 
-export default class DOMCookieRewrite extends Rewrite {
+export default class CookieRewrite extends Rewrite {
 	global_descriptor = Reflect.getOwnPropertyDescriptor(Document.prototype, 'cookie');
 	get value(){
 		return Reflect.apply(this.global_descriptor.get, document, []);
@@ -21,7 +22,7 @@ export default class DOMCookieRewrite extends Rewrite {
 					throw new TypeError('Illegal invocation');
 				}
 
-				const { rawArrayBuffer } = this.client.sync.fetch(`${this.client.tomp.directory}get-cookies/?` + new URLSearchParams({
+				const { rawArrayBuffer } = this.client.get(SyncClient).fetch(`${this.client.tomp.directory}get-cookies/?` + new URLSearchParams({
 					remote: JSON.stringify(this.client.base),
 				}));
 				
@@ -32,7 +33,7 @@ export default class DOMCookieRewrite extends Rewrite {
 					throw new TypeError('Illegal invocation');
 				}
 
-				this.client.sync.fetch(`${this.client.tomp.directory}set-cookies/?` + new URLSearchParams({
+				this.client.get(SyncClient).fetch(`${this.client.tomp.directory}set-cookies/?` + new URLSearchParams({
 					remote: JSON.stringify(this.client.base),
 					cookies: value,
 				}));

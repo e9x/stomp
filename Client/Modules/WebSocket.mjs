@@ -4,6 +4,7 @@ import { encode_protocol, valid_protocol } from '../EncodeProtocol.mjs';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.mjs';
 import { Reflect } from '../RewriteUtil.mjs';
 import { DOMObjectConstructor, TargetConstant, EventTarget_on, mirror_class } from '../NativeUtil.mjs';
+import RequestRewrite from '../Modules/Request.mjs';
 
 const default_ports = {
 	'ws:': 80,
@@ -88,7 +89,7 @@ export default class WebSocketRewrite extends Rewrite {
 					request_headers['Cookie'] = cookies.toString();
 				}
 
-				const meta_req = await Reflect.apply(that.client.request.global_fetch, global, [
+				const meta_req = await Reflect.apply(that.client.get(RequestRewrite).global_fetch, global, [
 					that.client.tomp.bare + 'v1/ws-new-meta',
 					{
 						method: 'GET',
@@ -124,7 +125,7 @@ export default class WebSocketRewrite extends Rewrite {
 				});
 
 				this.#socket.addEventListener('open', async event => {
-					const meta = await(await Reflect.apply(that.client.request.global_fetch, global, [
+					const meta = await(await Reflect.apply(that.client.get(RequestRewrite).global_fetch, global, [
 						that.client.tomp.bare + 'v1/ws-meta',
 						{
 							headers: {

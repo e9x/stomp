@@ -2,6 +2,8 @@ import Rewrite from '../Rewrite.mjs';
 import global from '../global.mjs';
 import { hasOwnProperty, Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { undefinable, global_client } from '../../RewriteJS.mjs';
+import LocationRewrite from './Location.mjs';
+import EvalRewrite from './Eval.mjs';
 
 const undefinable_object = {};
 
@@ -19,16 +21,19 @@ export default class AccessRewrite extends Rewrite {
 	import(meta, url){
 		const resolved = new URL(url, meta.url);
 
-		return this.client.tomp.js.serve(resolved, this.client.location.proxy);
+		return this.client.tomp.js.serve(resolved, this.location.proxy);
 	}
 	unique_parent = false;
 	work(){
+		this.location = this.client.get(LocationRewrite);
+		this.eval = this.client.get(EvalRewrite);
+
 		// expose to global
 		this.client.access = this;
 
-		this.client.location.global[global_proxy] = this.client.location.proxy;
-		this.client.location.global[global_name] = 'location';
-		this.client.eval.global[global_proxy] = this.client.eval.eval_global_proxy;
+		this.location.global[global_proxy] = this.location.proxy;
+		this.location.global[global_name] = 'location';
+		this.eval.global[global_proxy] = this.eval.eval_global_proxy;
 		
 		if(this.client.type === 'page'){
 			this.unique_parent = parent !== global  && global_client in parent;
@@ -48,7 +53,7 @@ export default class AccessRewrite extends Rewrite {
 			return result;
 		};
 		
-		const reflect_desc = global.Reflect.getOwnPropertyDescriptor = wrap_function(global.Reflect.getOwnPropertyDescriptor, get_desc);
+		global.Reflect.getOwnPropertyDescriptor = wrap_function(global.Reflect.getOwnPropertyDescriptor, get_desc);
 		
 		global.Object.getOwnPropertyDescriptor = wrap_function(global.Object.getOwnPropertyDescriptor, get_desc);
 
@@ -90,14 +95,14 @@ export default class AccessRewrite extends Rewrite {
 		if(!(desc instanceof Object))return desc;
 
 		if(typeof desc.get === 'function'){
-			if(desc.get === this.client.location.global_description.get){
-				return {...this.client.location.description};
-			}else if(desc.get === this.client.location.global_description_document.get){
-				return {...this.client.location.description_document};
+			if(desc.get === this.location.global_description.get){
+				return {...this.location.description};
+			}else if(desc.get === this.location.global_description_document.get){
+				return {...this.location.description_document};
 			}
 		}else if(typeof desc.value === 'function'){
-			if(desc.value === this.client.eval.global_description.value){
-				return {...this.client.eval.description};
+			if(desc.value === this.eval.global_description.value){
+				return {...this.eval.description};
 			}
 		}
 
@@ -111,7 +116,7 @@ export default class AccessRewrite extends Rewrite {
 		if(typeof key === 'string'){
 			if(target === global){
 				if(key === 'location'){
-					target = this.client.location.proxy;
+					target = this.location.proxy;
 					key = 'href';
 				}
 			}else if((typeof target === 'object' && target !== null || typeof target === 'function') && hasOwnProperty(target, global_client)){

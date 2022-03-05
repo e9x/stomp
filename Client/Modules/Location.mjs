@@ -76,9 +76,7 @@ export default class LocationRewrite extends Rewrite {
 						throw new TypeError('Illegal invocation');
 					}
 					
-					let result = Reflect.apply(target, that, args);
-					result = this.client.access.get(result);
-					return result;
+					return this.proxy;
 				}),
 				set: wrap_function(location.set, (target, that, [ value ]) => {
 					if(context_this(that) !== global){
@@ -105,9 +103,7 @@ export default class LocationRewrite extends Rewrite {
 						throw new TypeError('Illegal invocation');
 					}
 
-					let result = Reflect.apply(target, that, args);
-					result = this.client.access.get(result);
-					return result;
+					return this.proxy;
 				}),
 				set: wrap_function(location.set, (target, that, [ value ]) => {
 					if(that !== document){

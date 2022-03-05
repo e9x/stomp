@@ -3,6 +3,8 @@ import global from '../global.mjs';
 import { Reflect } from '../RewriteUtil.mjs';
 import { EventTarget_on, TargetConstant, DOMObjectConstructor, mirror_class } from '../NativeUtil.mjs';
 import { forbids_body } from '../../Worker/bare.mjs';
+import { SyncClient } from '../Page/Modules/SyncClient.mjs';
+import RequestRewrite from './Request.mjs';
 
 export default class XMLHttpRequestRewrite extends Rewrite {
 	global = global.XMLHttpRequest;
@@ -171,14 +173,14 @@ export default class XMLHttpRequestRewrite extends Rewrite {
 				if(this.#async){
 					init.signal = this.#abort.signal;
 
-					Reflect.apply(that.client.request.global_fetch, global, [ url, init ]).then(async response => {
+					Reflect.apply(that.client.get(RequestRewrite).global_fetch, global, [ url, init ]).then(async response => {
 						this.#on_headers(undefined, response);
 						const buffer = await response.arrayBuffer();
 						this.#on_done(undefined, response, buffer);
 					}).catch(error => this.#on_done(error));	
 				}else{
 					try{
-						const response = that.client.sync.fetch(url, init);
+						const response = that.client.get(SyncClient).fetch(url, init);
 						this.#on_headers(undefined, response);
 						this.#on_done(undefined, response, response.rawArrayBuffer);
 					}catch(error){

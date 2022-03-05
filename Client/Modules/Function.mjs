@@ -1,6 +1,7 @@
 import Rewrite from '../Rewrite.mjs';
 import global from '../global.mjs';
 import { wrap_function, function_strings, mirror_attributes, Reflect } from '../RewriteUtil.mjs';
+import NativeHelper from './NativeHelper.mjs';
 
 export default class FunctionRewrite extends Rewrite {
 	global = global.Function;
@@ -14,7 +15,7 @@ export default class FunctionRewrite extends Rewrite {
 			else{
 				let string = Reflect.apply(target, that, args);
 
-				if(!this.client.native.is_native(string)){
+				if(!this.client.get(NativeHelper).is_native(string)){
 					if(/^class[{ ]/.test(string)){
 						string = this.client.tomp.js.unwrap(`x = ${string}`, this.client.base);
 						string = string.slice(string.indexOf('=') + 1);
