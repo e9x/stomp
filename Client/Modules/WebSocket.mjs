@@ -1,6 +1,6 @@
 import Rewrite from '../Rewrite.mjs';
 import global from '../global.mjs';
-import { encode_protocol, valid_protocol } from '../EncodeProtocol.mjs';
+import { encodeProtocol, validProtocol } from '../encodeProtocol.mjs';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.mjs';
 import { Reflect } from '../RewriteUtil.mjs';
 import { DOMObjectConstructor, TargetConstant, EventTarget_on, mirror_class } from '../NativeUtil.mjs';
@@ -75,7 +75,7 @@ export default class WebSocketRewrite extends Rewrite {
 				request_headers['Connection'] = 'Upgrade';
 				
 				for(let proto of [].concat(protocol)){
-					if(!valid_protocol(proto)){
+					if(!validProtocol(proto)){
 						throw new DOMException(`Failed to construct 'WebSocket': The subprotocol '${proto}' is invalid.`);
 					}
 				}
@@ -104,7 +104,7 @@ export default class WebSocketRewrite extends Rewrite {
 				
 				this.#socket = new that.global(bare_ws, [
 					'bare',
-					encode_protocol(JSON.stringify({
+					encodeProtocol(JSON.stringify({
 						remote,
 						headers: request_headers,
 						forward_headers: [
