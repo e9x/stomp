@@ -58,9 +58,7 @@ export default class RequestRewrite extends Rewrite {
 				throw new TypeError('Illegal invocation');
 			}
 
-			if(this.request_urls.has(input)){
-				//
-			}else{
+			if(!this.request_urls.has(input)){
 				input = this.client.tomp.binary.serve(new URL(input, this.client.base), this.client.base);
 				
 				if(typeof init == 'object' && init != undefined){
