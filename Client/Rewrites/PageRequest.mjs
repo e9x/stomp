@@ -25,6 +25,23 @@ export class PageRequestRewrite extends Rewrite {
 			return Reflect.apply(target, that, [ message, this.client.host.toOrigin(), transfer ]);
 		});
 
+		const source = Reflect.getOwnPropertyDescriptor(MessageEvent.prototype, 'source');
+
+		Reflect.defineProperty(MessageEvent.prototype, 'source', {
+			configurable: true,
+			enumerable: true,
+			get: wrap_function(source.get, (target, that, args) => {
+				const source = Reflect.apply(target, that, args);
+
+				if(source === null){
+					return null;
+				}else{
+					return this.client.window.restrict_window(source);
+				}
+			}),
+		});
+
+		/*
 		const message_data = new WeakMap();
 
 		const { data, origin } = getOwnPropertyDescriptors(MessageEvent.prototype);
@@ -61,7 +78,7 @@ export class PageRequestRewrite extends Rewrite {
 
 				return Reflect.apply(target, that, args);
 			}),
-		});
+		});*/
 
 		AudioWorklet.prototype.addModule = wrap_function(AudioWorklet.prototype.addModule, (target, that, [ url, options ]) => {
 			url = new URL(url, this.client.base);

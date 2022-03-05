@@ -9,6 +9,7 @@ import { global } from '../Global.mjs';
 import { XMLHttpRequestRewrite } from './Rewrites/XMLHttpRequest.mjs';
 import { Reflect } from './RewriteUtil.mjs';
 import { IFrameRewrite } from './Rewrites/IFrame.mjs';
+import { WindowRewrite } from './Rewrites/Window.mjs';
 
 export class PageClient extends Client {
 	static type = 'page';
@@ -36,6 +37,7 @@ export class PageClient extends Client {
 		this.cookie = new DOMCookieRewrite(this);
 		this.page_request = new PageRequestRewrite(this);
 		this.xml = new XMLHttpRequestRewrite(this);
+		this.window = new WindowRewrite(this);
 		this.iframe = new IFrameRewrite(this);
 
 		this.work_modules();
@@ -44,13 +46,14 @@ export class PageClient extends Client {
 		super.work_modules();
 		
 		this.sync.work();
+		this.window.work();
+		this.iframe.work();
 		this.xml.work();
 		this.history.work();
 		this.storage.work();
 		this.dom.work();
 		this.cookie.work();
 		this.page_request.work();
-		this.iframe.work();
 
 		delete global.CookieStore;
 		delete global.cookieStore;

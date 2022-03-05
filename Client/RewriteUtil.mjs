@@ -24,10 +24,8 @@ export const Reflect = {
 	setPrototypeOf: global.Reflect.setPrototypeOf.bind(global.Reflect),
 };
 
-const _hasOwnProperty = Object.prototype.hasOwnProperty;
-
 export function hasOwnProperty(object, key){
-	return Reflect.apply(_hasOwnProperty, object, [ key ]);
+	return Reflect.ownKeys(object).includes(key);
 }
 
 export function mirror_attributes(from, to){
@@ -36,8 +34,6 @@ export function mirror_attributes(from, to){
 	Reflect.defineProperty(to, 'name', Reflect.getOwnPropertyDescriptor(from, 'name'));
 	return to;
 };
-
-const error_reporting = false;
 
 export function wrap_function(fn, wrap, construct){
 	if(typeof fn != 'function')throw new TypeError(`First argument to wrap_function(fn, wrap, construct) was not a function.`);
