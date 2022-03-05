@@ -1,14 +1,14 @@
-import Client from '../Client.mjs';
 import { SyncClient } from '../SyncClient.mjs';
 import { Reflect } from '../RewriteUtil.mjs';
-import HistoryRewrite from './Rewrites/History.mjs';
-import DOMRewrite from './Rewrites/DOM.mjs';
-import StorageRewrite from './Rewrites/Storage.mjs';
-import DOMCookieRewrite from './Rewrites/DOMCookie.mjs';
-import PageRequestRewrite from './Rewrites/PageRequest.mjs';
-import IFrameRewrite from './Rewrites/IFrame.mjs';
-import WindowRewrite from './Rewrites/Window.mjs';
-import IsolateRewrite from './Rewrites/Isolate.mjs';
+import Client from '../Client.mjs';
+import HistoryRewrite from './Modules/History.mjs';
+import DOMRewrite from './Modules/DOM.mjs';
+import StorageRewrite from './Modules/Storage.mjs';
+import DOMCookieRewrite from './Modules/DOMCookie.mjs';
+import PageRequestRewrite from './Modules/PageRequest.mjs';
+import IFrameRewrite from './Modules/IFrame.mjs';
+import WindowRewrite from './Modules/Window.mjs';
+import IsolateModule from './Modules/Isolate.mjs';
 
 export default class PageClient extends Client {
 	static type = 'page';
@@ -38,7 +38,7 @@ export default class PageClient extends Client {
 			PageRequestRewrite,
 			WindowRewrite,
 			IFrameRewrite,
-			IsolateRewrite,
+			IsolateModule,
 		);
 	}
 };

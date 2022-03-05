@@ -1,5 +1,5 @@
 import Client from '../Client.mjs';
-import ImportScriptsRewrite from './Rewrites/ImportScripts.mjs';
+import ImportScriptsRewrite from './Modules/ImportScripts.mjs';
 
 export default class WorkerClient extends Client {
 	static type = 'worker';

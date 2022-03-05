@@ -1,7 +1,7 @@
 import Rewrite from '../../Rewrite.mjs';
 import global from '../../global.mjs';
 
-export default class IsolateRewrite extends Rewrite {
+export default class IsolateModule extends Rewrite {
 	work(){
 		delete global.CookieStore;
 		delete global.cookieStore;
