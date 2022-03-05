@@ -1,7 +1,7 @@
-import Rewriter from './Rewriter.mjs';
+import Rewriter from './Rewriter.js';
 import { parseScript } from 'meriyah';
 import { generate } from '@javascript-obfuscator/escodegen';
-import { AcornIterator } from './IterateAcorn.mjs';
+import { AcornIterator } from './IterateAcorn.js';
 import { builders as b } from 'ast-types';
 
 const html_comment = /<!--([\s\S]*?)-->/g;

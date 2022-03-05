@@ -1,4 +1,4 @@
-import Rewrite from '../Rewrite.mjs';
+import Rewrite from '../Rewrite.js';
 import { isIdentifierChar, isIdentifierStart } from 'acorn';
 
 export default class NativeHelper extends Rewrite {

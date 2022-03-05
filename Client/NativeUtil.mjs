@@ -1,4 +1,4 @@
-import { getOwnPropertyDescriptors, mirror_attributes, Reflect, wrap_function } from './RewriteUtil.mjs';
+import { getOwnPropertyDescriptors, mirror_attributes, Reflect, wrap_function } from './RewriteUtil.js';
 
 export function TargetConstant(target, key, value){
 	const descriptor = {

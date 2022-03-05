@@ -1,4 +1,4 @@
-import { get_cookies } from './Cookies.mjs';
+import { get_cookies } from './Cookies.js';
 
 export function get(options, server){
 

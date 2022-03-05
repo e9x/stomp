@@ -1,4 +1,4 @@
-import { createDataURI, parseDataURI } from './dataURI.mjs'
+import { createDataURI, parseDataURI } from './dataURI.js'
 
 export default class Rewriter {
 	static service = 'unknown';

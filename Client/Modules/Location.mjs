@@ -1,6 +1,6 @@
-import Rewrite from '../Rewrite.mjs';
-import global from '../global.mjs';
-import { wrap_function, Reflect, getOwnPropertyDescriptors, defineProperties, context_this } from '../RewriteUtil.mjs';
+import Rewrite from '../Rewrite.js';
+import global from '../global.js';
+import { wrap_function, Reflect, getOwnPropertyDescriptors, defineProperties, context_this } from '../RewriteUtil.js';
 
 export default class LocationRewrite extends Rewrite {
 	description = {};

@@ -1,10 +1,10 @@
-import Rewrite from '../Rewrite.mjs';
-import global from '../global.mjs';
-import { encodeProtocol, validProtocol } from '../../encodeProtocol.mjs';
-import { load_setcookies, get_cookies } from '../../Worker/Cookies.mjs';
-import { Reflect } from '../RewriteUtil.mjs';
-import { DOMObjectConstructor, TargetConstant, EventTarget_on, mirror_class } from '../NativeUtil.mjs';
-import RequestRewrite from '../Modules/Request.mjs';
+import Rewrite from '../Rewrite.js';
+import global from '../global.js';
+import { encodeProtocol, validProtocol } from '../../encodeProtocol.js';
+import { load_setcookies, get_cookies } from '../../Worker/Cookies.js';
+import { Reflect } from '../RewriteUtil.js';
+import { DOMObjectConstructor, TargetConstant, EventTarget_on, mirror_class } from '../NativeUtil.js';
+import RequestRewrite from '../Modules/Request.js';
 
 const default_ports = {
 	'ws:': 80,

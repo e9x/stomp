@@ -1,9 +1,9 @@
-import Rewrite from '../Rewrite.mjs';
-import global from '../global.mjs';
-import { hasOwnProperty, Reflect, wrap_function } from '../RewriteUtil.mjs';
-import { undefinable, global_client } from '../../RewriteJS.mjs';
-import LocationRewrite from './Location.mjs';
-import EvalRewrite from './Eval.mjs';
+import Rewrite from '../Rewrite.js';
+import global from '../global.js';
+import { hasOwnProperty, Reflect, wrap_function } from '../RewriteUtil.js';
+import { undefinable, global_client } from '../../RewriteJS.js';
+import LocationRewrite from './Location.js';
+import EvalRewrite from './Eval.js';
 
 const undefinable_object = {};
 

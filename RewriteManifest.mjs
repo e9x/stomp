@@ -1,4 +1,4 @@
-import Rewriter from './Rewriter.mjs';
+import Rewriter from './Rewriter.js';
 
 export class RewriteManifest extends Rewriter {
 	static service = 'manifest';

@@ -1,7 +1,7 @@
-import Rewriter from './Rewriter.mjs';
-import Parse5Iterator from './IterateParse5.mjs';
+import Rewriter from './Rewriter.js';
+import Parse5Iterator from './IterateParse5.js';
 import { serialize, parseFragment } from 'parse5';
-import { TOMPElementParse5 } from './RewriteHTML.mjs';
+import { TOMPElementParse5 } from './RewriteHTML.js';
 
 export class RewriteSVG extends Rewriter {
 	static service = 'svg';

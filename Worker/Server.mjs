@@ -1,10 +1,10 @@
-import TOMP from '../TOMP.mjs';
-import SyncServer from './SyncServer.mjs';
-import register from './send.mjs';
+import TOMP from '../TOMP.js';
+import SyncServer from './SyncServer.js';
+import register from './send.js';
 import { openDB } from 'idb/with-async-ittr';
-import { create_db as create_cookie_db } from './Cookies.mjs';
-import { create_db as create_storage_db } from './Storage.mjs';
-import { BareError } from './bare.mjs';
+import { create_db as create_cookie_db } from './Cookies.js';
+import { create_db as create_storage_db } from './Storage.js';
+import { BareError } from './bare.js';
 
 export default class Server {
 	session = Math.random();

@@ -1,8 +1,8 @@
-import PageClient from './Page/Client.mjs';
-import WorkerClient from './Worker/Client.mjs';
-import global from './global.mjs';
-import { global_client } from '../RewriteJS.mjs';
-import { is_page, is_worker } from './environment.mjs';
+import PageClient from './Page/Client.js';
+import WorkerClient from './Worker/Client.js';
+import global from './global.js';
+import { global_client } from '../RewriteJS.js';
+import { is_page, is_worker } from './environment.js';
 
 function create_instance(...args){
 	let created;

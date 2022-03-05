@@ -32,8 +32,8 @@ export default class Builder {
 			mode: 'development',
 			devtool: 'source-map',
 			entry: {
-				client: join(__dirname, 'Client', 'entry.mjs'),
-				worker: join(__dirname, 'Worker', 'entry.mjs'),
+				client: join(__dirname, 'Client', 'entry.js'),
+				worker: join(__dirname, 'Worker', 'entry.js'),
 			},
 			context: __dirname,
 			output: {
@@ -45,7 +45,7 @@ export default class Builder {
 		this.webpacks.push(webpack({
 			mode: 'development',
 			devtool: 'source-map',
-			entry: join(__dirname, 'Bootstrapper', 'Bootstrapper.mjs'),
+			entry: join(__dirname, 'Bootstrapper', 'Bootstrapper.js'),
 			context: __dirname,
 			output: {
 				library: 'TOMPBoot',

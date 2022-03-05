@@ -1,6 +1,6 @@
-import Rewrite from '../Rewrite.mjs';
-import global from '../global.mjs';
-import { Reflect, wrap_function } from '../RewriteUtil.mjs';
+import Rewrite from '../Rewrite.js';
+import global from '../global.js';
+import { Reflect, wrap_function } from '../RewriteUtil.js';
 
 export default class EvalRewrite extends Rewrite {
 	global_description = Reflect.getOwnPropertyDescriptor(global, 'eval');

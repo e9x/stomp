@@ -1,4 +1,4 @@
-import Rewriter from './Rewriter.mjs';
+import Rewriter from './Rewriter.js';
 import { parse, walk, generate } from 'css-tree';
 
 export class RewriteCSS extends Rewriter {

@@ -1,7 +1,7 @@
 import { program, Option, Argument } from 'commander';
-import build from './cli/build.mjs';
-import test from './cli/test.mjs';
-import ast from './cli/ast.mjs';
+import build from './cli/build.js';
+import test from './cli/test.js';
+import ast from './cli/ast.js';
 
 program.command('build')
 .addOption(new Option('-f, --folder <path>', 'folder to contain output').default('tompbuild'))

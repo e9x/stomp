@@ -1,4 +1,4 @@
-import { decodeBase64, encodeBase64 } from './Base64.mjs';
+import { decodeBase64, encodeBase64 } from './Base64.js';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();

@@ -1,4 +1,4 @@
-import Server from './Server.mjs';
+import Server from './Server.js';
 
 const params = new URLSearchParams(location.search);
 const config = JSON.parse(params.get('config'));

@@ -1,6 +1,6 @@
-import Rewrite from '../../Rewrite.mjs';
-import { Reflect, wrap_function } from '../../RewriteUtil.mjs';
-import { SyncClient } from './SyncClient.mjs';
+import Rewrite from '../../Rewrite.js';
+import { Reflect, wrap_function } from '../../RewriteUtil.js';
+import { SyncClient } from './SyncClient.js';
 
 const decoder = new TextDecoder();
 

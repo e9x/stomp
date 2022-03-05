@@ -1,8 +1,8 @@
-import Rewriter from './Rewriter.mjs';
-import Parse5Iterator from './IterateParse5.mjs';
+import Rewriter from './Rewriter.js';
+import Parse5Iterator from './IterateParse5.js';
 import { serialize, parse, parseFragment } from 'parse5';
-import { global_client } from './RewriteJS.mjs';
-import { TOMPElement } from './RewriteElements.mjs';
+import { global_client } from './RewriteJS.js';
+import { TOMPElement } from './RewriteElements.js';
 
 const essential_nodes = ['#documentType','#document','#text','html','head','body'];
 

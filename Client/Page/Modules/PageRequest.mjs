@@ -1,7 +1,7 @@
-import Rewrite from '../../Rewrite.mjs';
-import global from '../../global.mjs';
-import { wrap_function, Reflect, getOwnPropertyDescriptors, context_this } from '../../RewriteUtil.mjs';
-import WindowRewrite from './Window.mjs';
+import Rewrite from '../../Rewrite.js';
+import global from '../../global.js';
+import { wrap_function, Reflect, getOwnPropertyDescriptors, context_this } from '../../RewriteUtil.js';
+import WindowRewrite from './Window.js';
 
 const beacon_protocols = ['http:','https:'];
 

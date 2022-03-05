@@ -1,4 +1,4 @@
-import { ParsedRewrittenURL } from '../RewriteURL.mjs';
+import { ParsedRewrittenURL } from '../RewriteURL.js';
 
 export function create_db(db){
 	const localStorage = db.createObjectStore('localStorage', {

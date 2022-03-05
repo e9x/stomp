@@ -1,10 +1,10 @@
-import { decodeBase64, encodeBase64 } from '../../../Base64.mjs';
-import global from '../../global.mjs';
-import { engine } from '../../environment.mjs';
-import { decodeCookie } from '../../../encodeCookies.mjs';
-import { status_empty } from '../../../Worker/bare.mjs';
-import { Reflect } from '../../RewriteUtil.mjs';
-import CookieRewrite from './Cookie.mjs'
+import { decodeBase64, encodeBase64 } from '../../../Base64.js';
+import global from '../../global.js';
+import { engine } from '../../environment.js';
+import { decodeCookie } from '../../../encodeCookies.js';
+import { status_empty } from '../../../Worker/bare.js';
+import { Reflect } from '../../RewriteUtil.js';
+import CookieRewrite from './Cookie.js'
 
 const { Request, XMLHttpRequest } = global;
 

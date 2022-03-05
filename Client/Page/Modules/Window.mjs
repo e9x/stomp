@@ -1,9 +1,9 @@
-import Rewrite from '../../Rewrite.mjs';
-import global from '../../global.mjs';
-import { global_client } from '../../../RewriteJS.mjs';
-import { Reflect, wrap_function } from '../../RewriteUtil.mjs';
-import { is_tomp } from './PageRequest.mjs';
-import NativeHelper from '../../Modules/NativeHelper.mjs';
+import Rewrite from '../../Rewrite.js';
+import global from '../../global.js';
+import { global_client } from '../../../RewriteJS.js';
+import { Reflect, wrap_function } from '../../RewriteUtil.js';
+import { is_tomp } from './PageRequest.js';
+import NativeHelper from '../../Modules/NativeHelper.js';
 
 export default class WindowRewrite extends Rewrite {
 	global = global.postMessage;

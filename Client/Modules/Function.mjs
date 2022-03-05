@@ -1,7 +1,7 @@
-import Rewrite from '../Rewrite.mjs';
-import global from '../global.mjs';
-import { wrap_function, function_strings, mirror_attributes, Reflect } from '../RewriteUtil.mjs';
-import NativeHelper from './NativeHelper.mjs';
+import Rewrite from '../Rewrite.js';
+import global from '../global.js';
+import { wrap_function, function_strings, mirror_attributes, Reflect } from '../RewriteUtil.js';
+import NativeHelper from './NativeHelper.js';
 
 export default class FunctionRewrite extends Rewrite {
 	global = global.Function;

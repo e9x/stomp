@@ -1,15 +1,15 @@
-import TOMP from '../TOMP.mjs'
-import NativeHelper from './Modules/NativeHelper.mjs';
-import LocationRewrite from './Modules/Location.mjs';
-import WebSocketRewrite from './Modules/WebSocket.mjs';
-import RequestRewrite from './Modules/Request.mjs';
-import EvalRewrite from './Modules/Eval.mjs';
-import AccessRewrite from './Modules/Access.mjs';
-import IDBRewrite from './Modules/IndexedDB.mjs';
-import WorkerRewrite from './Modules/Worker.mjs';
-import FunctionRewrite from './Modules/Function.mjs';
-import EventRewrite from './Modules/Event.mjs';
-import XMLHttpRequestRewrite from './Modules/XMLHttpRequest.mjs';
+import TOMP from '../TOMP.js'
+import NativeHelper from './Modules/NativeHelper.js';
+import LocationRewrite from './Modules/Location.js';
+import WebSocketRewrite from './Modules/WebSocket.js';
+import RequestRewrite from './Modules/Request.js';
+import EvalRewrite from './Modules/Eval.js';
+import AccessRewrite from './Modules/Access.js';
+import IDBRewrite from './Modules/IndexedDB.js';
+import WorkerRewrite from './Modules/Worker.js';
+import FunctionRewrite from './Modules/Function.js';
+import EventRewrite from './Modules/Event.js';
+import XMLHttpRequestRewrite from './Modules/XMLHttpRequest.js';
 import { openDB } from 'idb/with-async-ittr';
 
 export default class Client {

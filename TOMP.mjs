@@ -1,13 +1,13 @@
-import { RewriteURL } from './RewriteURL.mjs';
-import { RewriteJS } from './RewriteJS.mjs';
-import { RewriteCSS } from './RewriteCSS.mjs';
-import { RewriteHTML } from './RewriteHTML.mjs';
-import { RewriteSVG } from './RewriteSVG.mjs';
-import { RewriteForm } from './RewriteForm.mjs';
-import { RewriteElements } from './RewriteElements.mjs';
-import { RewriteManifest } from './RewriteManifest.mjs';
-import { RewriteBinary } from './RewriteBinary.mjs';
-import { Logger, LOG_WARN } from './Logger.mjs';
+import { RewriteURL } from './RewriteURL.js';
+import { RewriteJS } from './RewriteJS.js';
+import { RewriteCSS } from './RewriteCSS.js';
+import { RewriteHTML } from './RewriteHTML.js';
+import { RewriteSVG } from './RewriteSVG.js';
+import { RewriteForm } from './RewriteForm.js';
+import { RewriteElements } from './RewriteElements.js';
+import { RewriteManifest } from './RewriteManifest.js';
+import { RewriteBinary } from './RewriteBinary.js';
+import { Logger, LOG_WARN } from './Logger.js';
 
 export default class TOMP {
 	toJSON(){

@@ -1,7 +1,7 @@
-import bareFetch, { status_empty } from './bare.mjs';
-import { mapHeaderNamesFromArray } from './HeaderUtil.mjs'
-import { html_types, get_mime } from '../RewriteElements.mjs';
-import { load_setcookies, get_cookies } from './Cookies.mjs';
+import bareFetch, { status_empty } from './bare.js';
+import { mapHeaderNamesFromArray } from './HeaderUtil.js'
+import { html_types, get_mime } from '../RewriteElements.js';
+import { load_setcookies, get_cookies } from './Cookies.js';
 
 const remove_general_headers = [
 	'alt-svc',
@@ -117,7 +117,7 @@ async function sendSetCookies(server, server_request){
 	});
 }
 
-import * as CookieStore from './CookieStore.mjs';
+import * as CookieStore from './CookieStore.js';
 
 async function sendCookieStore(server, server_request){
 	const url = new URL(server_request.url);
@@ -137,7 +137,7 @@ async function sendCookieStore(server, server_request){
 	}
 }
 
-import * as Storage from './Storage.mjs';
+import * as Storage from './Storage.js';
 
 async function sendStorage(server, server_request){
 	const url = new URL(server_request.url);

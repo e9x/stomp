@@ -1,5 +1,5 @@
-import SearchBuilder from './SearchBuilder.mjs';
-import { LOG_DEBUG } from '../Logger.mjs';
+import SearchBuilder from './SearchBuilder.js';
+import { LOG_DEBUG } from '../Logger.js';
 
 const { src } = document.currentScript;
 

@@ -1,10 +1,10 @@
-import Rewrite from '../Rewrite.mjs';
-import global from '../global.mjs';
-import { Reflect } from '../RewriteUtil.mjs';
-import { EventTarget_on, TargetConstant, DOMObjectConstructor, mirror_class } from '../NativeUtil.mjs';
-import { forbids_body } from '../../Worker/bare.mjs';
-import { SyncClient } from '../Page/Modules/SyncClient.mjs';
-import RequestRewrite from './Request.mjs';
+import Rewrite from '../Rewrite.js';
+import global from '../global.js';
+import { Reflect } from '../RewriteUtil.js';
+import { EventTarget_on, TargetConstant, DOMObjectConstructor, mirror_class } from '../NativeUtil.js';
+import { forbids_body } from '../../Worker/bare.js';
+import { SyncClient } from '../Page/Modules/SyncClient.js';
+import RequestRewrite from './Request.js';
 
 export default class XMLHttpRequestRewrite extends Rewrite {
 	global = global.XMLHttpRequest;
