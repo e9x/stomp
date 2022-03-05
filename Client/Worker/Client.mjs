@@ -9,14 +9,10 @@ export default class WorkerClient extends Client {
 	constructor(config){
 		super(config);
 
-		this.xml = new XMLHttpRequestRewrite(this);
-		
 		this.work_modules();
 	}
 	work_modules(){
 		super.work_modules();
-
-		this.xml.work();
 
 		/* script url isnt relative to the imported script
 		relative to the creation url scope
