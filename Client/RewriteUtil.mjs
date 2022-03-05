@@ -147,4 +147,11 @@ export function bind_natives(target){
 	}
 }
 
-// bind_natives(EventTarget.prototype);
+// calling window.fetch as fetch
+export function context_this(that){
+	if(that === undefined || that === null){
+		return global;
+	}else{
+		return that;
+	}
+}

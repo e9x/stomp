@@ -1,10 +1,10 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { wrap_function, Reflect, getOwnPropertyDescriptors } from '../RewriteUtil.mjs';
+import { wrap_function, Reflect, getOwnPropertyDescriptors, context_this } from '../RewriteUtil.mjs';
 
 const beacon_protocols = ['http:','https:'];
 
-const is_tomp = 'tompc$from_tomp';
+export const is_tomp = 'tompc$from_tomp';
 
 export class PageRequestRewrite extends Rewrite {
 	work(){
@@ -14,34 +14,14 @@ export class PageRequestRewrite extends Rewrite {
 			return Reflect.apply(target, that, [ url, tar, features ]);
 		});
 
-		global.postMessage = wrap_function(global.postMessage, (target, that, [ data, target_origin, transfer ]) => {
-			const message = {
-				[is_tomp]: true,
-				data,
-				target_origin,
-				origin: this.client.base.toOrigin(),
-			};
-
-			return Reflect.apply(target, that, [ message, this.client.host.toOrigin(), transfer ]);
+		global.postMessage = wrap_function(global.postMessage, (target, that, args) => {
+			if(args.length < 1){
+				throw new TypeError(`Failed to execute 'postMessage' on 'Window': 1 argument required, but only ${args.length} present.`);
+			}
+	
+			return this.client.window.postMessage(context_this(that), ...args);
 		});
 
-		const source = Reflect.getOwnPropertyDescriptor(MessageEvent.prototype, 'source');
-
-		Reflect.defineProperty(MessageEvent.prototype, 'source', {
-			configurable: true,
-			enumerable: true,
-			get: wrap_function(source.get, (target, that, args) => {
-				const source = Reflect.apply(target, that, args);
-
-				if(source === null){
-					return null;
-				}else{
-					return this.client.window.restrict_window(source);
-				}
-			}),
-		});
-
-		/*
 		const message_data = new WeakMap();
 
 		const { data, origin } = getOwnPropertyDescriptors(MessageEvent.prototype);
@@ -73,12 +53,12 @@ export class PageRequestRewrite extends Rewrite {
 			enumerable: true,
 			get: wrap_function(data.get, (target, that, args) => {
 				if(message_data.has(that)){
-					return message_data.get(that).data;
+					return message_data.get(that).message;
 				}
 
 				return Reflect.apply(target, that, args);
 			}),
-		});*/
+		});
 
 		AudioWorklet.prototype.addModule = wrap_function(AudioWorklet.prototype.addModule, (target, that, [ url, options ]) => {
 			url = new URL(url, this.client.base);

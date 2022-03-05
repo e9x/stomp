@@ -3,8 +3,12 @@ import { global } from '../../Global.mjs';
 import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 
 export class HistoryRewrite extends Rewrite {
-	global = global.History;
+	global = global.history;
 	handler(target, that, args){
+		if(that !== this.global){
+			throw new TypeError('Illegal invocation');
+		}
+
 		if(args.length < 2){
 			throw new TypeError(`Failed to execute '${target.name}' on 'History': 2 arguments required, but only ${args.length} present.`);
 		}
@@ -12,6 +16,7 @@ export class HistoryRewrite extends Rewrite {
 		let [data, title, url] = args;
 		
 		if(url !== undefined){
+			url = new URL(url, this.client.base);
 			url = this.client.tomp.url.parse_url(url);
 
 			if(url.toOrigin() !== this.client.base.toOrigin()){
@@ -24,7 +29,7 @@ export class HistoryRewrite extends Rewrite {
 		return Reflect.apply(target, that, [ data, title, url ]);
 	}
 	work(){
-		this.global.prototype.pushState = wrap_function(this.global.prototype.pushState, this.handler.bind(this));
-		this.global.prototype.replaceState = wrap_function(this.global.prototype.replaceState, this.handler.bind(this));
+		History.prototype.pushState = wrap_function(History.prototype.pushState, this.handler.bind(this));
+		History.prototype.replaceState = wrap_function(History.prototype.replaceState, this.handler.bind(this));
 	}
 };

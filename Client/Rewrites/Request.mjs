@@ -1,6 +1,6 @@
 import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
-import { wrap_function, Reflect } from '../RewriteUtil.mjs';
+import { wrap_function, Reflect, context_this } from '../RewriteUtil.mjs';
 
 export class RequestRewrite extends Rewrite {
 	response_url = new WeakMap();
@@ -9,9 +9,6 @@ export class RequestRewrite extends Rewrite {
 	global_fetch = global.fetch;
 	global = global.Request;
 	work(){
-		const desc_url = Reflect.getOwnPropertyDescriptor(Response.prototype, 'url');
-		const legal_windows = [null,undefined,global];
-		
 		{
 			const url = Reflect.getOwnPropertyDescriptor(global.EventSource.prototype, 'url');
 
@@ -34,7 +31,12 @@ export class RequestRewrite extends Rewrite {
 			return result;
 		});
 
-		global.URL.revokeObjectURL = wrap_function(global.URL.revokeObjectURL, (target, that, [ url ]) => {
+		global.URL.revokeObjectURL = wrap_function(global.URL.revokeObjectURL, (target, that, args) => {
+			if(args.length < 1){
+				throw new TypeError(`Failed to execute 'revokeObjectURL' on 'URL': 1 argument required, but only ${args.length} present.`);	
+			}
+
+			let [ url ] = args;
 			url = String(url);
 			url = url.replace(this.client.location.proxy.origin, this.client.location.global.origin);
 			Reflect.apply(target, that, [ url ]);
@@ -49,9 +51,13 @@ export class RequestRewrite extends Rewrite {
 			return result;
 		}, true);
 
+		const desc_url = Reflect.getOwnPropertyDescriptor(Response.prototype, 'url');
+		
 		global.fetch = wrap_function(global.fetch, (target, that, [input, init]) => {
-			if(!legal_windows.includes(that))throw new TypeError('Illegal invocation');
-			
+			if(context_this(that) !== global){
+				throw new TypeError('Illegal invocation');
+			}
+
 			if(!this.request_urls.has(input)){
 				input = this.client.tomp.binary.serve(new URL(input, this.client.base), this.client.base);
 				

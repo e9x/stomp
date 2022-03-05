@@ -2,9 +2,11 @@ import { Rewrite } from '../Rewrite.mjs';
 import { global } from '../../Global.mjs';
 import { global_client } from '../../RewriteJS.mjs';
 import { getOwnPropertyDescriptors, mirror_attributes, Reflect, wrap_function } from '../RewriteUtil.mjs';
+import { is_tomp } from './PageRequest.mjs';
 
 export class WindowRewrite extends Rewrite {
-	restricted = new WeakMap();
+	global = global.postMessage;
+	restricted = new WeakMap([ [global, global] ]);
 	same_origin(window){
 		return window[global_client].base.toOrigin() === this.client.base.toOrigin();
 	}
@@ -126,18 +128,35 @@ export class WindowRewrite extends Rewrite {
 		return proxy;
 	}
 	postMessage(targetWindow, message, targetOrigin, transfer){
-		// console.assert(this.restricted.has(targetWindow), 'Unknown target:', targetWindow);
+		console.assert(this.restricted.has(targetWindow), 'Unknown target:', targetWindow);
 		if(!this.restricted.has(targetWindow)){
 			throw new TypeError('Illegal invocation');	
 		}
 
 		const window = this.restricted.get(targetWindow);
 
-		window.dispatchEvent(new MessageEvent('message', {
+		/*window.dispatchEvent(new MessageEvent('message', {
 			data: message,
 			origin: this.client.base.toOrigin(),
 			source: global,
-		}));
+		}));*/
+
+		const args = [
+			{
+				[is_tomp]: true,
+				message,
+				origin: this.client.base.toOrigin(),
+			},
+			this.client.host.toOrigin(),
+			transfer,
+		];
+
+		if(targetOrigin !== undefined){
+			const { origin } = new URL(targetOrigin, this.client.base);
+			console.assert(window[global_client].base.toOrigin() === origin, 'Bad origin', window[global_client].base.toOrigin(), origin);
+		}
+		
+		Reflect.apply(this.global, window, args);
 	}
 	restrict(){
 		throw new DOMException(`Blocked a frame with "${this.client.base.toOrigin()}" from accessing a cross-origin frame.`)
@@ -229,5 +248,16 @@ export class WindowRewrite extends Rewrite {
 		}
 
 		return this.restricted.get(window);
+	}
+	work(){
+		Object.defineProperty(global, 'parent', {
+			get: wrap_function(Reflect.getOwnPropertyDescriptor(global, 'parent').get, (target, that, args) => {
+				const got = Reflect.apply(target, that, args);
+				return this.restrict_window(got);
+			}),
+			set: parent.set,
+			configurable: true,
+			enumerable: true,
+		});
 	}
 };
