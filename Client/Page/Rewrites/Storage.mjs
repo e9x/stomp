@@ -1,6 +1,6 @@
 import Rewrite from '../../Rewrite.mjs';
 import global from '../../global.mjs';
-import { Reflect } from '../../RewriteUtil.mjs';
+import { context_this, Reflect, wrap_function } from '../../RewriteUtil.mjs';
 import { mirror_class } from '../../NativeUtil.mjs';
 
 const decoder = new TextDecoder();
@@ -207,20 +207,32 @@ export default class StorageRewrite extends Rewrite {
 		this.localStorage = localStorage;
 		this.sessionStorage = sessionStorage;
 
+		const { get: localStorage_get } = Reflect.getOwnPropertyDescriptor(global, 'localStorage');
+		const { get: sessionStorage_get } = Reflect.getOwnPropertyDescriptor(global, 'sessionStorage');
+		
+
 		Reflect.defineProperty(global, 'localStorage', {
-			get(){
+			get: wrap_function(localStorage_get, (target, that, args) => {
+				if(context_this(that) !== global){
+					throw new TypeError('Illegal invocation');
+				}
+
 				return localStorage;
-			},
+			}),
 			enumerable: true,
-			configurable: false,
+			configurable: true,
 		});
 
 		Reflect.defineProperty(global, 'sessionStorage', {
-			get(){
+			get: wrap_function(sessionStorage_get, (target, that, args) => {
+				if(context_this(that) !== global){
+					throw new TypeError('Illegal invocation');
+				}
+
 				return sessionStorage;
-			},
+			}),
 			enumerable: true,
-			configurable: false,
+			configurable: true,
 		});
 
 		mirror_class(this.global, StorageProxy, instances);
