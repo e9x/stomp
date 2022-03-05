@@ -1,8 +1,8 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
+import Rewrite from '../Rewrite.mjs';
+import global from '../global.mjs';
 import { wrap_function, Reflect, context_this } from '../RewriteUtil.mjs';
 
-export class RequestRewrite extends Rewrite {
+export default class RequestRewrite extends Rewrite {
 	response_url = new WeakMap();
 	request_urls = new WeakMap();
 	eventsource_urls = new WeakMap();

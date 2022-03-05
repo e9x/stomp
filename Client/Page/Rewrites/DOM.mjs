@@ -1,9 +1,9 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global as g } from '../../Global.mjs';
+import Rewrite from '../../Rewrite.mjs';
+import g from '../../global.mjs';
 // https://github.com/webpack/webpack/issues/12960
 const global = g;
-import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect, wrap_function } from '../RewriteUtil.mjs';
-import { attribute_original, get_mime, TOMPElement } from '../../RewriteElements.mjs';
+import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect, wrap_function } from '../../RewriteUtil.mjs';
+import { attribute_original, get_mime, TOMPElement } from '../../../RewriteElements.mjs';
 
 const { getAttribute, setAttribute, hasAttribute, hasAttributeNS, removeAttribute, getAttributeNames } = global?.Element?.prototype || {};
 const { localName } = getOwnPropertyDescriptors(global?.Element?.prototype || {});
@@ -103,7 +103,7 @@ function test_args(target, args, length, class_name){
 	}
 }
 
-export class DOMRewrite extends Rewrite {
+export default class DOMRewrite extends Rewrite {
 	style_proxy(style){
 		const proxy = new Proxy(style, {
 			get: (target, prop, receiver) => {

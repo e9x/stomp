@@ -1,8 +1,8 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
+import Rewrite from '../Rewrite.mjs';
+import global from '../global.mjs';
 import { encode_protocol, valid_protocol } from '../EncodeProtocol.mjs';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.mjs';
-import { mirror_attributes, Reflect, getOwnPropertyDescriptors, wrap_function } from '../RewriteUtil.mjs';
+import { Reflect } from '../RewriteUtil.mjs';
 import { DOMObjectConstructor, TargetConstant, EventTarget_on, mirror_class } from '../NativeUtil.mjs';
 
 const default_ports = {
@@ -12,7 +12,7 @@ const default_ports = {
 
 const ws_protocols = ['wss:','ws:'];
 
-export class WebSocketRewrite extends Rewrite {
+export default class WebSocketRewrite extends Rewrite {
 	#socket
 	global = global.WebSocket;
 	work(){

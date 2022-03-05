@@ -1,9 +1,8 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
+import Rewrite from '../Rewrite.mjs';
+import global from '../global.mjs';
 import { wrap_function, Reflect, getOwnPropertyDescriptors, defineProperties } from '../RewriteUtil.mjs';
-import { Type } from 'ast-types';
 
-export class LocationRewrite extends Rewrite {
+export default class LocationRewrite extends Rewrite {
 	description = {};
 	global_description = {};
 	global_description_document = {};

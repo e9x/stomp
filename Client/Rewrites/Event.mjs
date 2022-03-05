@@ -1,8 +1,7 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
-import { getOwnPropertyDescriptors, mirror_attributes, Reflect, wrap_function } from '../RewriteUtil.mjs';
+import Rewrite from '../Rewrite.mjs';
+import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 
-export class EventRewrite extends Rewrite {
+export default class EventRewrite extends Rewrite {
 	work(){
 		const filename = Reflect.getOwnPropertyDescriptor(ErrorEvent.prototype, 'filename');
 

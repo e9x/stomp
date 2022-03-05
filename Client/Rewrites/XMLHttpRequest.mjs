@@ -1,10 +1,10 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
-import { wrap_function, Reflect } from '../RewriteUtil.mjs';
+import Rewrite from '../Rewrite.mjs';
+import global from '../global.mjs';
+import { Reflect } from '../RewriteUtil.mjs';
 import { EventTarget_on, TargetConstant, DOMObjectConstructor, mirror_class } from '../NativeUtil.mjs';
 import { forbids_body } from '../../Worker/Bare.mjs';
 
-export class XMLHttpRequestRewrite extends Rewrite {
+export default class XMLHttpRequestRewrite extends Rewrite {
 	global = global.XMLHttpRequest;
 	global_target = global.XMLHttpRequestEventTarget;
 	work(){

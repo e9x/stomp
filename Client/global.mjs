@@ -10,4 +10,5 @@ if(typeof self === 'object' && self !== undefined){
 	g = window;
 }
 
-export const global = g;
+let global;
+export default global = g;

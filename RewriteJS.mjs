@@ -9,7 +9,7 @@ export const global_client = 'tompc$';
 const global_access = b.memberExpression(b.identifier(global_client), b.identifier('access'));
 
 export const providers = ['window','document'];
-export const undefinable = ['eval','location'];
+export const undefinable = ['eval','location','top'];
 // only eval and location are of interest
 
 const parse_options = { 

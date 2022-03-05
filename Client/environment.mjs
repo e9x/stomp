@@ -1,4 +1,4 @@
-import { global } from './Global.mjs';
+import global from './global.mjs';
 
 export const engine = navigator.userAgent.includes('Firefox/') ? 'gecko' : 'webkit';
 export const is_page = typeof Window == 'function' && global instanceof Window;

@@ -1,8 +1,8 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global_client } from '../../RewriteJS.mjs';
-import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../RewriteUtil.mjs';
+import Rewrite from '../../Rewrite.mjs';
+import { global_client } from '../../../RewriteJS.mjs';
+import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../../RewriteUtil.mjs';
 
-export class IFrameRewrite extends Rewrite {
+export default class IFrameRewrite extends Rewrite {
 	get_contentWindow(target, that, args){
 		const window = Reflect.apply(target, that, args);
 

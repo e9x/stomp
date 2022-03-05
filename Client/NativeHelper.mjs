@@ -1,6 +1,6 @@
 import { isIdentifierChar, isIdentifierStart } from 'acorn';
 
-export class NativeHelper {
+export default class NativeHelper {
 	constructor(){
 		this.calculate();
 	}

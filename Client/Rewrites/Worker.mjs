@@ -1,8 +1,7 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
-import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../RewriteUtil.mjs';
+import Rewrite from '../Rewrite.mjs';
+import global from '../global.mjs';
 
-export class WorkerRewrite extends Rewrite {
+export default class WorkerRewrite extends Rewrite {
 	work(){
 		const that = this;
 

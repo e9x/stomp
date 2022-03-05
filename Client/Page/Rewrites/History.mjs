@@ -1,8 +1,8 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
-import { Reflect, wrap_function } from '../RewriteUtil.mjs';
+import Rewrite from '../../Rewrite.mjs';
+import global from '../../global.mjs';
+import { Reflect, wrap_function } from '../../RewriteUtil.mjs';
 
-export class HistoryRewrite extends Rewrite {
+export default class HistoryRewrite extends Rewrite {
 	global = global.history;
 	handler(target, that, args){
 		if(that !== this.global){

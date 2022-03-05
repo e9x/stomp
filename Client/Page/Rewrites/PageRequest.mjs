@@ -1,12 +1,12 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
-import { wrap_function, Reflect, getOwnPropertyDescriptors, context_this } from '../RewriteUtil.mjs';
+import Rewrite from '../../Rewrite.mjs';
+import global from '../../global.mjs';
+import { wrap_function, Reflect, getOwnPropertyDescriptors, context_this } from '../../RewriteUtil.mjs';
 
 const beacon_protocols = ['http:','https:'];
 
 export const is_tomp = 'tompc$from_tomp';
 
-export class PageRequestRewrite extends Rewrite {
+export default class PageRequestRewrite extends Rewrite {
 	work(){
 		global.open = wrap_function(global.open, (target, that, [ url, tar, features ]) => {
 			url = new URL(url, this.client.base);

@@ -1,9 +1,9 @@
-import { Rewrite } from '../Rewrite.mjs';;
-import { Reflect, wrap_function } from '../RewriteUtil.mjs';
+import Rewrite from '../../Rewrite.mjs';
+import { Reflect, wrap_function } from '../../RewriteUtil.mjs';
 
 const decoder = new TextDecoder();
 
-export class DOMCookieRewrite extends Rewrite {
+export default class DOMCookieRewrite extends Rewrite {
 	global_descriptor = Reflect.getOwnPropertyDescriptor(Document.prototype, 'cookie');
 	get value(){
 		return Reflect.apply(this.global_descriptor.get, document, []);

@@ -1,11 +1,11 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
-import { Reflect } from '../RewriteUtil.mjs';
-import { mirror_class } from '../NativeUtil.mjs';
+import Rewrite from '../../Rewrite.mjs';
+import global from '../../global.mjs';
+import { Reflect } from '../../RewriteUtil.mjs';
+import { mirror_class } from '../../NativeUtil.mjs';
 
 const decoder = new TextDecoder();
 
-export class StorageRewrite extends Rewrite {
+export default class StorageRewrite extends Rewrite {
 	StorageHandler = {
 		get: (target, prop, receiver) => {
 			if(typeof prop == 'symbol' || prop in target || prop in this.proxy.prototype){

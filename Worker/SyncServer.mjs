@@ -1,6 +1,5 @@
 import { decode_base64, encode_base64 } from '../Base64.mjs';
 import { encode_cookie } from '../EncodeCookies.mjs'
-import { engine } from '../Environment.mjs';
 import { status_redirect } from '../Worker/Bare.mjs';
 
 export class SyncServer {

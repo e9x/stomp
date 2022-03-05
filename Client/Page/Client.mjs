@@ -1,17 +1,16 @@
-import { Client } from './Client.mjs';
-import { HistoryRewrite } from './Rewrites/History.mjs';
-import { DOMRewrite } from './Rewrites/DOM.mjs';
-import { StorageRewrite } from './Rewrites/Storage.mjs';
-import { DOMCookieRewrite } from './Rewrites/DOMCookie.mjs';
-import { PageRequestRewrite } from './Rewrites/PageRequest.mjs';
-import { SyncClient } from './SyncClient.mjs';
-import { global } from '../Global.mjs';
-import { XMLHttpRequestRewrite } from './Rewrites/XMLHttpRequest.mjs';
-import { Reflect } from './RewriteUtil.mjs';
-import { IFrameRewrite } from './Rewrites/IFrame.mjs';
-import { WindowRewrite } from './Rewrites/Window.mjs';
+import global from '../global.mjs';
+import Client from '../Client.mjs';
+import { SyncClient } from '../SyncClient.mjs';
+import { Reflect } from '../RewriteUtil.mjs';
+import HistoryRewrite from './Rewrites/History.mjs';
+import DOMRewrite from './Rewrites/DOM.mjs';
+import StorageRewrite from './Rewrites/Storage.mjs';
+import DOMCookieRewrite from './Rewrites/DOMCookie.mjs';
+import PageRequestRewrite from './Rewrites/PageRequest.mjs';
+import IFrameRewrite from './Rewrites/IFrame.mjs';
+import WindowRewrite from './Rewrites/Window.mjs';
 
-export class PageClient extends Client {
+export default class PageClient extends Client {
 	static type = 'page';
 	#baseURI_desc = Reflect.getOwnPropertyDescriptor(Node.prototype, 'baseURI');
 	get #baseURI(){
@@ -36,7 +35,6 @@ export class PageClient extends Client {
 		this.dom = new DOMRewrite(this);
 		this.cookie = new DOMCookieRewrite(this);
 		this.page_request = new PageRequestRewrite(this);
-		this.xml = new XMLHttpRequestRewrite(this);
 		this.window = new WindowRewrite(this);
 		this.iframe = new IFrameRewrite(this);
 
@@ -48,7 +46,6 @@ export class PageClient extends Client {
 		this.sync.work();
 		this.window.work();
 		this.iframe.work();
-		this.xml.work();
 		this.history.work();
 		this.storage.work();
 		this.dom.work();

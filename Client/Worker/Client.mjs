@@ -1,9 +1,8 @@
-import { Client } from './Client.mjs';
-import { Reflect, wrap_function } from './RewriteUtil.mjs';
-import { global } from '../Global.mjs';
-import { XMLHttpRequestRewrite } from './Rewrites/XMLHttpRequest.mjs';
+import Client from '../Client.mjs';
+import global from '../global.mjs';
+import { Reflect, wrap_function } from '../RewriteUtil.mjs';
 
-export class WorkerClient extends Client {
+export default class WorkerClient extends Client {
 	static type = 'worker';
 	base = this.tomp.url.parse_url(this.tomp.url.unwrap_ez(location));
 	host = this.tomp.url.parse_url(location.href);

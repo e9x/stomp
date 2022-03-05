@@ -1,5 +1,5 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
+import Rewrite from '../Rewrite.mjs';
+import global from '../global.mjs';
 import { hasOwnProperty, Reflect, wrap_function } from '../RewriteUtil.mjs';
 import { undefinable, global_client } from '../../RewriteJS.mjs';
 
@@ -14,7 +14,7 @@ Reflect.setPrototypeOf(undefinable_object, null);
 export const global_proxy = 'tompcgp$';
 export const global_name = 'tompcgn$';
 
-export class AccessRewrite extends Rewrite {
+export default class AccessRewrite extends Rewrite {
 	// unique_top = parent !== top && global_client in parent;
 	import(meta, url){
 		const resolved = new URL(url, meta.url);

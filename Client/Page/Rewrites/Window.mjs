@@ -1,10 +1,10 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
-import { global_client } from '../../RewriteJS.mjs';
-import { getOwnPropertyDescriptors, mirror_attributes, Reflect, wrap_function } from '../RewriteUtil.mjs';
+import Rewrite from '../../Rewrite.mjs';
+import global from '../../global.mjs';
+import { global_client } from '../../../RewriteJS.mjs';
+import { Reflect, wrap_function } from '../../RewriteUtil.mjs';
 import { is_tomp } from './PageRequest.mjs';
 
-export class WindowRewrite extends Rewrite {
+export default class WindowRewrite extends Rewrite {
 	global = global.postMessage;
 	restricted = new WeakMap([ [global, global] ]);
 	same_origin(window){

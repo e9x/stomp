@@ -1,8 +1,8 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
-import { getOwnPropertyDescriptors, mirror_attributes, Reflect, wrap_function } from '../RewriteUtil.mjs';
+import Rewrite from '../Rewrite.mjs';
+import global from '../global.mjs';
+import { mirror_attributes, Reflect } from '../RewriteUtil.mjs';
 
-export class FunctionRewrite extends Rewrite {
+export default class FunctionRewrite extends Rewrite {
 	global = global.Function;
 	global_async = (async _=>_).constructor;
 	work(){

@@ -1,8 +1,8 @@
-import { Rewrite } from '../Rewrite.mjs';
-import { global } from '../../Global.mjs';
+import Rewrite from '../Rewrite.mjs';
+import global from '../global.mjs';
 import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../RewriteUtil.mjs';
 
-export class IDBRewrite extends Rewrite {
+export default class IDBRewrite extends Rewrite {
 	work(){
 		global.IDBFactory.prototype.open = wrap_function(global.IDBFactory.prototype.open, (target, that, [ name, version ]) => {
 			return Reflect.apply(target, that, [ `${name}@${this.client.base.toOrigin()}`])

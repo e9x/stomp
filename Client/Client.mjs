@@ -1,18 +1,19 @@
 import { TOMP } from '../TOMP.mjs'
 import { openDB } from 'idb/with-async-ittr';
-import { LocationRewrite } from './Rewrites/Location.mjs';
-import { WebSocketRewrite } from './Rewrites/WebSocket.mjs';
-import { RequestRewrite } from './Rewrites/Request.mjs';
-import { EvalRewrite } from './Rewrites/Eval.mjs';
-import { AccessRewrite } from './Rewrites/Access.mjs';
-import { IDBRewrite } from './Rewrites/IndexedDB.mjs';
-import { WorkerRewrite } from './Rewrites/Worker.mjs';
-import { FunctionRewrite } from './Rewrites/Function.mjs';
-import { EventRewrite } from './Rewrites/Event.mjs';
-import { NativeHelper } from './NativeHelper.mjs';
 import { wrap_function, function_strings } from './RewriteUtil.mjs';
+import NativeHelper from './NativeHelper.mjs';
+import LocationRewrite from './Rewrites/Location.mjs';
+import WebSocketRewrite from './Rewrites/WebSocket.mjs';
+import RequestRewrite from './Rewrites/Request.mjs';
+import EvalRewrite from './Rewrites/Eval.mjs';
+import AccessRewrite from './Rewrites/Access.mjs';
+import IDBRewrite from './Rewrites/IndexedDB.mjs';
+import WorkerRewrite from './Rewrites/Worker.mjs';
+import FunctionRewrite from './Rewrites/Function.mjs';
+import EventRewrite from './Rewrites/Event.mjs';
+import XMLHttpRequestRewrite from './Rewrites/XMLHttpRequest.mjs';
 
-export class Client {
+export default class Client {
 	native = new NativeHelper();
 	type = this.constructor.type;
 	constructor(config){
@@ -28,8 +29,12 @@ export class Client {
 		this.eval = new EvalRewrite(this);
 		this.location = new LocationRewrite(this);
 		this.access = new AccessRewrite(this);
+		this.xml = new XMLHttpRequestRewrite(this);
 	}
 	work_modules(){
+		
+		this.xml.work();
+		
 		this.function.work();
 		this.websocket.work();
 		this.idb.work();

@@ -1,6 +1,6 @@
 import { decode_base64, encode_base64 } from '../Base64.mjs';
-import { global } from '../Global.mjs';
-import { engine } from '../Environment.mjs';
+import global from './global.mjs';
+import { engine } from './environment.mjs';
 import { decode_cookie } from '../EncodeCookies.mjs';
 import { status_empty } from '../Worker/Bare.mjs';
 import { Reflect } from './RewriteUtil.mjs';

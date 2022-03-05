@@ -1,4 +1,4 @@
-import { global } from '../Global.mjs';
+import global from './global.mjs';
 
 export const function_strings = new Map();
 
