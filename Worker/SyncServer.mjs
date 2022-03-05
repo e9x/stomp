@@ -1,4 +1,4 @@
-import { decode_base64, encode_base64 } from '../Base64.mjs';
+import { decodeBase64, encodeBase64 } from '../Base64.mjs';
 import { encodeCookie } from '../encodeCookies.mjs'
 import { status_redirect } from '../Worker/bare.mjs';
 
@@ -54,7 +54,7 @@ export default class SyncServer {
 	}
 	async process([ url, options, body ]){
 		if(body !== null){
-			options.body = decode_base64(body);
+			options.body = decodeBase64(body);
 		}
 
 
@@ -103,7 +103,7 @@ export default class SyncServer {
 		
 		return [
 			undefined,
-			encode_base64(await response.arrayBuffer()),
+			encodeBase64(await response.arrayBuffer()),
 			{
 				status: response.status,
 				statusText: response.statusText,

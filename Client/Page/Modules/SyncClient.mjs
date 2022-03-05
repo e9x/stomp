@@ -1,4 +1,4 @@
-import { decode_base64, encode_base64 } from '../../../Base64.mjs';
+import { decodeBase64, encodeBase64 } from '../../../Base64.mjs';
 import global from '../../global.mjs';
 import { engine } from '../../environment.mjs';
 import { decodeCookie } from '../../../encodeCookies.mjs';
@@ -21,7 +21,7 @@ export class SyncClient {
 			throw new TypeError(error.message);
 		}
 		
-		const { buffer: rawArrayBuffer } = decode_base64(base64ArrayBuffer);
+		const { buffer: rawArrayBuffer } = decodeBase64(base64ArrayBuffer);
 
 		let response;
 		
@@ -63,9 +63,9 @@ export class SyncClient {
 		let body = undefined;
 
 		if(init.body instanceof ArrayBuffer){
-			body = encode_base64(init.body);
+			body = encodeBase64(init.body);
 		}else if(typeof init.body == 'string'){
-			body = encode_base64(this.encoder.encode(init.body));
+			body = encodeBase64(this.encoder.encode(init.body));
 		}
 
 		const args = [

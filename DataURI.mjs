@@ -1,4 +1,4 @@
-import { decode_base64, encode_base64 } from './Base64.mjs';
+import { decodeBase64, encodeBase64 } from './Base64.mjs';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -33,7 +33,7 @@ export function ParseDataURI(href){
 	let data = decodeURIComponent(href.slice(datapos + 1));
 	
 	if(base64){
-		data = decoder.decode(decode_base64(data));
+		data = decoder.decode(decodeBase64(data));
 	}
 	
 	return {
@@ -54,7 +54,7 @@ export function CreateDataURI(mime, data, base64){
 			data = encoder.encode(data);
 		}
 
-		data = encode_base64(data);
+		data = encodeBase64(data);
 		parts.push('base64');
 	}else{
 		data = String(data);
