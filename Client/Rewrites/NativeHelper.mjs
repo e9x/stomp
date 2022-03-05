@@ -1,7 +1,8 @@
+import Rewrite from '../Rewrite.mjs';
 import { isIdentifierChar, isIdentifierStart } from 'acorn';
 
-export default class NativeHelper {
-	constructor(){
+export default class NativeHelper extends Rewrite {
+	work(){
 		this.calculate();
 	}
 	calculate(){

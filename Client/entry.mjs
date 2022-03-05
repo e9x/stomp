@@ -17,6 +17,8 @@ function create_instance(...args){
 		throw new Error('Unknown context!');
 	}
 
+	created.work();
+
 	Reflect.defineProperty(global, global_client, {
 		enumerable: false,
 		configurable: false,

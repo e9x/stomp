@@ -1,5 +1,5 @@
 import TOMP from '../TOMP.mjs'
-import NativeHelper from './NativeHelper.mjs';
+import NativeHelper from './Rewrites/NativeHelper.mjs';
 import LocationRewrite from './Rewrites/Location.mjs';
 import WebSocketRewrite from './Rewrites/WebSocket.mjs';
 import RequestRewrite from './Rewrites/Request.mjs';
@@ -11,94 +11,44 @@ import FunctionRewrite from './Rewrites/Function.mjs';
 import EventRewrite from './Rewrites/Event.mjs';
 import XMLHttpRequestRewrite from './Rewrites/XMLHttpRequest.mjs';
 import { openDB } from 'idb/with-async-ittr';
-import { wrap_function, function_strings } from './RewriteUtil.mjs';
 
 export default class Client {
-	native = new NativeHelper();
 	type = this.constructor.type;
 	constructor(config){
 		this.tomp = new TOMP(config);
-		this.ready = this.work();
+		this.ready = this.async_work();
 		
-		this.function = new FunctionRewrite(this);
-		this.websocket = new WebSocketRewrite(this);
-		this.idb = new IDBRewrite(this);
-		this.event = new EventRewrite(this);
-		this.worker = new WorkerRewrite(this);
-		this.request = new RequestRewrite(this);
-		this.eval = new EvalRewrite(this);
-		this.location = new LocationRewrite(this);
-		this.access = new AccessRewrite(this);
-		this.xml = new XMLHttpRequestRewrite(this);
+		this.load_modules(
+			NativeHelper,
+			FunctionRewrite,
+			WebSocketRewrite,
+			IDBRewrite,
+			EventRewrite,
+			WorkerRewrite,
+			RequestRewrite,
+			EvalRewrite,
+			LocationRewrite,
+			AccessRewrite,
+			XMLHttpRequestRewrite,
+		);
+
+		// this.modules.get(NativeHelper)[...]
 	}
-	work_modules(){
-		
-		this.xml.work();
-		
-		this.function.work();
-		this.websocket.work();
-		this.idb.work();
-		this.worker.work();
-		this.event.work();
-		
-		this.request.work();
-		this.eval.work();
-		this.location.work();
-	
-		// work access last
-		this.access.work();
-		
-		Function.prototype.toString = wrap_function(Function.prototype.toString, (target, that, args) => {
-			if(function_strings.has(that))return function_strings.get(that);
-			else{
-				let string = Reflect.apply(target, that, args);
-
-				if(!this.native.is_native(string)){
-					if(/^class[{ ]/.test(string)){
-						string = this.tomp.js.unwrap(`x = ${string}`, this.location.proxy);
-						string = string.slice(string.indexOf('=') + 1);
-						if(string.startsWith(' ')){
-							string = string.slice(1);
-						}
-
-						if(string.endsWith(';')){
-							string = string.slice(0, -1);
-						}
-					}else{
-						let left = 0;
-						let right;
-
-						if(!(/^((async\s+)?(\(|function[( ]))/).test(string)){
-							// (){kind of function}
-							left = 1;
-							right = -1;
-							string = `{${string}}`
-						}
-
-						string = this.tomp.js.unwrap(`x = ${string}`, this.location.proxy);
-
-						string = string.slice(string.indexOf('=') + 1);
-						
-						if(string.startsWith(' ')){
-							string = string.slice(1);
-						}
-					
-						if(string.endsWith(';')){
-							string = string.slice(0, -1);
-						}
-
-						string = string.slice(left, right);
-					}
-				}
-
-				return string;
-			}
-		});
+	modules = new Map();
+	load_modules(...Modules){
+		for(let Module of Modules){
+			this.modules.set(Module, new Module(this));
+		}
 	}
-	async work(){
+	work(){
+		for(let [Module, module] of this.modules){
+			module.work();
+		}
+	}
+	async async_work(){
 		this.db = await openDB('tomp', 1, {
 			upgrade: (db, oldv, newv, transaction) => {
-				throw new Error(`Service worker didn't register the tomp database in time.`);
+				throw new Error(`Service worker didn't register the TOMP database.`);
 			},
 		});
 	}

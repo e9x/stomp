@@ -1,6 +1,6 @@
 import Rewrite from '../Rewrite.mjs';
 import global from '../global.mjs';
-import { mirror_attributes, Reflect } from '../RewriteUtil.mjs';
+import { wrap_function, function_strings, mirror_attributes, Reflect } from '../RewriteUtil.mjs';
 
 export default class FunctionRewrite extends Rewrite {
 	global = global.Function;
@@ -8,6 +8,54 @@ export default class FunctionRewrite extends Rewrite {
 	work(){
 		const that = this;
 		
+
+		this.global.prototype.toString = wrap_function(this.global.prototype.toString, (target, that, args) => {
+			if(function_strings.has(that))return function_strings.get(that);
+			else{
+				let string = Reflect.apply(target, that, args);
+
+				if(!this.client.native.is_native(string)){
+					if(/^class[{ ]/.test(string)){
+						string = this.client.tomp.js.unwrap(`x = ${string}`, this.client.base);
+						string = string.slice(string.indexOf('=') + 1);
+						if(string.startsWith(' ')){
+							string = string.slice(1);
+						}
+
+						if(string.endsWith(';')){
+							string = string.slice(0, -1);
+						}
+					}else{
+						let left = 0;
+						let right;
+
+						if(!(/^((async\s+)?(\(|function[( ]))/).test(string)){
+							// (){kind of function}
+							left = 1;
+							right = -1;
+							string = `{${string}}`
+						}
+
+						string = this.client.tomp.js.unwrap(`x = ${string}`, this.client.base);
+
+						string = string.slice(string.indexOf('=') + 1);
+						
+						if(string.startsWith(' ')){
+							string = string.slice(1);
+						}
+					
+						if(string.endsWith(';')){
+							string = string.slice(0, -1);
+						}
+
+						string = string.slice(left, right);
+					}
+				}
+
+				return string;
+			}
+		});
+
 		function NewFunction(...args){
 			if(args.length !== 0){
 				let [ code ] = args.splice(-1, 1);
