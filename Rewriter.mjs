@@ -1,4 +1,4 @@
-import { CreateDataURI, ParseDataURI } from './DataURI.mjs'
+import { createDataURI, parseDataURI } from './dataURI.mjs'
 
 export default class Rewriter {
 	static service = 'unknown';
@@ -19,7 +19,7 @@ export default class Rewriter {
 				return serve;
 			}
 			
-			const {mime,data,base64} = ParseDataURI(serve);
+			const {mime,data,base64} = parseDataURI(serve);
 			
 			const wrapped = this.wrap(data, url);
 			
@@ -40,7 +40,7 @@ export default class Rewriter {
 			
 			const unwrapped = this.unwrap(data, url);
 			
-			return CreateDataURI(mime, unwrapped, base64);
+			return createDataURI(mime, unwrapped, base64);
 		}
 		
 		return this.tomp.url.unwrap_ez(serving);
