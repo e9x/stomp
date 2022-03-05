@@ -176,7 +176,7 @@ export default class AccessRewrite extends Rewrite {
 		}
 		
 		return obj;
-	  }
+	}
 	pattern(target, destructor){
 		const stack = [
 			[ target, destructor ],

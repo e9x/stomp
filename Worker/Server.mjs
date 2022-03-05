@@ -143,6 +143,7 @@ console.error(error);
 		
 		if(this.routes.has(service)){
 			event.respondWith(this.send(request, service, field));
+			return true;
 		}
 		
 		return false;

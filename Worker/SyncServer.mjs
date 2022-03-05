@@ -64,7 +64,9 @@ export default class SyncServer {
 		for(;;){
 			if(redirects-- <= 0){
 				return [
-					'too many redirects',
+					{
+						message: 'too many redirects',
+					}
 				];
 			}
 
@@ -80,12 +82,14 @@ export default class SyncServer {
 					};
 		
 					if(!this.server.request(event)){
-						return reject('Declined');
+						reject('Declined');
 					}
 				});
 			}catch(error){
 				return [
-					error.message,
+					{
+						message: String(error),
+					},
 				];
 			}
 			

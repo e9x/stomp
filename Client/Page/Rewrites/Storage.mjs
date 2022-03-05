@@ -105,7 +105,7 @@ export default class StorageRewrite extends Rewrite {
 		return target === this.sessionStorageTarget;
 	}
 	work(){
-		this.worker_storage = `${this.client.tomp.directory}worker:storage/?`;
+		this.worker_storage = `${this.client.tomp.directory}storage/?`;
 
 		const that = this;
 		const instances = new WeakSet();

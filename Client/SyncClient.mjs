@@ -17,13 +17,18 @@ export class SyncClient {
 	work(){}
 	create_response([ error, base64ArrayBuffer, init, url ]){
 		if(error !== null){
-			throw new TypeError(error);
+			throw new TypeError(error.message);
 		}
 		
 		const { buffer: rawArrayBuffer } = decode_base64(base64ArrayBuffer);
 
 		let response;
 		
+		if(!init){
+			console.error('no init');
+			debugger;
+		}
+
 		if(status_empty.includes(init.status)){
 			response = new Response(undefined, init);
 		}else{
@@ -71,7 +76,7 @@ export class SyncClient {
 		if(engine == 'gecko'){
 			const http = new XMLHttpRequest();
 
-			http.open('POST', `${this.client.tomp.directory}worker:sync-request/`, false);
+			http.open('POST', `${this.client.tomp.directory}sync-request/`, false);
 			http.send(JSON.stringify(args));
 			
 			return this.create_response(JSON.parse(http.responseText));

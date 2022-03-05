@@ -1,6 +1,6 @@
 import Rewrite from '../Rewrite.mjs';
 import global from '../global.mjs';
-import { wrap_function, Reflect, getOwnPropertyDescriptors, defineProperties } from '../RewriteUtil.mjs';
+import { wrap_function, Reflect, getOwnPropertyDescriptors, defineProperties, context_this } from '../RewriteUtil.mjs';
 
 export default class LocationRewrite extends Rewrite {
 	description = {};
@@ -18,13 +18,12 @@ export default class LocationRewrite extends Rewrite {
 		Reflect.setPrototypeOf(this.proxy, WorkerLocation.prototype);
 
 		const scope_location = Reflect.getOwnPropertyDescriptor(WorkerGlobalScope.prototype, 'location');
-		const legal_contexts = [ this.proxy, null, undefined ];
 
 		Reflect.defineProperty(WorkerGlobalScope.prototype, 'location', {
 			configurable: true,
 			enumerable: true,
 			get: wrap_function(scope_location.get, (target, that, args) => {
-				if(!legal_contexts.includes(that))throw new TypeError('Illegal Invocation');
+				if(context_this(that) !== global)throw new TypeError('Illegal Invocation');
 				return this.proxy;
 			}),
 		});
@@ -36,14 +35,14 @@ export default class LocationRewrite extends Rewrite {
 				configurable: true,
 				enumerable: true,
 				get: desc.get ? wrap_function(desc.get, (target, that, args) => {
-					if(!legal_contexts.includes(that))throw new TypeError('Illegal Invocation');
+					if(that !== this.proxy)throw new TypeError('Illegal Invocation');
 					return this.page_urlo[prop];
 				}) : undefined,
 				set: desc.set ? wrap_function(desc.set, (target, that, [ value ]) => {
-					if(!legal_contexts.includes(that))throw new TypeError('Illegal Invocation');
+					if(that !== this.proxy)throw new TypeError('Illegal Invocation');
 					const urlo = this.page_urlo;
 					urlo[prop] = value;
-					this.global.href = this.client.tomp.url.wrap(urlo, 'worker:html');
+					this.global.href = this.client.tomp.html.serve(urlo, this.client.base);
 					return value;
 				}) : undefined,
 			});
@@ -73,12 +72,22 @@ export default class LocationRewrite extends Rewrite {
 				configurable: false,
 				enumerable: true,
 				get: wrap_function(location.get, (target, that, args) => {
+					if(context_this(that) !== global){
+						throw new TypeError('Illegal invocation');
+					}
+					
 					let result = Reflect.apply(target, that, args);
 					result = this.client.access.get(result);
 					return result;
 				}),
 				set: wrap_function(location.set, (target, that, [ value ]) => {
-					return global.location = this.client.access.set(Reflect.apply(global_location.get, that, []), value);
+					if(context_this(that) !== global){
+						throw new TypeError('Illegal invocation');
+					}
+					
+					value = new URL(value, this.client.base);
+					value = this.client.tomp.html.serve(value, this.client.base);
+					return Reflect.apply(target, that, [ value ]);
 				}),
 			};
 		}
@@ -92,13 +101,22 @@ export default class LocationRewrite extends Rewrite {
 				configurable: false,
 				enumerable: true,
 				get: wrap_function(location.get, (target, that, args) => {
+					if(that !== document){
+						throw new TypeError('Illegal invocation');
+					}
+
 					let result = Reflect.apply(target, that, args);
 					result = this.client.access.get(result);
 					return result;
 				}),
 				set: wrap_function(location.set, (target, that, [ value ]) => {
-					const result = this.client.access.get(Reflect.apply(target, that, [ value ]));
-					return result;
+					if(that !== document){
+						throw new TypeError('Illegal invocation');
+					}
+					
+					value = new URL(value, this.client.base);
+					value = this.client.tomp.html.serve(value, this.client.base);
+					return Reflect.apply(target, that, [ value ]);
 				}),
 			};
 		}
@@ -120,20 +138,23 @@ export default class LocationRewrite extends Rewrite {
 					if(that !== this.proxy)throw new TypeError('Invalid invocation');
 					const urlo = this.page_urlo;
 					urlo[prop] = value;
-					this.global.href = this.client.tomp.url.wrap(urlo, 'worker:html');
+					this.global.href = this.client.tomp.html.serve(urlo, this.client.base);
 					return value;
 				}) : undefined,
 			});
 		}
 
-		const { href, toString, assign, replace, reload, ancestorOrigins } = getOwnPropertyDescriptors(this.global);
+		const { href, ancestorOrigins } = getOwnPropertyDescriptors(this.global);
 
 		Reflect.defineProperty(this.proxy, 'toString', {
 			configurable: false,
 			enumerable: true,
 			writable: false,
-			value: wrap_function(toString.value, (target, that, args) => {
-				if(that !== this.proxy)throw new TypeError('Invalid invocation');
+			value: wrap_function(this.global.toString, (target, that, args) => {
+				if(that !== this.proxy){
+					throw new TypeError('Invalid invocation');
+				}
+				
 				return this.page_url.toString();
 			}),
 		});
@@ -156,9 +177,12 @@ export default class LocationRewrite extends Rewrite {
 			configurable: false,
 			enumerable: true,
 			writable: false,
-			value: wrap_function(assign.value, (target, that, [ url ]) => {
-				if(that != this.proxy)throw new TypeError('Invalid invocation');
-				this.global.assign(this.client.tomp.url.wrap(new URL(url, this.page_url), 'worker:html'));
+			value: wrap_function(this.global.assign, (target, that, [ url ]) => {
+				if(that !== this.proxy){
+					throw new TypeError('Invalid invocation');
+				}
+
+				this.global.assign(this.client.tomp.html.serve(new URL(url, this.page_url), this.client.base));
 			}),
 		});
 
@@ -166,9 +190,12 @@ export default class LocationRewrite extends Rewrite {
 			configurable: false,
 			enumerable: true,
 			writable: false,
-			value: wrap_function(replace.value, (target, that, [ url ]) => {
-				if(that != this.proxy)throw new TypeError('Invalid invocation');
-				this.global.replace(this.client.tomp.url.wrap(new URL(url, this.page_url), 'worker:html'));
+			value: wrap_function(this.global.replace, (target, that, [ url ]) => {
+				if(that !== this.proxy){
+					throw new TypeError('Invalid invocation');
+				}
+				
+				this.global.replace(this.client.tomp.html.serve(new URL(url, this.page_url), this.client.base));
 			}),
 		});
 
@@ -176,8 +203,11 @@ export default class LocationRewrite extends Rewrite {
 			configurable: false,
 			enumerable: true,
 			writable: false,
-			value: wrap_function(replace.value, (target, that, args) => {
-				if(that != this.proxy)throw new TypeError('Invalid invocation');
+			value: wrap_function(this.global.reload, (target, that, args) => {
+				if(that !== this.proxy){
+					throw new TypeError('Invalid invocation');
+				}
+
 				this.global.reload();
 			}),
 		});
@@ -187,7 +217,10 @@ export default class LocationRewrite extends Rewrite {
 				configurable: false,
 				enumerable: true,
 				get: wrap_function(ancestorOrigins.get, (target, that, args) => {
-					if(that != this.proxy)throw new TypeError('Invalid invocation');
+					if(that !== this.proxy){
+						throw new TypeError('Invalid invocation');
+					}
+	
 					// should have no items
 					return this.global.ancestorOrigins;
 				}),
