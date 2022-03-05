@@ -1,6 +1,6 @@
 import Rewrite from '../Rewrite.mjs';
 import global from '../global.mjs';
-import { encodeProtocol, validProtocol } from '../encodeProtocol.mjs';
+import { encodeProtocol, validProtocol } from '../../encodeProtocol.mjs';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.mjs';
 import { Reflect } from '../RewriteUtil.mjs';
 import { DOMObjectConstructor, TargetConstant, EventTarget_on, mirror_class } from '../NativeUtil.mjs';

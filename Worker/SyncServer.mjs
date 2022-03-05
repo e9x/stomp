@@ -1,5 +1,5 @@
 import { decode_base64, encode_base64 } from '../Base64.mjs';
-import { encode_cookie } from '../EncodeCookies.mjs'
+import { encodeCookie } from '../encodeCookies.mjs'
 import { status_redirect } from '../Worker/bare.mjs';
 
 export default class SyncServer {
@@ -18,7 +18,7 @@ export default class SyncServer {
 	async on_message({ id, args }){
 		const response = await this.process(JSON.parse(JSON.stringify(args)));
 		
-		const long = encode_cookie(JSON.stringify(response));
+		const long = encodeCookie(JSON.stringify(response));
 		let chunks = 0;
 		const split = 4000;
 		
@@ -35,7 +35,7 @@ export default class SyncServer {
 			});
 		}
 		
-		encode_cookie(JSON.stringify(response));
+		encodeCookie(JSON.stringify(response));
 
 		await cookieStore.set({
 			name: id,

@@ -1,7 +1,7 @@
 import { decode_base64, encode_base64 } from '../../../Base64.mjs';
 import global from '../../global.mjs';
 import { engine } from '../../environment.mjs';
-import { decode_cookie } from '../../../EncodeCookies.mjs';
+import { decodeCookie } from '../../../encodeCookies.mjs';
 import { status_empty } from '../../../Worker/bare.mjs';
 import { Reflect } from '../../RewriteUtil.mjs';
 import CookieRewrite from './Cookie.mjs'
@@ -132,6 +132,6 @@ export class SyncClient {
 			data += value;
 		}
 
-		return this.create_response(JSON.parse(decode_cookie(data)));
+		return this.create_response(JSON.parse(decodeCookie(data)));
 	}
 };
