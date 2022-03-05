@@ -34,14 +34,17 @@ export default class Client {
 
 		// this.modules.get(NativeHelper)[...]
 	}
-	modules = new Map();
+	get(Module){
+		return this.modules.get(Module);
+	}
+	#modules = new Map();
 	load_modules(...Modules){
 		for(let Module of Modules){
-			this.modules.set(Module, new Module(this));
+			this.#modules.set(Module, new Module(this));
 		}
 	}
 	work(){
-		for(let [Module, module] of this.modules){
+		for(let [Module, module] of this.#modules){
 			module.work();
 		}
 	}
