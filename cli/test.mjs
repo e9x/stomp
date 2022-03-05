@@ -1,4 +1,4 @@
-import { TOMP } from '../TOMP.mjs';
+import TOMP from '../TOMP.mjs';
 import { readFile } from 'node:fs/promises';
 import { cwd } from 'node:process';
 import { resolve } from 'node:path';
