@@ -1,8 +1,10 @@
 import Rewriter from './Rewriter.mjs';
-import { parse } from 'acorn';
+import { parseScript } from 'meriyah';
 import { generate } from '@javascript-obfuscator/escodegen';
 import { AcornIterator } from './IterateAcorn.mjs';
 import { builders as b } from 'ast-types';
+
+const html_comment = /<!--([\s\S]*?)-->/g;
 
 export const global_client = 'tompc$';
 
@@ -14,10 +16,10 @@ export const undefinable = ['eval','location','top'];
 
 const parse_options = { 
 	ecmaVersion: 2022,
-	allowImportExportEverywhere: true,
-	allowAwaitOutsideFunction: true,
-	allowSuperOutsideMethod: true,
-	allowReturnOutsideFunction: true,
+	module: true,
+	webcompat: true,
+	globalReturn: true,
+	next: true,
 	ranges: true,
 };
 
@@ -36,10 +38,13 @@ export class RewriteJS extends Rewriter {
 	wrap(code, url, worker){
 		if(this.tomp.noscript)return '';
 
+		code = String(code);
+		// code = code.replace(html_comment, '');
+
 		let ast;
 
 		try{
-			ast = parse(code, parse_options);
+			ast = parseScript(code, parse_options);
 		}catch(err){
 			if(err instanceof SyntaxError){
 				this.tomp.log.trace(code, err);
@@ -376,10 +381,13 @@ export class RewriteJS extends Rewriter {
 	unwrap(code, url){
 		if(this.tomp.noscript)return '';
 
+		code = String(code);
+		// code = code.replace(html_comment, '');
+
 		let ast;
 
 		try{
-			ast = parse(code, parse_options);
+			ast = parseScript(code, parse_options);
 		}catch(err){
 			if(err instanceof SyntaxError){
 				this.tomp.log.trace(code, err);
