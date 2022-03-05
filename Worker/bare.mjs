@@ -13,7 +13,7 @@ export class BareError extends Error {
 	}
 };
 
-export default async function BareFetch(server, url, server_request, request_headers){
+export default async function bareFetch(server, url, server_request, request_headers){
 	if(url.protocol.startsWith('blob:')){
 		const response = await fetch(`blob:${location.origin}${url.path}`);
 		response.json_headers = Object.fromEntries(response.headers.entries());

@@ -1,8 +1,10 @@
+import SearchBuilder from './SearchBuilder.mjs';
 import { LOG_DEBUG } from '../Logger.mjs';
 
 const { src } = document.currentScript;
 
-export class Bootstrapper {
+export default class Bootstrapper {
+	static SearchBuilder = SearchBuilder;
 	constructor(config){
 		this.config = config;
 
@@ -27,10 +29,12 @@ export class Bootstrapper {
 		
 		await this.worker.update();
 
-		if(this.config.loglevel <= LOG_DEBUG)console.debug('Registered the service worker.');
+		if(this.config.loglevel <= LOG_DEBUG){
+			console.debug('Registered the service worker.');
+		}
 	}
 	#send(service, url){
-		return `${this.directory}worker:process/?` + new URLSearchParams({ service, url });
+		return `${this.directory}process/?` + new URLSearchParams({ service, url });
 	}
 	html(url){
 		return this.#send('html', url);

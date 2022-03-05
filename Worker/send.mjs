@@ -1,6 +1,6 @@
-import { MapHeaderNamesFromArray } from './HeaderUtil.mjs'
+import bareFetch, { status_empty } from './bare.mjs';
+import { mapHeaderNamesFromArray } from './HeaderUtil.mjs'
 import { html_types, get_mime } from '../RewriteElements.mjs';
-import BareFetch, { BareError, status_empty } from './Bare.mjs';
 import { load_setcookies, get_cookies } from './Cookies.mjs';
 
 const remove_general_headers = [
@@ -84,7 +84,7 @@ async function handle_common_request(server, server_request, request_headers, ur
 	}
 }
 
-export async function SendGetCookies(server, server_request){
+async function sendGetCookies(server, server_request){
 	const url = new URL(server_request.url);
 	const remote = JSON.parse(url.searchParams.get('remote'));
 	const json = url.searchParams.has('json');
@@ -105,7 +105,7 @@ export async function SendGetCookies(server, server_request){
 	}
 }
 
-export async function SendSetCookies(server, server_request){
+async function sendSetCookies(server, server_request){
 	const url = new URL(server_request.url);
 	const remote = JSON.parse(url.searchParams.get('remote'));
 	const set_cookies = url.searchParams.get('cookies');
@@ -119,7 +119,7 @@ export async function SendSetCookies(server, server_request){
 
 import * as CookieStore from './CookieStore.mjs';
 
-export async function SendCookieStore(server, server_request){
+async function sendCookieStore(server, server_request){
 	const url = new URL(server_request.url);
 	const func = url.searchParams.get('func');
 	const args = JSON.parse(url.searchParams.get('args'));
@@ -139,7 +139,7 @@ export async function SendCookieStore(server, server_request){
 
 import * as Storage from './Storage.mjs';
 
-export async function SendStorage(server, server_request){
+async function sendStorage(server, server_request){
 	const url = new URL(server_request.url);
 	const func = url.searchParams.get('func');
 	const args = JSON.parse(url.searchParams.get('args'));
@@ -208,7 +208,7 @@ async function get_data(server, server_request, field){
 	};
 }
 
-export async function SendBinary(server, server_request, field){
+export async function sendBinary(server, server_request, field){
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
@@ -217,18 +217,18 @@ export async function SendBinary(server, server_request, field){
 	Reflect.setPrototypeOf(exact_request_headers, null);
 
 	if(server_request.headers.has('x-tomp-impl-names')){
-		MapHeaderNamesFromArray(JSON.parse(server_request.headers.get('x-tomp-impl-names')), exact_request_headers);
+		mapHeaderNamesFromArray(JSON.parse(server_request.headers.get('x-tomp-impl-names')), exact_request_headers);
 		delete exact_request_headers['x-tomp-impl-names'];
 	}
 	
-	const response = await BareFetch(server, url, server_request, exact_request_headers);
+	const response = await bareFetch(server, url, server_request, exact_request_headers);
 	
 	const response_headers = await handle_common_response(server.tomp.binary, server, server_request, url, response);
 	
 	let exact_response_headers = Object.fromEntries([...response_headers.entries()]);
 	Reflect.setPrototypeOf(exact_request_headers, null);
 	
-	MapHeaderNamesFromArray(response.raw_header_names, exact_response_headers);
+	mapHeaderNamesFromArray(response.raw_header_names, exact_response_headers);
 	
 	if(status_empty.includes(+response.status)){
 		return new Response(undefined, {
@@ -245,11 +245,11 @@ export async function SendBinary(server, server_request, field){
 	}
 }
 
-async function SendRewrittenScript(rewriter, server, server_request, field, ...args){
+async function sendRewrittenScript(rewriter, server, server_request, field, ...args){
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
-	const response = await BareFetch(server, url, server_request, request_headers);
+	const response = await bareFetch(server, url, server_request, request_headers);
 	
 	const response_headers = await handle_common_response(rewriter, server, server_request, url, response, ...args);
 	
@@ -274,27 +274,31 @@ async function SendRewrittenScript(rewriter, server, server_request, field, ...a
 	}
 }
 
-export async function SendJS(server, server_request, field, worker){
-	return await SendRewrittenScript(server.tomp.js, server, server_request, field, worker);
+async function sendJS(server, server_request, field,){
+	return await sendRewrittenScript(server.tomp.js, server, server_request, field);
 }
 
-export async function SendCSS(server, server_request, field){
-	return await SendRewrittenScript(server.tomp.css, server, server_request, field);
+async function sendWJS(server, server_request, field, worker){
+	return await sendRewrittenScript(server.tomp.js, server, server_request, field, true);
 }
 
-export async function SendManifest(server, server_request, field){
-	return await SendRewrittenScript(server.tomp.manifest, server, server_request, field);
+async function sendCSS(server, server_request, field){
+	return await sendRewrittenScript(server.tomp.css, server, server_request, field);
 }
 
-export async function SendSVG(server, server_request, field){
-	return await SendRewrittenScript(server.tomp.svg, server, server_request, field);
+async function sendManifest(server, server_request, field){
+	return await sendRewrittenScript(server.tomp.manifest, server, server_request, field);
 }
 
-export async function SendHTML(server, server_request, field){
+async function sendSVG(server, server_request, field){
+	return await sendRewrittenScript(server.tomp.svg, server, server_request, field);
+}
+
+async function sendHTML(server, server_request, field){
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
-	const response = await BareFetch(server, url, server_request, request_headers);
+	const response = await bareFetch(server, url, server_request, request_headers);
 	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, response);
 
 	let send = new Uint8Array();
@@ -320,7 +324,7 @@ export async function SendHTML(server, server_request, field){
 	});
 }
 
-export async function SendForm(server, server_request, field){
+async function sendForm(server, server_request, field){
 	const headers = new Headers();
 
 	if(server_request.method == 'GET'){
@@ -360,4 +364,29 @@ export async function SendForm(server, server_request, field){
 		headers,
 		status: 307 ,
 	});
+}
+
+async function process(server, server_request, field){
+	const url = new URL(server_request.url);
+	const headers = new Headers();
+	headers.set('content-type', 'text/html');
+	headers.set('refresh', '0;' + server.tomp[url.searchParams.get('service')].serve(url.searchParams.get('url'), url.searchParams.get('url')));
+	return new Response(undefined, { headers });
+}
+
+export default async function register(server){
+	// process, sendCookieStore, sendGetCookies, sendSetCookies, sendBinary, sendForm, sendHTML, sendSVG, sendJS, sendCSS, sendManifest, sendStorage
+	server.routes.set('get-cookies', sendGetCookies);
+	server.routes.set('set-cookies', sendSetCookies);
+	server.routes.set('cookiestore', sendCookieStore);
+	server.routes.set('storage', sendStorage);
+	server.routes.set('process', process);
+	server.routes.set('binary', sendBinary);
+	server.routes.set('form', sendForm);
+	server.routes.set('html', sendHTML);
+	server.routes.set('svg', sendSVG);
+	server.routes.set('js', sendJS);
+	server.routes.set('wjs', sendWJS);
+	server.routes.set('css', sendCSS);
+	server.routes.set('manifest', sendManifest);
 }

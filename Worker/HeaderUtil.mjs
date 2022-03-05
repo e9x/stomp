@@ -1,4 +1,4 @@
-export function ObjectFromRawHeaders(raw){
+export function objectFromRawHeaders(raw){
 	const result = {};
 	
 	Reflect.setPrototypeOf(result, null);
@@ -12,7 +12,7 @@ export function ObjectFromRawHeaders(raw){
 	return result;
 }
 
-export function RawHeaderNames(raw){
+export function rawHeaderNames(raw){
 	const result = [];
 
 	for(let i = 0; i < raw.length; i += 2){
@@ -22,7 +22,7 @@ export function RawHeaderNames(raw){
 	return result;
 }
 
-export function MapHeaderNamesFromArray(/*Array*/ from, /*Object*/ to){
+export function mapHeaderNamesFromArray(/*Array*/ from, /*Object*/ to){
 	for(let header of from) {
 		if(to[header.toLowerCase()] != void[]){
 			const value = to[header.toLowerCase()];

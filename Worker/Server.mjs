@@ -1,21 +1,19 @@
-import { TOMP } from '../TOMP.mjs';
-import { Process } from './Process.mjs';
-import { SendCookieStore, SendGetCookies, SendSetCookies, SendBinary, SendForm, SendHTML, SendSVG, SendJS, SendCSS, SendManifest, SendStorage } from './Send.mjs';
+import TOMP from '../TOMP.mjs';
+import SyncServer from './SyncServer.mjs';
+import register from './send.mjs';
 import { openDB } from 'idb/with-async-ittr';
 import { create_db as create_cookie_db } from './Cookies.mjs';
 import { create_db as create_storage_db } from './Storage.mjs';
-import { SyncServer } from './SyncServer.mjs';
-import { BareError } from './Bare.mjs';
+import { BareError } from './bare.mjs';
 
-export class Server {
+export default class Server {
 	session = Math.random();
 	constructor(config){
 		this.tomp = new TOMP(config);
 		this.request = this.request.bind(this);
 		this.ready = this.work();
-
 		this.sync_request = new SyncServer(this);
-		this.sync_request.work();
+		register(this);
 	}
 	async work(){
 		this.db = await openDB('tomp', 1, {
@@ -54,75 +52,28 @@ export class Server {
 			},
 		});
 	}
+	routes = new Map();
 	async send(request, service, field){
 		try{
-			switch(service){
-				case'worker:get-cookies':
-					return await SendGetCookies(this, request, field)
-					break;
-				case'worker:set-cookies':
-					return await SendSetCookies(this, request, field)
-					break;
-				case'worker:cookiestore':
-					return await SendCookieStore(this, request, field)
-					break;
-				case'worker:storage':
-					return await SendStorage(this, request, field)
-					break;
-				case'worker:sync-request':
-					return await this.sync_request.route(request);
-					break;
-				case 'worker:process':
-					return await Process(this, request, field);
-					break;
-				case 'worker:binary':
-					return await SendBinary(this, request, field)
-					break;
-				case 'worker:form':
-					return await SendForm(this, request, field)
-					break;
-				case 'worker:html':
-					return await SendHTML(this, request, field);
-					break;
-				case 'worker:svg':
-					return await SendSVG(this, request, field);
-					break;
-				case 'worker:js':
-					return await SendJS(this, request, field);
-					break;
-				case 'worker:wjs':
-					return await SendJS(this, request, field, true);
-					break;
-				case 'worker:js:module':
-					return await SendJS(this, request, field, true);
-					break;
-				case 'worker:css':
-					return await SendCSS(this, request, field);
-					break;
-				case 'worker:manifest':
-					return await SendManifest(this, request, field);
-					break;
-				default:
+			const route = this.routes.get(service);
+				if(typeof route !== 'function'){
 					throw new BareError(400, {
-						code: 'IMPL_UNKNOWN_SERVICE',
+						code: 'IMPL_BAD_ROUTE',
 						id: 'request',
-						message: `Unknown service ${service}`,
+						message: `Bad route for ${service}`,
 					});
-					break;
-			}
+				}
+
+				return await route(this, request, field);
 		}catch(err){
 			let status;
 			let json;
-			let type;
 
 			if(err instanceof Error){
 				if(err instanceof BareError){
-					type = 'bare';
 					status = err.status;
 					json = err.body;
 				}else{
-					
-					type = 'exception';
 					status = 500;
 					json = {
 						code: 'UNKNOWN',
@@ -133,7 +84,6 @@ export class Server {
 					this.tomp.log.error(err);
 				}		
 			}else{
-				type = 'message';
 				status = 500;
 				json = {
 					code: 'UNKNOWN',
@@ -173,7 +123,7 @@ console.error(error);
 					headers: {
 						'content-type': 'text/html',
 					},
-				})	
+				});
 			}else{
 				return this.json(status, json);
 			}
@@ -191,11 +141,10 @@ console.error(error);
 
 		const {service,field} = this.tomp.url.get_attributes(url);
 		
-		if(service.startsWith('worker:')){
+		if(this.routes.has(service)){
 			event.respondWith(this.send(request, service, field));
-			return true;
 		}
-
+		
 		return false;
 	}
 };

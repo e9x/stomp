@@ -1,6 +1,4 @@
-import { TOMP } from '../TOMP.mjs'
-import { openDB } from 'idb/with-async-ittr';
-import { wrap_function, function_strings } from './RewriteUtil.mjs';
+import TOMP from '../TOMP.mjs'
 import NativeHelper from './NativeHelper.mjs';
 import LocationRewrite from './Rewrites/Location.mjs';
 import WebSocketRewrite from './Rewrites/WebSocket.mjs';
@@ -12,6 +10,8 @@ import WorkerRewrite from './Rewrites/Worker.mjs';
 import FunctionRewrite from './Rewrites/Function.mjs';
 import EventRewrite from './Rewrites/Event.mjs';
 import XMLHttpRequestRewrite from './Rewrites/XMLHttpRequest.mjs';
+import { openDB } from 'idb/with-async-ittr';
+import { wrap_function, function_strings } from './RewriteUtil.mjs';
 
 export default class Client {
 	native = new NativeHelper();

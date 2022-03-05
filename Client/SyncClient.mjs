@@ -2,7 +2,7 @@ import { decode_base64, encode_base64 } from '../Base64.mjs';
 import global from './global.mjs';
 import { engine } from './environment.mjs';
 import { decode_cookie } from '../EncodeCookies.mjs';
-import { status_empty } from '../Worker/Bare.mjs';
+import { status_empty } from '../Worker/bare.mjs';
 import { Reflect } from './RewriteUtil.mjs';
 
 const { Request, XMLHttpRequest } = global;

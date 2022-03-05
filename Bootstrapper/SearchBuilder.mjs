@@ -1,7 +1,7 @@
 const whitespace = /\s/;
 const http_s_protocol = /^https?:\/\//;
 
-export class SearchBuilder {
+export default class SearchBuilder {
 	constructor(template){
 		this.template = String(template);
 	}

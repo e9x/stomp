@@ -1,8 +1,8 @@
+import Rewriter from './Rewriter.mjs';
 import { parse, walk, generate } from 'css-tree';
-import { Rewriter } from './Rewriter.mjs';
 
 export class RewriteCSS extends Rewriter {
-	static service = 'worker:css';
+	static service = 'css';
 	wrap(code, url, context = 'stylesheet'){
 		try{
 			var ast = parse(code, { context });

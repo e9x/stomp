@@ -9,7 +9,7 @@ import { RewriteManifest } from './RewriteManifest.mjs';
 import { RewriteBinary } from './RewriteBinary.mjs';
 import { Logger, LOG_WARN } from './Logger.mjs';
 
-export class TOMP {
+export default class TOMP {
 	toJSON(){
 		return {
 			directory: this.directory,

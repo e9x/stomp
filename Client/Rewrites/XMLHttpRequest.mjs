@@ -2,7 +2,7 @@ import Rewrite from '../Rewrite.mjs';
 import global from '../global.mjs';
 import { Reflect } from '../RewriteUtil.mjs';
 import { EventTarget_on, TargetConstant, DOMObjectConstructor, mirror_class } from '../NativeUtil.mjs';
-import { forbids_body } from '../../Worker/Bare.mjs';
+import { forbids_body } from '../../Worker/bare.mjs';
 
 export default class XMLHttpRequestRewrite extends Rewrite {
 	global = global.XMLHttpRequest;

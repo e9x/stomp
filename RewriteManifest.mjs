@@ -1,7 +1,7 @@
-import { Rewriter} from './Rewriter.mjs';
+import Rewriter from './Rewriter.mjs';
 
 export class RewriteManifest extends Rewriter {
-	static service = 'worker:manifest';
+	static service = 'manifest';
 	wrap(code, url){
 		let manifest;
 

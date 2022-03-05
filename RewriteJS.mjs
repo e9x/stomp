@@ -1,8 +1,8 @@
+import Rewriter from './Rewriter.mjs';
 import { parse } from 'acorn';
 import { generate } from '@javascript-obfuscator/escodegen';
 import { AcornIterator } from './IterateAcorn.mjs';
 import { builders as b } from 'ast-types';
-import { Rewriter } from './Rewriter.mjs';
 
 export const global_client = 'tompc$';
 
@@ -22,7 +22,7 @@ const parse_options = {
 };
 
 export class RewriteJS extends Rewriter {
-	static service = 'worker:js';
+	static service = 'js';
 	worker_main(url){
 		const cli = `${this.tomp.directory}client.js`;
 
@@ -485,7 +485,7 @@ export class RewriteJS extends Rewriter {
 	}
 	serve(serve, url, worker){
 		if(worker){
-			return super.serve(serve, url, 'worker:wjs');
+			return super.serve(serve, url, 'wjs');
 		}else{
 			return super.serve(serve, url);
 		}

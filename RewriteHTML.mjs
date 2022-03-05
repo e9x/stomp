@@ -1,8 +1,8 @@
+import Rewriter from './Rewriter.mjs';
+import Parse5Iterator from './IterateParse5.mjs';
 import { serialize, parse, parseFragment } from 'parse5';
-import { Parse5Iterator } from './IterateParse5.mjs';
 import { global_client } from './RewriteJS.mjs';
 import { TOMPElement } from './RewriteElements.mjs';
-import { Rewriter } from './Rewriter.mjs';
 
 const essential_nodes = ['#documentType','#document','#text','html','head','body'];
 
@@ -59,7 +59,7 @@ export class TOMPElementParse5 extends TOMPElement {
 };
 
 export class RewriteHTML extends Rewriter {
-	static service = 'worker:html';
+	static service = 'html';
 	get_head(url){
 		const nodes = [];
 

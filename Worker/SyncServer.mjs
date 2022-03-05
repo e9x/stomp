@@ -1,10 +1,12 @@
 import { decode_base64, encode_base64 } from '../Base64.mjs';
 import { encode_cookie } from '../EncodeCookies.mjs'
-import { status_redirect } from '../Worker/Bare.mjs';
+import { status_redirect } from '../Worker/bare.mjs';
 
-export class SyncServer {
+export default class SyncServer {
 	constructor(server){
 		this.server = server;
+
+		this.server.routes.set('sync-request', async (server, request, field) => await this.sync_request.route(request));
 	}
 	async route(request){
 		return new Response(JSON.stringify(await this.process(await request.json())), {
@@ -106,5 +108,4 @@ export class SyncServer {
 			response.url,
 		];
 	}
-	work(){}
 };

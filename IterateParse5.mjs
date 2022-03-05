@@ -78,7 +78,7 @@ export class Parse5Context {
 	}
 };
 
-export class Parse5Iterator {
+export default class Parse5Iterator {
 	constructor(ast){
 		this.stack = [new Parse5Context(ast, undefined, true)];
 	}

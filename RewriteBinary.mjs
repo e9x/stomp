@@ -1,6 +1,6 @@
 // for api compatibility
-import { Rewriter } from './Rewriter.mjs';
+import Rewriter from './Rewriter.mjs';
 
 export class RewriteBinary extends Rewriter {
-	static service = 'worker:binary';
+	static service = 'binary';
 };

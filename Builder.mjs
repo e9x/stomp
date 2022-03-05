@@ -16,31 +16,50 @@ export default class Builder {
 		
 		if(typeof stats == 'object' && stats !== undefined && stats !== null){
 			for(let error of stats.compilation.errors){
-				errors.push(error);
+				if(error?.module){
+					errors.push(`${error.module?.request}: ${error}`);
+				}else{
+					errors.push(error);
+				}
 			}
 		}
 
 		return errors;
 	}
+	webpacks = [];
 	constructor(output){
-		this.webpack = webpack({
+		this.webpacks.push(webpack({
 			mode: 'development',
 			devtool: 'source-map',
 			entry: {
-				client: join(__dirname, 'Client', 'Entry.mjs'),
-				worker: join(__dirname, 'Worker', 'Entry.mjs'),
-				bootstrapper: join(__dirname, 'Bootstrapper', 'Entry.mjs'),
+				client: join(__dirname, 'Client', 'entry.mjs'),
+				worker: join(__dirname, 'Worker', 'entry.mjs'),
 			},
 			context: __dirname,
 			output: {
 				path: output,
 				filename: '[name].js',
 			},
-		});
+		}));
+		
+		this.webpacks.push(webpack({
+			mode: 'development',
+			devtool: 'source-map',
+			entry: join(__dirname, 'Bootstrapper', 'Bootstrapper.mjs'),
+			context: __dirname,
+			output: {
+				library: 'TOMPBoot',
+			    libraryTarget: 'umd',
+				libraryExport: 'default',
+				path: output,
+				filename: 'bootstrapper.js',
+			},
+		}));
+		
 	}
 	build(){
-		return new Promise((resolve, reject) => {
-			this.webpack.run((error, stats) => {
+		return Promise.all(this.webpacks.map(webpack => new Promise((resolve, reject) => {
+			webpack.run((error, stats) => {
 				const errors = this.get_errors(error, stats);
 	
 				if(errors.length){
@@ -49,13 +68,13 @@ export default class Builder {
 					resolve();
 				}
 			});
-		});
+		})));
 	}
 	watch(){
 		const emitter = new Events();
 		
-		const watch = new Promise(resolve => setTimeout(() => {
-			resolve(this.webpack.watch({}, (error, stats) => {
+		const watch = Promise.all(this.webpacks.map(webpack => new Promise(resolve => setTimeout(() => {
+			resolve(webpack.watch({}, (error, stats) => {
 				const errors = this.get_errors(error, stats);
 	
 				if(errors.length){
@@ -64,7 +83,7 @@ export default class Builder {
 					emitter.emit('bulit');
 				}
 			}));
-		}));
+		}))));
 
 		emitter.stop = async () => {
 			(await watch).close();

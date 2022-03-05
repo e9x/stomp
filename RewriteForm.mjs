@@ -1,6 +1,6 @@
 // for api compatibility
-import { Rewriter } from './Rewriter.mjs';
+import Rewriter from './Rewriter.mjs';
 
 export class RewriteForm extends Rewriter {
-	static service = 'worker:form';
+	static service = 'form';
 };

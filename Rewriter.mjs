@@ -1,7 +1,7 @@
 import { CreateDataURI, ParseDataURI } from './DataURI.mjs'
 
-export class Rewriter {
-	static service = 'worker:unknown';
+export default class Rewriter {
+	static service = 'unknown';
 	constructor(tomp){
 		this.tomp = tomp;
 	}
