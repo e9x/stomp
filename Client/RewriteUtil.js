@@ -24,8 +24,15 @@ export const Reflect = {
 	setPrototypeOf: global.Reflect.setPrototypeOf.bind(global.Reflect),
 };
 
+const { hasOwnProperty: hasOwnProperty_ } = Object.prototype;
+
 export function hasOwnProperty(object, key){
-	return Reflect.ownKeys(object).includes(key);
+	try{
+		return Reflect.apply(hasOwnProperty_, object, [ key ]);
+	}catch(err){
+		return false;
+	}
+	// return Reflect.ownKeys(object).includes(key);
 }
 
 export function mirror_attributes(from, to){
