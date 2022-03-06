@@ -82,7 +82,7 @@ export class AcornContext {
 	}
 };
 
-export class AcornIterator {
+export default class AcornIterator {
 	constructor(ast){
 		this.stack = [];
 		this.stack.push(new AcornContext(ast, undefined, undefined, this.stack, true));
@@ -116,4 +116,4 @@ export class AcornIterator {
 	[Symbol.iterator](){
 		return this;
 	}
-}
+};
