@@ -1,5 +1,5 @@
 import Rewriter from './Rewriter.js';
-import Parse5Iterator from './iterateParse5.js';
+import Parse5Iterator from './IterateParse5.js';
 import { serialize, parseFragment } from 'parse5';
 import { TOMPElementParse5 } from './RewriteHTML.js';
 
