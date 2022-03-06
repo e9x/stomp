@@ -124,6 +124,13 @@ export default class WindowRewrite extends Rewrite {
 			setPrototypeOf: (target, prop, descriptor) => {
 				this.restrict();	
 			},
+			has: (target, prop, descriptor) => {
+				if(!(prop in object)){
+					this.restrict();
+				}
+
+				return true;
+			},
 		});
 
 		return proxy;
