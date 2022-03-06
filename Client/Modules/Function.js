@@ -3,6 +3,9 @@ import global from '../global.js';
 import { wrap_function, function_strings, mirror_attributes, Reflect } from '../RewriteUtil.js';
 import NativeHelper from './NativeHelper.js';
 
+const is_class = /^class[{ ]/;
+const is_not_member = /=>|^((async\s+)?(\(|function[( ]))/;
+
 export default class FunctionRewrite extends Rewrite {
 	global = global.Function;
 	global_async = (async _=>_).constructor;
@@ -16,7 +19,7 @@ export default class FunctionRewrite extends Rewrite {
 				let string = Reflect.apply(target, that, args);
 
 				if(!this.client.get(NativeHelper).is_native(string)){
-					if(/^class[{ ]/.test(string)){
+					if(is_class.test(string)){
 						string = this.client.tomp.js.unwrap(`x = ${string}`, this.client.base);
 						string = string.slice(string.indexOf('=') + 1);
 						if(string.startsWith(' ')){
@@ -30,11 +33,11 @@ export default class FunctionRewrite extends Rewrite {
 						let left = 0;
 						let right;
 
-						if(!(/^((async\s+)?(\(|function[( ]))/).test(string)){
+						if(!is_not_member.test(string)){
 							// (){kind of function}
 							left = 1;
 							right = -1;
-							string = `{${string}}`
+							string = `{${string}}`;
 						}
 
 						string = this.client.tomp.js.unwrap(`x = ${string}`, this.client.base);
