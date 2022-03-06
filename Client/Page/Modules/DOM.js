@@ -2,7 +2,7 @@ import Rewrite from '../../Rewrite.js';
 import g from '../../global.js';
 // https://github.com/webpack/webpack/issues/12960
 const global = g;
-import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect, wrap_function } from '../../RewriteUtil.js';
+import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect, wrap_function } from '../../rewriteUtil.js';
 import { attribute_original, get_mime, TOMPElement } from '../../../RewriteElements.js';
 
 const { getAttribute, setAttribute, hasAttribute, hasAttributeNS, removeAttribute, getAttributeNames } = global?.Element?.prototype || {};

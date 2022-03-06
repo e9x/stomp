@@ -1,5 +1,5 @@
 import { SyncClient } from './Modules/SyncClient.js';
-import { Reflect } from '../RewriteUtil.js';
+import { Reflect } from '../rewriteUtil.js';
 import Client from '../Client.js';
 import HistoryRewrite from './Modules/History.js';
 import DOMRewrite from './Modules/DOM.js';

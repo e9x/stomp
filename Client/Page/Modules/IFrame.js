@@ -1,6 +1,6 @@
 import Rewrite from '../../Rewrite.js';
 import { global_client } from '../../../RewriteJS.js';
-import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../../RewriteUtil.js';
+import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../../rewriteUtil.js';
 import WindowRewrite from './Window.js';
 
 export default class IFrameRewrite extends Rewrite {

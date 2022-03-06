@@ -1,6 +1,6 @@
 import Rewrite from '../../Rewrite.js';
 import global from '../../global.js';
-import { context_this, Reflect, wrap_function } from '../../RewriteUtil.js';
+import { context_this, Reflect, wrap_function } from '../../rewriteUtil.js';
 import { mirror_class } from '../../NativeUtil.js';
 import { SyncClient } from './SyncClient.js';
 

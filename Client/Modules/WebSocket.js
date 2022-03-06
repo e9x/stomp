@@ -2,7 +2,7 @@ import Rewrite from '../Rewrite.js';
 import global from '../global.js';
 import { encodeProtocol, validProtocol } from '../../encodeProtocol.js';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.js';
-import { Reflect } from '../RewriteUtil.js';
+import { Reflect } from '../rewriteUtil.js';
 import { DOMObjectConstructor, TargetConstant, EventTarget_on, mirror_class } from '../NativeUtil.js';
 import RequestRewrite from '../Modules/Request.js';
 

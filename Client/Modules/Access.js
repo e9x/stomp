@@ -1,6 +1,6 @@
 import Rewrite from '../Rewrite.js';
 import global from '../global.js';
-import { hasOwnProperty, Reflect, wrap_function } from '../RewriteUtil.js';
+import { hasOwnProperty, Reflect, wrap_function } from '../rewriteUtil.js';
 import { undefinable, global_client } from '../../RewriteJS.js';
 import LocationRewrite from './Location.js';
 import EvalRewrite from './Eval.js';

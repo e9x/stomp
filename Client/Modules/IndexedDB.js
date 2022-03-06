@@ -1,6 +1,6 @@
 import Rewrite from '../Rewrite.js';
 import global from '../global.js';
-import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../RewriteUtil.js';
+import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../rewriteUtil.js';
 
 export default class IDBRewrite extends Rewrite {
 	work(){

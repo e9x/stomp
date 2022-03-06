@@ -1,7 +1,7 @@
 import Rewrite from '../../Rewrite.js';
 import global from '../../global.js';
 import { global_client } from '../../../RewriteJS.js';
-import { Reflect, wrap_function } from '../../RewriteUtil.js';
+import { Reflect, wrap_function } from '../../rewriteUtil.js';
 import { is_tomp } from './PageRequest.js';
 import NativeHelper from '../../Modules/NativeHelper.js';
 

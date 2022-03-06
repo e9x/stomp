@@ -3,7 +3,7 @@ import global from '../../global.js';
 import { engine } from '../../environment.js';
 import { decodeCookie } from '../../../encodeCookies.js';
 import { status_empty } from '../../../Worker/bare.js';
-import { Reflect } from '../../RewriteUtil.js';
+import { Reflect } from '../../rewriteUtil.js';
 import CookieRewrite from './Cookie.js'
 
 const { Request, XMLHttpRequest } = global;

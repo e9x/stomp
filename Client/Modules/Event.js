@@ -1,5 +1,5 @@
 import Rewrite from '../Rewrite.js';
-import { Reflect, wrap_function } from '../RewriteUtil.js';
+import { Reflect, wrap_function } from '../rewriteUtil.js';
 
 export default class EventRewrite extends Rewrite {
 	work(){
