@@ -165,26 +165,12 @@ export class RewriteElements {
 				{
 					name: new TargetName(false, 'outerHTML'),
 					wrap: (name, value, element, url, context) => {
-						const text_context = this.get_text(value, element, url);
-						
-						if(text_context.modified){
-							context.value = text_context.value;
-							context.modified = true;
-						}else{
-							context.value = this.tomp.html.wrap(value, url, true);
-							context.modified = true;
-						}
+						context.value = this.tomp.html.wrap(value, url, true);
+						context.modified = true;
 					},
 					unwrap: (name, value, element, url, context) => {
-						const text_context = this.set_text(value, element, url);
-						
-						if(text_context.modified){
-							context.value = text_context.value;
-							context.modified = true;
-						}else{
-							context.value = this.tomp.html.unwrap(value, url, true);
-							context.modified = true;
-						}
+						context.value = this.tomp.html.unwrap(value, url, true);
+						context.modified = true;
 					},
 				},
 			],

@@ -12,7 +12,8 @@ export default class WindowRewrite extends Rewrite {
 		const window_base = window[global_client].base;
 		const base = this.client.base;
 
-		return this.remove_blob(base.protocol) === this.remove_blob(window_base.protocol) && base.port === window_base.port && base.host === window_base.port;
+		// return this.remove_blob(base.protocol) === this.remove_blob(window_base.protocol) && base.port === window_base.port && base.host === window_base.port;
+		return true;
 	}
 	remove_blob(protocol){
 		const blob = 'blob:';
