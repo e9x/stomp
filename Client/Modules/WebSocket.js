@@ -40,24 +40,19 @@ export default class WebSocketRewrite extends Rewrite {
 			#extensions = '';
 			#url = '';
 			#id = '';
-			async #read_meta({ headers }){
-				const lower_headers = {};
+			async #read_meta(meta){
+				const headers = new Headers(meta.headers);
 				
-				for(let header in headers){
-					const lower = header.toLowerCase();
-					lower_headers[lower] = headers[header];
-				}
-
-				if('sec-websocket-protocol' in lower_headers){
-					this.#protocol = String(lower_headers['sec-websocket-protocol']);
+				if(headers.has('sec-websocket-protocol')){
+					this.#protocol = headers.get('sec-websocket-protocol');
 				}
 				
-				if('sec-websocket-extensions' in lower_headers){
-					this.#extensions = String(lower_headers['sec-websocket-extensions']);
+				if(headers.has('sec-websocket-extensions')){
+					this.#extensions = headers.get('sec-websocket-extensions');
 				}
 
-				if('set-cookie' in lower_headers){
-					load_setcookies(that.client, this.#remote, lower_headers['set-cookie']);
+				if(headers.has('set-cookie')){
+					load_setcookies(that.client, this.#remote, headers.get('set-cookie'));
 				}
 			}
 			async #open(remote, protocol){
@@ -99,7 +94,7 @@ export default class WebSocketRewrite extends Rewrite {
 				if(meta_req.ok){
 					this.#id = await meta_req.text();
 				}else{
-					this.client.tomp.log.error('meta error:', meta_req.json());
+					that.client.tomp.log.error('meta error:', await meta_req.json());
 				}
 				
 				this.#socket = new that.global(bare_ws, [
