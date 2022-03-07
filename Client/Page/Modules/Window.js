@@ -9,7 +9,19 @@ export default class WindowRewrite extends Rewrite {
 	global = global.postMessage;
 	restricted = new WeakMap([ [global, global] ]);
 	same_origin(window){
-		return window[global_client].base.toOrigin() === this.client.base.toOrigin();
+		const window_base = window[global_client].base;
+		const base = this.client.base;
+
+		return this.remove_blob(base.protocol) === this.remove_blob(window_base.protocol) && base.port === window_base.port && base.host === window_base.port;
+	}
+	remove_blob(protocol){
+		const blob = 'blob:';
+
+		if(protocol.startsWith(blob)){
+			return protocol.slice(blob.length); 
+		}else{
+			return protocol;
+		}
 	}
 	restrict_function(target){
 		const restricted = () => {};

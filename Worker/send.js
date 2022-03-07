@@ -304,9 +304,18 @@ async function sendHTML(server, server_request, field){
 	let send = new Uint8Array();
 	
 	if(!status_empty.includes(+response.status)){
-		if(html_types.includes(get_mime(response_headers.get('content-type') || ''))){
+		const mime = get_mime(response_headers.get('content-type') || '');
+		
+		if(html_types.includes(mime)){
+			if(mime === ''){
+				response_headers.set('content-type', 'text/html');
+			}
+
 			send = server.tomp.html.wrap(await response.text(), url.toString());
-			for(let remove of remove_encoding_headers)response_headers.delete(remove);
+			
+			for(let remove of remove_encoding_headers){
+				response_headers.delete(remove);
+			}
 		}else{
 			send = response.body;
 		}

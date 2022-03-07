@@ -37,6 +37,10 @@ export default class AccessRewrite extends Rewrite {
 		
 		if(this.client.type === 'page'){
 			this.unique_parent = parent !== global  && global_client in parent;
+			
+			if(this.unique_parent){
+				this.parent = parent;
+			}
 		}
 		
 		global.Reflect.get = wrap_function(global.Reflect.get, (target, that, [ obj, prop, rece ]) => {
@@ -106,8 +110,9 @@ export default class AccessRewrite extends Rewrite {
 			}
 		}
 
-		if(this.unique_parent)return parent[global_client].access.get_desc(desc);
-		else return desc;
+		if(this.unique_parent){
+			return this.parent[global_client].access.get_desc(desc);
+		}else return desc;
 	}
 	set2(target, key, operate, righthand){
 		key = this.normalize_key(key);
