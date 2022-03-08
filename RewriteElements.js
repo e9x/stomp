@@ -468,6 +468,7 @@ export class RewriteElements {
 		},
 		{
 			name: new TargetName('style', 'HTMLStyleElement'),
+			attributes: [],
 			// <style> is strictly content-only
 			content: {
 				wrap: (value, element, url, context) => {
@@ -882,6 +883,7 @@ export class RewriteElements {
 			if(!ab.name.test_tag(element.type)){
 				continue;
 			}
+			
 			for(let attr of ab.attributes){
 				if(!attr.name.test_tag(name)){
 					continue;
