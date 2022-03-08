@@ -11,7 +11,7 @@ import { Logger, LOG_WARN } from './Logger.js';
 import { PlainCodec, XORCodec } from './Codec.js';
 
 const codecs = [PlainCodec, XORCodec];
-		
+
 export const CODEC_PLAIN = 0;
 export const CODEC_XOR = 1;
 

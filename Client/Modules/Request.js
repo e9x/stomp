@@ -27,7 +27,7 @@ export default class RequestRewrite extends Rewrite {
 
 		global.URL.createObjectURL = wrap_function(global.URL.createObjectURL, (target, that, args) => {
 			let url = Reflect.apply(target, that, args);
-			url = url.replace(this.client.host.toOrigin(), this.client.base.toOrigin());
+			url = url.replace(this.client.tomp.origin, this.client.base.toOrigin());
 			return url;
 		});
 
@@ -38,14 +38,14 @@ export default class RequestRewrite extends Rewrite {
 
 			let [ url ] = args;
 			url = String(url);
-			url = url.replace(this.client.base.toOrigin(), this.client.host.toOrigin());
+			url = url.replace(this.client.base.toOrigin(), this.client.tomp.origin);
 			Reflect.apply(target, that, [ url ]);
 		});
 
 		global.EventSource = wrap_function(global.EventSource, (target, that, [ url ]) => {
 			url = new URL(input, this.client.base);
 			
-			const result = Reflect.construct(target, [ this.client.tomp.binary.serve(url, this.client.base) ]);
+			const result = Reflect.construct(target, [ this.client.tomp.binary.serve(url, this.client.base) ], that);
 			this.eventsource_urls.set(result, url.href);
 
 			return result;
@@ -104,7 +104,7 @@ export default class RequestRewrite extends Rewrite {
 
 			url = new URL(url, this.client.base);
 			
-			const result = Reflect.construct(target, [ this.client.tomp.binary.serve(url), init ]);
+			const result = Reflect.construct(target, [ this.client.tomp.binary.serve(url), init ], that);
 
 			this.request_urls.set(result, url.toString())
 			

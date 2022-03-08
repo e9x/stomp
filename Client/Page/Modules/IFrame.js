@@ -30,7 +30,7 @@ export default class IFrameRewrite extends Rewrite {
 		return window;
 	}
 	work(){
-		const { contentWindow, contentDocument, src } = getOwnPropertyDescriptors(HTMLIFrameElement.prototype);
+		const { contentWindow, contentDocument } = getOwnPropertyDescriptors(HTMLIFrameElement.prototype);
 		
 		Reflect.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', {
 			get: wrap_function(contentWindow.get, (target, that, args) => {
