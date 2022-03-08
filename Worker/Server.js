@@ -31,8 +31,6 @@ export default class Server {
 
 		let key = await store.get('key');
 
-		console.log(key);
-
 		if(key === undefined){
 			key = this.tomp.codec.generate_key();
 		}
