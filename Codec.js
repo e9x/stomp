@@ -78,8 +78,3 @@ export class XORCodec extends CodecInterface {
 		return result;
 	}
 };
-
-// todo...
-export class RC4Codec extends CodecInterface {
-	
-};

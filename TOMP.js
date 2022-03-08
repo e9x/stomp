@@ -8,29 +8,68 @@ import { RewriteElements } from './RewriteElements.js';
 import { RewriteManifest } from './RewriteManifest.js';
 import { RewriteBinary } from './RewriteBinary.js';
 import { Logger, LOG_WARN } from './Logger.js';
+import { PlainCodec, XORCodec } from './Codec.js';
+
+const codecs = [PlainCodec, XORCodec];
+		
+export const CODEC_PLAIN = 0;
+export const CODEC_XOR = 1;
 
 export default class TOMP {
 	toJSON(){
+		if(this.key === ''){
+			throw new Error('Cannot serialize TOMP: Key not set');
+		}
+
 		return {
 			directory: this.directory,
 			bare: this.bare,
+			origin: this.origin,
+			key: this.key,
 			noscript: this.noscript,
 			loglevel: this.loglevel,
+			codec: this.codec_index,
 		};
 	}
 	directory = '';
 	bare = '';
+	// real origin of the TOMP instance eg http://localhost
+	origin = '';
+	// codec key such as xor value
+	key = '';
 	loglevel = LOG_WARN;
 	noscript = false;
+	codec = PlainCodec;
+	codec_index = 0;
 	constructor(config){
-		if(typeof config.directory != 'string'){
+		if(typeof config.codec === 'number'){
+			if(config.codec < 0 || config.codec > codecs.length){
+				throw new RangeError('Bad Codec ID');
+			}
+
+			this.codec_index = config.codec;
+			this.codec = codecs[config.codec];
+		}
+		
+		if(typeof config.directory !== 'string'){
 			throw new Error('Directory must be specified.')
 		}
 
-		if(typeof config.bare != 'string'){
+		if(typeof config.bare !== 'string'){
 			throw new Error('Bare server URL must be specified.')
 		}
 		
+		if(typeof config.origin !== 'string'){
+			throw new Error('Origin must be specified.')
+		}
+		
+		// serviceworker can set config.key once db is loaded
+		// client MUST specify config.key
+		if(typeof config.key === 'string'){
+			this.key = config.key;
+		}
+		
+		this.origin = config.origin;
 		this.directory = config.directory;
 		this.bare = config.bare;
 
@@ -38,7 +77,7 @@ export default class TOMP {
 			this.loglevel = config.loglevel;
 		}
 
-		if(config.noscript == true){
+		if(config.noscript === true){
 			this.noscript = true;
 		}
 

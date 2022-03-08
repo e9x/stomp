@@ -1,10 +1,20 @@
 import SearchBuilder from './SearchBuilder.js';
-import { LOG_DEBUG } from '../Logger.js';
+import { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_SILENT } from '../Logger.js';
+import { CODEC_PLAIN, CODEC_XOR } from '../TOMP.js';
 
 const { src } = document.currentScript;
 
 export default class Bootstrapper {
 	static SearchBuilder = SearchBuilder;
+	// expose constants
+	static CODEC_XOR = CODEC_XOR;
+	static CODEC_PLAIN = CODEC_PLAIN;
+	static LOG_TRACE = LOG_TRACE;
+	static LOG_DEBUG = LOG_DEBUG;
+	static LOG_INFO = LOG_INFO;
+	static LOG_WARN = LOG_WARN;
+	static LOG_ERROR = LOG_ERROR;
+	static LOG_SILENT = LOG_SILENT;
 	constructor(config){
 		this.config = config;
 

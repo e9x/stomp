@@ -9,6 +9,7 @@ import { BareError } from './bare.js';
 export default class Server {
 	session = Math.random();
 	constructor(config){
+		config.origin = new URL(serviceWorker.scriptURL).origin;
 		this.tomp = new TOMP(config);
 		this.request = this.request.bind(this);
 		this.ready = this.work();
@@ -18,16 +19,29 @@ export default class Server {
 	async work(){
 		this.db = await openDB('tomp', 1, {
 			upgrade: (db, oldv, newv, transaction) => {
-				/*const consts = db.createObjectStore('consts', {
-					keyPath: 'name',
-				});
-				
-				consts.createIndex('name', 'name');*/
-				
+				const consts = db.createObjectStore('consts');
+
 				create_cookie_db(db);
 				create_storage_db(db);
 			},
 		});
+
+		const tx = this.db.transaction('consts', 'readwrite');
+		const store = tx.objectStore('consts');
+
+		let key = await store.get('key');
+
+		console.log(key);
+
+		if(key === undefined){
+			key = this.tomp.codec.generate_key();
+		}
+
+		this.tomp.key = key;
+
+		await store.put(key, 'key');
+		
+		await tx.done;
 	}
 	on_message({ data }){
 		if(this.sync_request.message(data)){

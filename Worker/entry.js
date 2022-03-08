@@ -10,8 +10,6 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-	const {request} = event;
-	
 	if(server.request(event)){
 		// handled
 		return;
