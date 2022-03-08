@@ -70,9 +70,21 @@ class BrowserCookieArray extends Array {
 	}
 };
 
-export async function get_cookies(server, remote){
+function cookie_expired(cookie, server){
 	const now = new Date();
 
+	if('maxAge' in cookie){
+		return cookie.set.getTime() + (cookie.maxAge * 1e3) < now;
+	}else if('expires' in cookie){
+		return cookie.expires < now;
+	}else if('session' in cookie){
+		return cookie.session !== server.session;
+	}
+
+	return false;
+}
+
+export async function get_cookies(server, remote){
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 	// https://developer.mozilla.org/en-US/docs/Web/API/IDBKeyRange
 	
@@ -84,17 +96,7 @@ export async function get_cookies(server, remote){
 	const result = new BrowserCookieArray();
 	
 	for(let cookie of entries){
-		let expired = false;
-		
-		if('maxAge' in cookie){
-			expired = cookie.set.getTime() + (cookie.maxAge * 1e3) < now;
-		}else if('expires' in cookie){
-			expired = cookie.expires < now;
-		}else if('session' in cookie){
-			expired = cookie.session !== server.session;
-		}
-		
-		if(expired){
+		if(cookie_expired(cookie, server)){
 			server.db.delete('cookies', cookie.id);
 		}else if(`.${remote.host}`.endsWith(cookie.domain)){
 			result.push(cookie);
@@ -142,27 +144,27 @@ function normalize_cookie(cookie, host){
 
 export async function load_setcookies(server, remote, setcookie){
 	for(let set of [].concat(setcookie)){
-		const parsed = setcookie_parser(setcookie, {
+		const parsed = setcookie_parser(set, {
 			decodeValues: false,
 			silent: true,
 		});
 		
 		await server.ready;
 		
-		const index = server.db.transaction('cookies', 'readwrite').store.index('path');
+		// const index = server.db.transaction('cookies', 'readwrite').store.index('path');
 		
 		for(let cookie of parsed){
 			cookie = normalize_cookie(cookie, remote.host);
 
 			const id = cookie.domain + '@' + cookie.path + '@' + cookie.name;
 			
-			if(!cookie.value){
+			if(!('maxAge' in cookie) && !('expires' in cookie)){
+				cookie.session = server.session;
+			}
+
+			if(cookie_expired(cookie, server)){
 				server.db.delete('cookies', id);
 			}else{
-				if(!('maxAge' in cookie) && !('expires' in cookie)){
-					cookie.session = server.session;
-				}
-
 				server.db.put('cookies', {
 					...cookie,
 					id,
