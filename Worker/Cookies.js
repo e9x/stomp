@@ -156,6 +156,8 @@ export async function load_setcookies(server, remote, setcookie){
 		for(let cookie of parsed){
 			cookie = normalize_cookie(cookie, remote.host);
 
+			cookie.set = new Date(Date.now());
+
 			const id = cookie.domain + '@' + cookie.path + '@' + cookie.name;
 			
 			if(!('maxAge' in cookie) && !('expires' in cookie)){
@@ -168,7 +170,6 @@ export async function load_setcookies(server, remote, setcookie){
 				server.db.put('cookies', {
 					...cookie,
 					id,
-					set: new Date(Date.now()),
 				});
 			}
 		}
