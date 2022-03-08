@@ -12,19 +12,7 @@ export default class IFrameRewrite extends Rewrite {
 		}
 
 		if(!(global_client in window)){
-			const http = new window.XMLHttpRequest();
-			
-			http.open('GET', this.client.tomp.directory + 'client.js', false);
-
-			http.send();
-
-			let script = http.responseText;
-			
-			script = script.replace('//# sourceMappingURL=client.js.map', `//# sourceMappingURL=${this.client.host.toOrigin()}${this.client.tomp.directory}client.js.map`)
-
-			window.eval(script);
-			
-			window[global_client](this.client.tomp);
+			this.client.get(WindowRewrite).inject_client(window);
 		}
 
 		return window;

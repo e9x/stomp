@@ -2,6 +2,7 @@ import Rewrite from '../../Rewrite.js';
 import global from '../../global.js';
 import { wrap_function, Reflect, getOwnPropertyDescriptors, context_this } from '../../rewriteUtil.js';
 import WindowRewrite from './Window.js';
+import { global_client } from '../../../RewriteJS.js';
 
 const beacon_protocols = ['http:','https:'];
 
@@ -10,9 +11,21 @@ export const is_tomp = 'tompc$from_tomp';
 export default class PageRequestRewrite extends Rewrite {
 	work(){
 		global.open = wrap_function(global.open, (target, that, [ url, tar, features ]) => {
-			url = new URL(url, this.client.base);
-			url = this.client.tomp.html.serve(url, this.client.base);
-			return Reflect.apply(target, that, [ url, tar, features ]);
+			if(url !== '' && url !== undefined){
+				url = new URL(url, this.client.base);
+				url = this.client.tomp.html.serve(url, this.client.base);
+			}
+
+			let result = Reflect.apply(target, that, [ url, tar, features ]);
+			result = this.client.get(WindowRewrite).restrict_window(result);
+
+			if(result !== null){
+				if(!(global_client in result)){
+					this.client.get(WindowRewrite).inject_client(result);
+				}	
+			}
+
+			return result;
 		});
 
 		global.postMessage = wrap_function(global.postMessage, (target, that, args) => {

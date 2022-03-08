@@ -180,6 +180,21 @@ export default class WindowRewrite extends Rewrite {
 		
 		Reflect.apply(this.global, window, args);
 	}
+	inject_client(window){
+		const http = new window.XMLHttpRequest();
+		
+		http.open('GET', this.client.tomp.directory + 'client.js', false);
+
+		http.send();
+
+		let script = http.responseText;
+		
+		script = script.replace('//# sourceMappingURL=client.js.map', `//# sourceMappingURL=${this.client.host.toOrigin()}${this.client.tomp.directory}client.js.map`)
+
+		window.eval(script);
+		
+		window[global_client](this.client.tomp);
+	}
 	restrict(){
 		throw new DOMException(`Blocked a frame with "${this.client.base.toOrigin()}" from accessing a cross-origin frame.`)
 	}
