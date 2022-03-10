@@ -453,7 +453,7 @@ export class RewriteElements {
 						return;
 					}
 
-					context.value = this.tomp.js.wrap(value, url);
+					context.value = this.tomp.js.wrap(value, url, false, element_is_type(element, js_module_types));
 					context.modified = true;
 				},
 				unwrap: (value, element, url, context) => {
@@ -461,7 +461,7 @@ export class RewriteElements {
 						return;
 					}
 
-					context.value = this.tomp.js.unwrap(value, url);
+					context.value = this.tomp.js.unwrap(value, url, element_is_type(element, js_module_types));
 					context.modified = true;
 				},
 			},

@@ -14,13 +14,15 @@ export const providers = ['window','document'];
 export const undefinable = ['eval','location','top'];
 // only eval and location are of interest
 
-const parse_options = { 
-	ecmaVersion: 2022,
-	module: true,
-	webcompat: true,
-	globalReturn: true,
-	next: true,
-	ranges: true,
+const parse_options = module => {
+	return { 
+		ecmaVersion: 2022,
+		module: module === true,
+		webcompat: true,
+		globalReturn: true,
+		next: true,
+		ranges: true,
+	};
 };
 
 export class RewriteJS extends Rewriter {
@@ -35,7 +37,7 @@ export class RewriteJS extends Rewriter {
 			+ `}`
 		+ `}();`;
 	}
-	wrap(code, url, worker){
+	wrap(code, url, worker, module){
 		if(this.tomp.noscript)return '';
 
 		code = String(code);
@@ -44,7 +46,7 @@ export class RewriteJS extends Rewriter {
 		let ast;
 
 		try{
-			ast = parseScript(code, parse_options);
+			ast = parseScript(code, parse_options(module));
 		}catch(err){
 			if(err instanceof SyntaxError){
 				this.tomp.log.trace(code, err);
@@ -378,7 +380,7 @@ export class RewriteJS extends Rewriter {
 			b.literal(this.generate_part(code, ctx.parent)),
 		])));
 	}
-	unwrap(code, url){
+	unwrap(code, url, module){
 		if(this.tomp.noscript)return '';
 
 		code = String(code);
@@ -387,7 +389,7 @@ export class RewriteJS extends Rewriter {
 		let ast;
 
 		try{
-			ast = parseScript(code, parse_options);
+			ast = parseScript(code, parse_options(module));
 		}catch(err){
 			if(err instanceof SyntaxError){
 				this.tomp.log.trace(code, err);
