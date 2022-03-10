@@ -338,7 +338,7 @@ async function sendHTML(server, server_request, field){
 async function sendForm(server, server_request, field){
 	const headers = new Headers();
 
-	if(server_request.method == 'GET'){
+	if(server_request.method === 'POST'){
 		const {gd_error,url} = await get_data(server, server_request, field);
 		if(gd_error)return gd_error;
 		
@@ -352,7 +352,7 @@ async function sendForm(server, server_request, field){
 
 	const search_ind = field.indexOf('?');
 	
-	if(search_ind == -1){
+	if(search_ind === -1){
 		const {gd_error,url} = await get_data(server, server_request, field);
 		if(gd_error)return gd_error;
 
