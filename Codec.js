@@ -58,10 +58,11 @@ export class XORCodec extends CodecInterface {
 			}
 		}
 
-		return result;
+		return encodeURIComponent(result);
 	}
 	static unwrap(input, key){
 		key = parseInt(key, 16);
+		input = decodeURIComponent(input);
 
 		const xor = key >> 0x4, frequency = key & 0xF;
 		var result = '';
