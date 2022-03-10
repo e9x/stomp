@@ -3,6 +3,8 @@
 // eg for salts, seeds
 // per client basis
 
+import { decodeCodecURI, encodeCodecURI } from './encodeCodecURI.js';
+
 export class CodecInterface {
 	static generate_key(){
 		throw new Error('generate_key() not implemented');
@@ -58,11 +60,11 @@ export class XORCodec extends CodecInterface {
 			}
 		}
 
-		return encodeURIComponent(result);
+		return encodeCodecURI(result);
 	}
 	static unwrap(input, key){
 		key = parseInt(key, 16);
-		input = decodeURIComponent(input);
+		input = decodeCodecURI(input);
 
 		const xor = key >> 0x4, frequency = key & 0xF;
 		var result = '';

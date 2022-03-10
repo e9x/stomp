@@ -1,8 +1,8 @@
-const encode_char = "%";
-const valid_chars = "!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ^_`abcdefghijklmnopqrstuvwxyz|~";
+const encode_char = "$";
+const valid_chars = "-_~:0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const reserved_chars = encode_char;
 
-export function validProtocol(protocol){
+export function validCodecURI(protocol){
 	protocol = protocol.toString();
 
 	for(let i = 0; i < protocol.length; i++){
@@ -16,13 +16,13 @@ export function validProtocol(protocol){
 	return true;
 }
 
-export function encodeProtocol(protocol){
-	protocol = protocol.toString();
+export function encodeCodecURI(ci){
+	ci = String(ci);
 
 	let result = '';
 	
-	for(let i = 0; i < protocol.length; i++){
-		const char = protocol[i];
+	for(let i = 0; i < ci.length; i++){
+		const char = ci[i];
 
 		if(valid_chars.includes(char) && !reserved_chars.includes(char)){
 			result += char;
@@ -35,16 +35,16 @@ export function encodeProtocol(protocol){
 	return result;
 }
 
-export function decodeProtocol(protocol){
-	if(typeof protocol != 'string')throw new TypeError('Protocol must be a string');
+export function decodeCodecURI(ci){
+	if(typeof ci !== 'string')throw new TypeError('Codec URI must be a string');
 
 	let result = '';
 	
-	for(let i = 0; i < protocol.length; i++){
-		const char = protocol[i];
+	for(let i = 0; i < ci.length; i++){
+		const char = ci[i];
 		
 		if(char === encode_char){
-			const code = parseInt(protocol.slice(i + 1, i + 3), 16);
+			const code = parseInt(ci.slice(i + 1, i + 3), 16);
 			const decoded = String.fromCharCode(code);
 			
 			result += decoded;

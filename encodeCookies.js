@@ -1,7 +1,8 @@
 // https://stackoverflow.com/a/45536811
 
+const encode_char = "%";
 const valid_chars = "abdefghijklmnqrstuvxyzABDEFGHIJKLMNQRSTUVXYZ0123456789!#$%&'()*+-./:<>?@[]^_`{|}~";
-const reserved_chars = "%";
+const reserved_chars = encode_char;
 
 export function validCookie(cookie){
 	cookie = String(cookie);
@@ -29,7 +30,7 @@ export function encodeCookie(cookie){
 			result += char;
 		}else{
 			const code = char.charCodeAt();
-			result += '%' + code.toString(16).padStart(2, 0);
+			result += encode_char + code.toString(16).padStart(2, 0);
 		}
 	}
 
@@ -37,14 +38,14 @@ export function encodeCookie(cookie){
 }
 
 export function decodeCookie(cookie){
-	if(typeof cookie != 'string')throw new TypeError('cookie must be a string');
+	if(typeof cookie !== 'string')throw new TypeError('Cookie must be a string');
 
 	let result = '';
 	
 	for(let i = 0; i < cookie.length; i++){
 		const char = cookie[i];
 		
-		if(char == '%'){
+		if(char === encode_char){
 			const code = parseInt(cookie.slice(i + 1, i + 3), 16);
 			const decoded = String.fromCharCode(code);
 			
