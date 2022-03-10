@@ -38,9 +38,11 @@ const remove_csp_headers = [
 ];
 
 async function handle_common_request(server, server_request, request_headers, url){
+	//req.referrer
 	if(server_request.headers.has('referer')){
 		const ref = new URL(server_request.headers.get('referer'));
-		const {service,field} = server.get_attributes(ref.pathname);
+		const {service,field} = server.tomp.url.get_attributes(ref.pathname);
+
 		if(service == 'html'){
 			request_headers.set('referer', server.tomp.url.unwrap(field).toString());
 		}else{
@@ -376,10 +378,13 @@ async function sendForm(server, server_request, field){
 }
 
 async function process(server, server_request, field){
-	const url = new URL(server_request.url);
+	let [service,url] = field.split(':');
+	url = decodeURIComponent(url);
+	service = decodeURIComponent(service);
+
 	const headers = new Headers();
 	headers.set('content-type', 'text/html');
-	headers.set('refresh', '0;' + server.tomp[url.searchParams.get('service')].serve(url.searchParams.get('url'), url.searchParams.get('url')));
+	headers.set('refresh', '0;' + server.tomp[service].serve(url, url));
 	return new Response(undefined, { headers });
 }
 

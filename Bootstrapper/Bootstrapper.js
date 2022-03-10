@@ -44,7 +44,7 @@ export default class Bootstrapper {
 		}
 	}
 	#send(service, url){
-		return `${this.directory}process/?` + new URLSearchParams({ service, url });
+		return `${this.directory}process:${encodeURIComponent(service)}:${encodeURIComponent(url)}`;
 	}
 	html(url){
 		return this.#send('html', url);

@@ -90,14 +90,14 @@ export class RewriteURL {
 		
 		const field = ((url.port << 4) + protoi).toString(16) + ':' + url.path + hash;
 		
-		return this.tomp.directory + service + '/' + url.host + '/' + field;
+		return this.tomp.directory + service + ':' + url.host + ':' + field;
 	}
 	// only called in send.js get_data
 	unwrap(field){
 		field = String(field);
 		
-		const hosti = field.indexOf('/', 1);
-		const host = field.slice(1, hosti);
+		const hosti = field.indexOf(':');
+		const host = field.slice(0, hosti);
 		
 		const metai = field.indexOf(':', hosti + 1);
 		
@@ -106,7 +106,7 @@ export class RewriteURL {
 		const port = meta >> 4;
 		const protocol = protocols[meta & 0xF];
 		
-		const path = decodeURIComponent(field.slice(metai + 1));
+		const path = field.slice(metai + 1);
 		
 		return new ParsedRewrittenURL({
 			protocol,
@@ -120,14 +120,14 @@ export class RewriteURL {
 		
 		const path = url.slice(this.tomp.directory.length);
 		
-		const si = path.indexOf('/', 1);
+		const si = path.indexOf(':');
 		
 		const result = {
 			service: si == -1 ? path : path.slice(0, si),
-			field: si == -1 ? '/' : path.slice(si),
+			field: si == -1 ? '' : path.slice(si + 1),
 		};
 
-		return result
+		return result;
 	}
 	unwrap_ez(url){
 		url = String(url);
