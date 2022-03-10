@@ -88,7 +88,7 @@ export class RewriteURL {
 		
 		// throw new RangeError(`Unsupported protocol '${url.protocol}'`);
 		
-		const field = ((url.port << 4) + protoi).toString(16) + '/' + encodeURIComponent(url.path) + hash;
+		const field = ((url.port << 4) + protoi).toString(16) + ':' + url.path + hash;
 		
 		return this.tomp.directory + service + '/' + url.host + '/' + field;
 	}
@@ -99,7 +99,7 @@ export class RewriteURL {
 		const hosti = field.indexOf('/', 1);
 		const host = field.slice(1, hosti);
 		
-		const metai = field.indexOf('/', hosti + 1);
+		const metai = field.indexOf(':', hosti + 1);
 		
 		const meta = parseInt(field.slice(hosti + 1, metai), 16);
 

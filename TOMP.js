@@ -92,4 +92,18 @@ export default class TOMP {
 		this.manifest = new RewriteManifest(this);
 		this.elements = new RewriteElements(this);
 	}
+	encode(data){
+		if(this.key === ''){
+			throw new Error('Cannot encode: Key not set');
+		}
+
+		return this.codec.wrap(data, this.key);
+	}
+	decode(data){
+		if(this.key === ''){
+			throw new Error('Cannot decode: Key not set');
+		}
+
+		return this.codec.unwrap(data, this.key);
+	}
 };
