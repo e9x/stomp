@@ -75,7 +75,7 @@ export default class RequestRewrite extends Rewrite {
 
 			return new Promise((resolve, reject) => {
 				promise.then(response => {
-					this.response_url.set(response, this.client.tomp.url.unwrap_ez(desc_url.get.call(response)));
+					this.response_url.set(response, this.client.tomp.url.unwrap_ez(desc_url.get.call(response)).toString());
 					resolve(response);
 				});
 

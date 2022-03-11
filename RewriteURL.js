@@ -1,28 +1,42 @@
 // WIP
-export const protocols =     ['http:','https:','blob:http:','blob:https:'];
-export const default_ports = [80     ,443     ,80          ,443          ];
+export const protocols_slashes = ['http:','https:','blob:http:','blob:https:'];
+export const protocols =         ['http:','https:','blob:http:','blob:https:'];
+export const default_ports =     [80     ,443     ,80          ,443          ];
 
 export class ParsedRewrittenURL {
+	protocol = '';
+	host = '';
+	port = '';
+	path = '';
 	constructor({ protocol, host, port, path }){
-		this.protocol = protocol;
-		this.host = host;
-		this.port = port;
-		this.path = path;
+		if(typeof protocol === 'string'){
+			this.protocol = protocol;
+		}
+
+		if(typeof host === 'string'){
+			this.host = host;
+		}
+
+		if(typeof port === 'string'){
+			this.port = port;
+		}
+
+		if(typeof path === 'string'){
+			this.path = path;
+		}
 	}
 	get port_string(){
-		if(this.protocol === 'about:'){
-			return '';
-		}else if(default_ports.includes(this.port)){
+		if(protocols_slashes.includes(this.protocol) && default_ports.includes(this.port)){
 			return '';
 		}else{
 			return `:${this.port}`;
 		}
 	}
 	get slash(){
-		if(this.protocol === 'about:'){
-			return '';
-		}else{
+		if(protocols_slashes.includes(this.protocol)){
 			return '//';
+		}else{
+			return '';
 		}
 	}
 	toString(){
@@ -132,6 +146,13 @@ export class RewriteURL {
 	unwrap_ez(url){
 		url = String(url);
 		
+		if(url.startsWith('data:')){
+			return new ParsedRewrittenURL({
+				protocol: 'data:',
+				path: url.slice(5),
+			});
+		}
+
 		// cut all characters before the prefix, get the field, unwrap
 		const cut = url.slice(url.indexOf(this.tomp.directory));
 		const { field } = this.get_attributes(cut);
