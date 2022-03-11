@@ -116,7 +116,7 @@ export class RewriteElements {
 					name: new TargetName(false, 'textContent'),
 					type: 'custom',
 					wrap: (name, value, element, url, context) => {
-						const text_context = this.get_text(value, element, url);
+						const text_context = this.set_text(value, element, url);
 						
 						if(text_context.modified){
 							context.value = text_context.value;
@@ -124,7 +124,7 @@ export class RewriteElements {
 						}
 					},
 					unwrap: (name, value, element, url, context) => {
-						const text_context = this.set_text(value, element, url);
+						const text_context = this.get_text(value, element, url);
 						
 						if(text_context.modified){
 							context.value = text_context.value;
@@ -140,17 +140,6 @@ export class RewriteElements {
 				{
 					name: new TargetName(false, 'innerHTML'),
 					wrap: (name, value, element, url, context) => {
-						const text_context = this.get_text(value, element, url);
-						
-						if(text_context.modified){
-							context.value = text_context.value;
-							context.modified = true;
-						}else{
-							context.value = this.tomp.html.wrap(value, url, true);
-							context.modified = true;
-						}
-					},
-					unwrap: (name, value, element, url, context) => {
 						const text_context = this.set_text(value, element, url);
 						
 						if(text_context.modified){
@@ -158,6 +147,17 @@ export class RewriteElements {
 							context.modified = true;
 						}else{
 							context.value = this.tomp.html.unwrap(value, url, true);
+							context.modified = true;
+						}
+					},
+					unwrap: (name, value, element, url, context) => {
+						const text_context = this.get_text(value, element, url);
+						
+						if(text_context.modified){
+							context.value = text_context.value;
+							context.modified = true;
+						}else{
+							context.value = this.tomp.html.wrap(value, url, true);
 							context.modified = true;
 						}
 					},
@@ -181,7 +181,7 @@ export class RewriteElements {
 				{
 					name: new TargetName(false, 'text'),
 					wrap: (name, value, element, url, context) => {
-						const text_context = this.get_text(value, element, url);
+						const text_context = this.set_text(value, element, url);
 						
 						if(text_context.modified){
 							context.value = text_context.value;
@@ -189,7 +189,7 @@ export class RewriteElements {
 						}
 					},
 					unwrap: (name, value, element, url, context) => {
-						const text_context = this.set_text(value, element, url);
+						const text_context = this.get_text(value, element, url);
 						
 						if(text_context.modified){
 							context.value = text_context.value;
@@ -227,7 +227,7 @@ export class RewriteElements {
 				{
 					name: new TargetName(false, 'innerText'),
 					wrap: (name, value, element, url, context) => {
-						const text_context = this.get_text(value, element, url);
+						const text_context = this.set_text(value, element, url);
 						
 						if(text_context.modified){
 							context.value = text_context.value;
@@ -235,7 +235,7 @@ export class RewriteElements {
 						}
 					},
 					unwrap: (name, value, element, url, context) => {
-						const text_context = this.set_text(value, element, url);
+						const text_context = this.get_text(value, element, url);
 						
 						if(text_context.modified){
 							context.value = text_context.value;
@@ -246,7 +246,7 @@ export class RewriteElements {
 				{
 					name: new TargetName(false, 'outerText'),
 					wrap: (name, value, element, url, context) => {
-						const text_context = this.get_text(value, element, url);
+						const text_context = this.set_text(value, element, url);
 						
 						if(text_context.modified){
 							context.value = text_context.value;
@@ -254,7 +254,7 @@ export class RewriteElements {
 						}
 					},
 					unwrap: (name, value, element, url, context) => {
-						const text_context = this.set_text(value, element, url);
+						const text_context = this.get_text(value, element, url);
 						
 						if(text_context.modified){
 							context.value = text_context.value;
@@ -649,8 +649,8 @@ export class RewriteElements {
 			],
 			wrap_done: (element, url) => {
 				// will have data-tomp-value-href
-				if(element.attributes.has('data-tomp-value-href')){
-					const href = element.attributes.get('data-tomp-value-href');
+				if(element.attributes.has(`${attribute_original}href`)){
+					const href = element.attributes.get(`${attribute_original}href`);
 					const resolved = new URL(href, url);
 					let serve;
 					
