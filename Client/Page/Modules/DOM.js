@@ -289,7 +289,7 @@ export default class DOMRewrite extends Rewrite {
 								const element = new TOMPElementDOM(that);
 								const context = this.client.tomp.elements.set_property(name, value, element, this.client.base, key);
 								
-								if(context.modified){
+								if(context.modified && data.name.tag !== false){ // not a property
 									element.attributes.set(attribute_original + name, value);
 								}
 								
