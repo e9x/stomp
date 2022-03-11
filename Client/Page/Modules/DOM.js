@@ -210,9 +210,9 @@ export default class DOMRewrite extends Rewrite {
 	domparser_work(){
 		DOMParser.prototype.parseFromString = wrap_function(DOMParser.prototype.parseFromString, (target, that, [ str, type ]) => {
 			if(get_mime(type) === 'image/svg+xml'){
-				str = this.client.tomp.svg.wrap(str, this.tomp.bare);
+				str = this.client.tomp.svg.wrap(str, this.tomp.base);
 			}else{
-				str = this.client.tomp.html.wrap(str, this.tomp.bare);
+				str = this.client.tomp.html.wrap(str, this.tomp.base);
 			}
 			
 			return Reflect.apply(target, that, [ str, type ]);
@@ -223,6 +223,15 @@ export default class DOMRewrite extends Rewrite {
 			result = this.client.tomp.html.unwrap(result, this.client.base);
 			return result;
 		});
+	}
+	audio_work(){
+		global.Audio = wrap_function(global.Audio, (target, that, [ src ]) => {
+			if(typeof src !== 'undefined'){
+				src = this.client.tomp.binary.wrap(src, this.client.base);
+			}
+
+			return Reflect.construct(target, [src], that);
+		}, true);
 	}
 	work(){
 		this.style_work();

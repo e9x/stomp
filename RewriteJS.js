@@ -142,7 +142,6 @@ export class RewriteJS extends Rewriter {
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
 							ctx.node,
-							b.literal(ctx.node.name),
 						]));
 					}
 					
@@ -433,7 +432,7 @@ export class RewriteJS extends Rewriter {
 						case'access':
 							switch(parts[2]){
 								case'get':{
-									const id = ctx.node.arguments[0].value;
+									const id = ctx.node.arguments[0].name;
 									ctx.replace_with(b.identifier(id));
 								} break;
 								case'get2':
