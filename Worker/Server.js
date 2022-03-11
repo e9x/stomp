@@ -37,7 +37,7 @@ export default class Server {
 
 		this.tomp.key = key;
 
-		await store.put(key, 'key${this.tomp.codec_index}');
+		await store.put(key, `key${this.tomp.codec_index}`);
 		
 		await tx.done;
 	}
