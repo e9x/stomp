@@ -8,8 +8,6 @@ import CookieRewrite from './Cookie.js'
 
 const { Request, XMLHttpRequest } = global;
 
-const { serviceWorker } = navigator;
-
 export class SyncClient {
 	constructor(client){
 		this.client = client;
@@ -86,7 +84,7 @@ export class SyncClient {
 		const id = 'sync-request-' + Math.random().toString(16).slice(2);
 		const regex = new RegExp(`${id}=(.*?)(;|$)`);
 
-		serviceWorker.controller.postMessage({
+		this.client.registration.postMessage({
 			tomp: true,
 			sync: true,
 			id,

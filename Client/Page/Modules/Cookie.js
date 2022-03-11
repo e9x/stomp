@@ -13,12 +13,11 @@ export default class CookieRewrite extends Rewrite {
 		return Reflect.apply(this.global_descriptor.set, document, [ value ]);
 	}
 	work(){
-		const legal_documents = [ document ];
 		Reflect.defineProperty(Document.prototype, 'cookie', {
 			configurable: true,
 			enumerable: true,
 			get: wrap_function(this.global_descriptor.get, (target, that, args) => {
-				if(!legal_documents.includes(that)){
+				if(that !== document){
 					throw new TypeError('Illegal invocation');
 				}
 
@@ -29,7 +28,7 @@ export default class CookieRewrite extends Rewrite {
 				return decoder.decode(rawArrayBuffer);
 			}),
 			set: wrap_function(this.global_descriptor.set, (target, that, [ value ]) => {
-				if(!legal_documents.includes(that)){
+				if(that !== document){
 					throw new TypeError('Illegal invocation');
 				}
 

@@ -9,6 +9,7 @@ import PageRequestRewrite from './Modules/PageRequest.js';
 import IFrameRewrite from './Modules/IFrame.js';
 import WindowRewrite from './Modules/Window.js';
 import IsolateModule from './Modules/Isolate.js';
+import { global_client } from '../../RewriteJS.js';
 
 export default class PageClient extends Client {
 	static type = 'page';
@@ -22,9 +23,20 @@ export default class PageClient extends Client {
 	get host(){
 		return this.tomp.url.parse_url(this.#baseURI);
 	}
+	registration = undefined;
 	constructor(config){
 		super(config);
+
+		try{
+			if(global_client in parent){
+				this.registration = parent[global_client].registration;
+			}
+		}catch(error){}
 		
+		if(this.registration === undefined){
+			this.registration = navigator.serviceWorker.controller;
+		}
+
 		for(let node of document.querySelectorAll('[data-is-tomp]')){
 			node.remove();
 		}

@@ -25,11 +25,11 @@ export default class AccessRewrite extends Rewrite {
 	}
 	unique_parent = false;
 	work(){
-		this.location = this.client.get(LocationRewrite);
-		this.eval = this.client.get(EvalRewrite);
-
 		// expose to global
 		this.client.access = this;
+
+		this.location = this.client.get(LocationRewrite);
+		this.eval = this.client.get(EvalRewrite);
 
 		this.location.global[global_proxy] = this.location.proxy;
 		this.location.global[global_name] = 'location';

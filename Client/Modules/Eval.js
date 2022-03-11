@@ -24,4 +24,8 @@ export default class EvalRewrite extends Rewrite {
 		value: this.eval_global_proxy,
 		writable: true,
 	};
+	work(){
+		// expose to global
+		this.client.eval = this;
+	}
 };

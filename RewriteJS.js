@@ -4,8 +4,6 @@ import { parseScript } from 'meriyah';
 import { generate } from '@javascript-obfuscator/escodegen';
 import { builders as b } from 'ast-types';
 
-const html_comment = /<!--([\s\S]*?)-->/g;
-
 export const global_client = 'tompc$';
 
 const global_access = b.memberExpression(b.identifier(global_client), b.identifier('access'));
@@ -41,7 +39,6 @@ export class RewriteJS extends Rewriter {
 		if(this.tomp.noscript)return '';
 
 		code = String(code);
-		// code = code.replace(html_comment, '');
 
 		let ast;
 
@@ -49,7 +46,7 @@ export class RewriteJS extends Rewriter {
 			ast = parseScript(code, parse_options(module));
 		}catch(err){
 			if(err instanceof SyntaxError){
-				this.tomp.log.trace(code, err);
+				// this.tomp.log.trace(code, err);
 				return `throw new SyntaxError(${JSON.stringify(err.message)})`;
 			}else throw err;
 		}
@@ -384,7 +381,6 @@ export class RewriteJS extends Rewriter {
 		if(this.tomp.noscript)return '';
 
 		code = String(code);
-		// code = code.replace(html_comment, '');
 
 		let ast;
 
@@ -392,7 +388,7 @@ export class RewriteJS extends Rewriter {
 			ast = parseScript(code, parse_options(module));
 		}catch(err){
 			if(err instanceof SyntaxError){
-				this.tomp.log.trace(code, err);
+				// this.tomp.log.trace(code, err);
 				return `throw new SyntaxError(${JSON.stringify(err.message)})`;
 			}else throw err;
 		}
