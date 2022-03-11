@@ -326,13 +326,13 @@ export default class DOMRewrite extends Rewrite {
 				const element = new TOMPElementDOM(that);
 				this.client.tomp.elements.done_wrapping(true, element, this.client.base);
 
-				return Reflect.apply(target, that, [ name ]);
+				return Reflect.apply(target, that, [ ...suffix, name ]);
 			}else{
 				return null;
 			}
 		});
 		
-		Element.prototype.getAttributeNode = (is_namespace, target) => wrap_function(target, (target, that, args) => {
+		this.get_attribute_node = (is_namespace, target) => wrap_function(target, (target, that, args) => {
 			let suffix = [];
 
 			if(is_namespace){
@@ -440,6 +440,9 @@ export default class DOMRewrite extends Rewrite {
 		
 		Element.prototype.getAttribute = this.get_attribute(false, Element.prototype.getAttribute);
 		Element.prototype.getAttributeNS = this.get_attribute(true, Element.prototype.getAttributeNS);
+
+		Element.prototype.getAttributeNode = this.get_attribute_node(false, Element.prototype.getAttributeNode);
+		Element.prototype.getAttributeNodeNS = this.get_attribute_node(true, Element.prototype.getAttributeNodeNS);
 
 		Element.prototype.setAttribute = this.set_attribute(false, Element.prototype.setAttribute);
 		Element.prototype.setAttributeNS = this.set_attribute(true, Element.prototype.setAttributeNS);
