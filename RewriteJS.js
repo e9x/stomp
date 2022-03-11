@@ -46,7 +46,7 @@ export class RewriteJS extends Rewriter {
 			ast = parseScript(code, parse_options(module));
 		}catch(err){
 			if(err instanceof SyntaxError){
-				// this.tomp.log.trace(code, err);
+				this.tomp.log.trace(code, err);
 				return `throw new SyntaxError(${JSON.stringify(err.message)})`;
 			}else throw err;
 		}
@@ -387,7 +387,7 @@ export class RewriteJS extends Rewriter {
 			ast = parseScript(code, parse_options(module));
 		}catch(err){
 			if(err instanceof SyntaxError){
-				// this.tomp.log.trace(code, err);
+				this.tomp.log.trace(code, err);
 				return `throw new SyntaxError(${JSON.stringify(err.message)})`;
 			}else throw err;
 		}

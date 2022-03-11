@@ -17,7 +17,7 @@ export class ParsedRewrittenURL {
 			this.host = host;
 		}
 
-		if(typeof port === 'string'){
+		if(typeof port === 'number'){
 			this.port = port;
 		}
 
