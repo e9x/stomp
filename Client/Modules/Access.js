@@ -5,14 +5,6 @@ import { undefinable, global_client } from '../../RewriteJS.js';
 import LocationRewrite from './Location.js';
 import EvalRewrite from './Eval.js';
 
-const undefinable_object = {};
-
-for(let entry of undefinable){
-	undefinable_object[entry] = true;
-}
-
-Reflect.setPrototypeOf(undefinable_object, null);
-
 export const global_proxy = 'tompcgp$';
 export const global_name = 'tompcgn$';
 
@@ -184,7 +176,7 @@ export default class AccessRewrite extends Rewrite {
 		return this.get(target[key], key);
 	}
 	get(obj, key){
-		if(typeof key === 'string' && undefinable_object[key] === true && (typeof obj === 'object' && obj !== null || typeof obj === 'function') && hasOwnProperty(obj, global_proxy)){
+		if(typeof key === 'string' && undefinable.includes(key) && (typeof obj === 'object' && obj !== null || typeof obj === 'function') && hasOwnProperty(obj, global_proxy)){
 			return obj[global_proxy];
 		}
 		
