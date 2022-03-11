@@ -29,7 +29,7 @@ export default class Server {
 		const tx = this.db.transaction('consts', 'readwrite');
 		const store = tx.objectStore('consts');
 
-		let key = await store.get('key');
+		let key = await store.get(`key${this.tomp.codec_index}`);
 
 		if(key === undefined){
 			key = this.tomp.codec.generate_key();
@@ -37,7 +37,7 @@ export default class Server {
 
 		this.tomp.key = key;
 
-		await store.put(key, 'key');
+		await store.put(key, 'key${this.tomp.codec_index}');
 		
 		await tx.done;
 	}
