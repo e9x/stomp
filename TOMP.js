@@ -7,7 +7,7 @@ import { RewriteForm } from './RewriteForm.js';
 import { RewriteElements } from './RewriteElements.js';
 import { RewriteManifest } from './RewriteManifest.js';
 import { RewriteBinary } from './RewriteBinary.js';
-import { Logger, LOG_WARN } from './Logger.js';
+import Logger, { LOG_WARN } from './Logger.js';
 import { PlainCodec, XORCodec } from './Codec.js';
 
 const codecs = [PlainCodec, XORCodec];

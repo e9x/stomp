@@ -27,9 +27,11 @@ export default class Builder {
 		return errors;
 	}
 	webpacks = [];
-	constructor(output){
+	constructor(output, development){
+		const mode = development ? 'development' : 'production';
+		
 		this.webpacks.push(webpack({
-			mode: 'development',
+			mode,
 			devtool: 'source-map',
 			entry: {
 				client: join(__dirname, 'Client', 'entry.js'),
@@ -43,7 +45,7 @@ export default class Builder {
 		}));
 		
 		this.webpacks.push(webpack({
-			mode: 'development',
+			mode,
 			devtool: 'source-map',
 			entry: join(__dirname, 'Bootstrapper', 'Bootstrapper.js'),
 			context: __dirname,

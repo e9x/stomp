@@ -5,13 +5,13 @@ export const LOG_WARN = 3;
 export const LOG_ERROR = 4;
 export const LOG_SILENT = 5;
 
-const trace = console.trace.bind(console);
-const debug = console.debug.bind(console);
-const info = console.info.bind(console);
-const warn = console.warn.bind(console);
-const error = console.error.bind(console);
+const trace = /*#__PURE__*/ console.trace.bind(console);
+const debug = /*#__PURE__*/ console.debug.bind(console);
+const info = /*#__PURE__*/console.info.bind(console);
+const warn = /*#__PURE__*/ console.warn.bind(console);
+const error = /*#__PURE__*/ console.error.bind(console);
 
-export class Logger {
+export default class Logger {
 	levels = ['trace','debug','info','warn','error','silent'];
 	constructor(loglevel){
 		this.loglevel = loglevel;

@@ -6,6 +6,7 @@ import ast from './cli/ast.js';
 program.command('build')
 .addOption(new Option('-f, --folder <path>', 'folder to contain output').default('tompbuild'))
 .addOption(new Option('-w, --watch', 'if the script should poll the source for changes'))
+.addOption(new Option('--development', 'Verbose scripts, skip minification'))
 .action(build)
 ;
 
