@@ -1,15 +1,11 @@
-export const LOG_TRACE = 0;
-export const LOG_DEBUG = 1;
-export const LOG_INFO = 2;
-export const LOG_WARN = 3;
-export const LOG_ERROR = 4;
-export const LOG_SILENT = 5;
+import {LOG_TRACE,LOG_DEBUG,LOG_INFO,LOG_WARN,LOG_ERROR} from './LoggerConstants.js';
+export * from './LoggerConstants.js';
 
-const trace = /*#__PURE__*/ console.trace.bind(console);
-const debug = /*#__PURE__*/ console.debug.bind(console);
-const info = /*#__PURE__*/console.info.bind(console);
-const warn = /*#__PURE__*/ console.warn.bind(console);
-const error = /*#__PURE__*/ console.error.bind(console);
+const trace = console.trace.bind(console);
+const debug = console.debug.bind(console);
+const info = console.info.bind(console);
+const warn = console.warn.bind(console);
+const error = console.error.bind(console);
 
 export default class Logger {
 	levels = ['trace','debug','info','warn','error','silent'];

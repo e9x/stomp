@@ -13,8 +13,7 @@ import Bare from './Bare.js';
 
 const codecs = [PlainCodec, XORCodec];
 
-export const CODEC_PLAIN = 0;
-export const CODEC_XOR = 1;
+export * from './TOMPConstants.js';
 
 export default class TOMP {
 	toJSON(){

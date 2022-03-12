@@ -1,6 +1,6 @@
 import SearchBuilder from './SearchBuilder.js';
-import { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_SILENT } from '../Logger.js';
-import { CODEC_PLAIN, CODEC_XOR } from '../TOMP.js';
+import { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_SILENT } from '../LoggerConstants.js';
+import { CODEC_PLAIN, CODEC_XOR } from '../TOMPConstants.js';
 
 const { src } = document.currentScript;
 
