@@ -2,7 +2,11 @@ import SearchBuilder from './SearchBuilder.js';
 import { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_SILENT } from '../LoggerConstants.js';
 import { CODEC_PLAIN, CODEC_XOR } from '../TOMPConstants.js';
 
-const { src } = document.currentScript;
+let src;
+
+if(document.currentScript !== undefined){
+	({ src } = document.currentScript);
+}
 
 export default class Bootstrapper {
 	static SearchBuilder = SearchBuilder;
@@ -21,7 +25,11 @@ export default class Bootstrapper {
 		this.ready = this.register();
 	}
 	get directory(){
-		return this.config.directory || new URL('.', src).pathname;
+		if(typeof this.config.directory === 'string'){
+			return this.config.directory;
+		}else{
+			return new URL('.', src).pathname;
+		}
 	}
 	async register(){
 		if(!('serviceWorker' in navigator))throw new Error('Your browser does not support service workers.' );
