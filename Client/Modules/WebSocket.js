@@ -1,10 +1,9 @@
 import Rewrite from '../Rewrite.js';
 import global from '../global.js';
-import { encodeProtocol, validProtocol } from '../../encodeProtocol.js';
+import { validProtocol } from '../../encodeProtocol.js';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.js';
 import { Reflect } from '../rewriteUtil.js';
 import { DOMObjectConstructor, TargetConstant, EventTarget_on, mirror_class } from '../NativeUtil.js';
-import RequestRewrite from '../Modules/Request.js';
 
 const default_ports = {
 	'ws:': 80,
@@ -19,9 +18,6 @@ export default class WebSocketRewrite extends Rewrite {
 	work(){
 		const that = this;
 
-		const bare_ws = new URL(this.client.tomp.bare + 'v1/', this.client.host);
-		bare_ws.protocol = bare_ws.protocol == 'https:' ? 'wss:' : 'ws:';
-		
 		const didnt_specify = Symbol();
 
 		const instances = new WeakSet();
@@ -84,34 +80,7 @@ export default class WebSocketRewrite extends Rewrite {
 					request_headers['Cookie'] = cookies.toString();
 				}
 
-				const meta_req = await Reflect.apply(that.client.get(RequestRewrite).global_fetch, global, [
-					that.client.tomp.bare + 'v1/ws-new-meta',
-					{
-						method: 'GET',
-					}
-				]);
-
-				if(meta_req.ok){
-					this.#id = await meta_req.text();
-				}else{
-					that.client.tomp.log.error('meta error:', await meta_req.json());
-				}
-				
-				this.#socket = new that.global(bare_ws, [
-					'bare',
-					encodeProtocol(JSON.stringify({
-						remote,
-						headers: request_headers,
-						forward_headers: [
-							'accept-encoding',
-							'accept-language',
-							'sec-websocket-extensions',
-							'sec-websocket-key',
-							'sec-websocket-version',
-						],
-						id: this.#id,
-					})),
-				]);
+				this.#socket = await that.client.tomp.bare.connect(request_headers, remote.protocol, remote.host, remote.port, remote.path);
 
 				this.#socket.binaryType = this.#binaryType;
 
@@ -119,19 +88,11 @@ export default class WebSocketRewrite extends Rewrite {
 					this.dispatchEvent(new MessageEvent('message', event));
 				});
 
+				this.#socket.meta.then(meta => {
+					this.#read_meta(meta);
+				}).catch(() => {});
+
 				this.#socket.addEventListener('open', async event => {
-					const meta = await(await Reflect.apply(that.client.get(RequestRewrite).global_fetch, global, [
-						that.client.tomp.bare + 'v1/ws-meta',
-						{
-							headers: {
-								'x-bare-id': this.#id,
-							},
-							method: 'GET',
-						}
-					])).json();
-					
-					await this.#read_meta(meta);
-					
 					this.dispatchEvent(new Event('open', event));
 				});
 

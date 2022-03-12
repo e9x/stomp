@@ -1,16 +1,97 @@
 // Implements the protocol for requesting bare data from a server
 // See ../Server/Send.mjs
 
+import { encodeProtocol } from './encodeProtocol.js';
+import global from './Client/global.js';
+
 export const forbids_body = ['GET','HEAD'];
 export const status_empty = [101,204,205,304];
 export const status_redirect = [300,301,302,303,304,305,306,307,308];
 
+const { fetch, WebSocket } = global;
+
 export default class Bare {
-	constructor(server){
+	constructor(tomp, server){
+		this.tomp = tomp;
 		this.server = server;
+
+		this.ws_v1 = new URL(this.server + 'v1/', this.tomp.origin);
+		this.http_v1 = new URL(this.server + 'v1/', this.tomp.origin);
+
+		if(this.ws_v1.protocol === 'https:'){
+			this.ws_v1.protocol = 'wss:';
+		}else{
+			this.ws_v1.protocol = 'ws:';
+		}
 	}
 	async connect(request_headers, protocol, host, port, path){
+		const assign_meta = await fetch(`${this.server}v1/ws-new-meta`, { method: 'GET' });
 
+		if(!assign_meta.ok){
+			throw BareError(assign_meta.status, await assign_meta.json());
+		}
+
+		const id = await assign_meta.text();
+		
+		console.log({
+			remote: {
+				protocol,
+				host,
+				port,
+				path,
+			},
+			headers: request_headers,
+			forward_headers: [
+				'accept-encoding',
+				'accept-language',
+				'sec-websocket-extensions',
+				'sec-websocket-key',
+				'sec-websocket-version',
+			],
+			id,
+		});
+
+		const socket = new WebSocket(this.ws_v1, [
+			'bare',
+			encodeProtocol(JSON.stringify({
+				remote: {
+					protocol,
+					host,
+					port,
+					path,
+				},
+				headers: request_headers,
+				forward_headers: [
+					'accept-encoding',
+					'accept-language',
+					'sec-websocket-extensions',
+					'sec-websocket-key',
+					'sec-websocket-version',
+				],
+				id,
+			})),
+		]);
+
+		socket.meta = new Promise((resolve, reject) => {
+			socket.addEventListener('open', async () => {
+				const outgoing = await fetch(`${this.server}v1/ws-meta`, {
+					headers: {
+						'x-bare-id': id,
+					},
+					method: 'GET',
+				});
+
+				if(!outgoing.ok){
+					reject(new BareError(outgoing.status, await outgoing.json()));
+				}
+
+				resolve(await outgoing.json());
+			});
+
+			socket.addEventListener('error', reject);
+		});
+
+		return socket;
 	}
 	async fetch(method, request_headers, protocol, host, port, path){
 		if(protocol.startsWith('blob:')){

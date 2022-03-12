@@ -142,6 +142,7 @@ export class RewriteJS extends Rewriter {
 					}else{
 						ctx.replace_with(b.callExpression(b.memberExpression(global_access, b.identifier('get')), [
 							ctx.node,
+							b.literal(ctx.node.name),
 						]));
 					}
 					

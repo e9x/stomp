@@ -80,7 +80,6 @@ export default class TOMP {
 			this.noscript = true;
 		}
 
-		this.bare = new Bare(config.bare);
 		this.log = new Logger(this.loglevel);
 		this.url = new RewriteURL(this);
 		this.js = new RewriteJS(this);
@@ -91,6 +90,7 @@ export default class TOMP {
 		this.form = new RewriteForm(this);
 		this.manifest = new RewriteManifest(this);
 		this.elements = new RewriteElements(this);
+		this.bare = new Bare(this, config.bare);
 	}
 	wrap(data){
 		if(this.key === ''){
