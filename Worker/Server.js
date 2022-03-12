@@ -66,6 +66,8 @@ export default class Server {
 	}
 	routes = new Map();
 	async send(request, service, field){
+		await this.ready;
+
 		try{
 			const route = this.routes.get(service);
 				if(typeof route !== 'function'){
