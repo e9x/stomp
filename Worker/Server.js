@@ -19,8 +19,7 @@ export default class Server {
 	async work(){
 		this.db = await openDB('tomp', 1, {
 			upgrade: (db, oldv, newv, transaction) => {
-				const consts = db.createObjectStore('consts');
-
+				db.createObjectStore('consts');
 				create_cookie_db(db);
 				create_storage_db(db);
 			},

@@ -23,7 +23,7 @@ export default class Rewriter {
 			
 			const wrapped = this.wrap(data, url);
 			
-			return CreateDataURI(mime, wrapped, base64);
+			return createDataURI(mime, wrapped, base64);
 		}
 
 		return this.tomp.url.wrap(serve, service);
@@ -36,7 +36,7 @@ export default class Rewriter {
 				return serving;
 			}
 			
-			const {mime,data,base64} = ParseDataURI(serving);
+			const {mime,data,base64} = parseDataURI(serving);
 			
 			const unwrapped = this.unwrap(data, url);
 			

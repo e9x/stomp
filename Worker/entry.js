@@ -2,7 +2,6 @@ import Server from './Server.js';
 
 const params = new URLSearchParams(location.search);
 const config = JSON.parse(params.get('config'));
-config.directory = new URL('.', location).pathname;
 const server = new Server(config);
 
 self.addEventListener('install', event => {

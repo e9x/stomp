@@ -2,12 +2,6 @@ import SearchBuilder from './SearchBuilder.js';
 import { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_SILENT } from '../LoggerConstants.js';
 import { CODEC_PLAIN, CODEC_XOR } from '../TOMPConstants.js';
 
-let src;
-
-if(document.currentScript !== undefined){
-	({ src } = document.currentScript);
-}
-
 export default class Bootstrapper {
 	static SearchBuilder = SearchBuilder;
 	// expose constants
@@ -20,16 +14,13 @@ export default class Bootstrapper {
 	static LOG_ERROR = LOG_ERROR;
 	static LOG_SILENT = LOG_SILENT;
 	constructor(config){
+		if(typeof config.directory !== 'string'){
+			throw new TypeError(`Directory must be a string`);
+		}
+
 		this.config = config;
 
 		this.ready = this.register();
-	}
-	get directory(){
-		if(typeof this.config.directory === 'string'){
-			return this.config.directory;
-		}else{
-			return new URL('.', src).pathname;
-		}
 	}
 	async register(){
 		if(!('serviceWorker' in navigator))throw new Error('Your browser does not support service workers.' );
@@ -38,10 +29,10 @@ export default class Bootstrapper {
 			await worker.unregister();
 		}*/
 
-		const url = `${this.directory}worker.js?config=${encodeURIComponent(JSON.stringify(this.config))}`;
+		const url = `${this.config.directory}worker.js?config=${encodeURIComponent(JSON.stringify(this.config))}`;
 
 		this.worker = await navigator.serviceWorker.register(url, {
-			scope: this.directory,
+			scope: this.config.directory,
 			updateViaCache: 'none',
 		});
 		
@@ -52,7 +43,7 @@ export default class Bootstrapper {
 		}
 	}
 	#send(service, url){
-		return `${this.directory}process:${encodeURIComponent(service)}:${encodeURIComponent(url)}`;
+		return `${this.config.directory}process:${encodeURIComponent(service)}:${encodeURIComponent(url)}`;
 	}
 	html(url){
 		return this.#send('html', url);
