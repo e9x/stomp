@@ -21,7 +21,7 @@ export default class Bootstrapper {
 		this.ready = this.register();
 	}
 	get directory(){
-		return new URL('.', src).pathname;
+		return this.config.directory || new URL('.', src).pathname;
 	}
 	async register(){
 		if(!('serviceWorker' in navigator))throw new Error('Your browser does not support service workers.' );
