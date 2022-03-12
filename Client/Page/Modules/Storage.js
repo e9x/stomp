@@ -110,7 +110,6 @@ export default class StorageRewrite extends Rewrite {
 
 		const that = this;
 		const instances = new WeakSet();
-		const unspecified = Symbol();
 
 		class StorageProxy {
 			clear(){
@@ -119,11 +118,12 @@ export default class StorageRewrite extends Rewrite {
 					args: JSON.stringify([ that.is_session(this), that.client.base ]),
 				}));
 			}
-			getItem(key = unspecified){
-				if(key === unspecified){
-					throw new TypeError(`Uncaught TypeError: Failed to execute 'getItem' on 'Storage': 1 argument required, but only 0 present.`);
+			getItem(...args){
+				if(args.length < 1){
+					throw new TypeError(`Uncaught TypeError: Failed to execute 'getItem' on 'Storage': 1 argument required, but only ${args.length} present.`);
 				}
 
+				let key = [ args ];
 				key = String(key);
 				
 				const { rawArrayBuffer } = that.client.get(SyncClient).fetch(that.worker_storage + new URLSearchParams({
@@ -133,11 +133,12 @@ export default class StorageRewrite extends Rewrite {
 
 				return that.parse_worker_storage(rawArrayBuffer);
 			}
-			key(keyNum = unspecified){
-				if(keyNum === unspecified){
+			key(args){
+				if(args.length < 1){
 					throw new TypeError(`Uncaught TypeError: Failed to execute 'key' on 'Storage': 1 argument required, but only 0 present.`);
 				}
 
+				let [ keyNum ] = args;
 				keyNum = Number(keyNum);
 				
 				const { rawArrayBuffer } = that.client.get(SyncClient).fetch(that.worker_storage + new URLSearchParams({
@@ -155,11 +156,12 @@ export default class StorageRewrite extends Rewrite {
 				
 				return that.parse_worker_storage(rawArrayBuffer);
 			}
-			removeItem(key = unspecified){
-				if(key === unspecified){
-					throw new TypeError(`Uncaught TypeError: Failed to execute 'key' on 'Storage': 1 argument required, but only 0 present.`);
+			removeItem(args){
+				if(args.length < 1){
+					throw new TypeError(`Uncaught TypeError: Failed to execute 'removeItem' on 'Storage': 1 argument required, but only ${args.length} present.`);
 				}
 
+				let [ key ] = args;
 				key = String(key);
 
 				that.client.get(SyncClient).fetch(that.worker_storage + new URLSearchParams({
@@ -167,10 +169,12 @@ export default class StorageRewrite extends Rewrite {
 					args: JSON.stringify([ that.is_session(this), key, that.client.base ]),
 				}));
 			}
-			setItem(key = unspecified, value = unspecified){
-				if(key === unspecified || value === unspecified){
-					throw new TypeError(`Uncaught TypeError: Failed to execute 'key' on 'Storage': 1 argument required, but only 0 present.`);
+			setItem(...args){
+				if(args.length < 2){
+					throw new TypeError(`Uncaught TypeError: Failed to execute 'setItem' on 'Storage': 2 arguments required, but only ${args.length} present.`);
 				}
+
+				let [ key, value ] = args;
 
 				key = String(key);
 				value = String(value);
