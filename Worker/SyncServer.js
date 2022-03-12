@@ -1,6 +1,6 @@
 import { decodeBase64, encodeBase64 } from '../Base64.js';
 import { encodeCookie } from '../encodeCookies.js'
-import { status_redirect } from '../Worker/bare.js';
+import { status_redirect } from '../Bare.js';
 
 export default class SyncServer {
 	constructor(server){

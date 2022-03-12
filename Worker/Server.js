@@ -4,12 +4,13 @@ import register from './send.js';
 import { openDB } from 'idb/with-async-ittr';
 import { create_db as create_cookie_db } from './Cookies.js';
 import { create_db as create_storage_db } from './Storage.js';
-import { BareError } from './bare.js';
+import { BareError } from '../Bare.js';
 
 export default class Server {
 	session = Math.random();
 	constructor(config){
 		config.origin = new URL(serviceWorker.scriptURL).origin;
+		/**@type TOMP*/
 		this.tomp = new TOMP(config);
 		this.request = this.request.bind(this);
 		this.ready = this.work();

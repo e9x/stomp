@@ -1,4 +1,4 @@
-import bareFetch, { status_empty } from './bare.js';
+import { status_empty } from '../Bare.js';
 import { mapHeaderNamesFromArray } from './HeaderUtil.js'
 import { html_types, get_mime } from '../RewriteElements.js';
 import { load_setcookies, get_cookies } from './Cookies.js';
@@ -223,7 +223,7 @@ export async function sendBinary(server, server_request, field){
 		delete exact_request_headers['x-tomp-impl-names'];
 	}
 	
-	const response = await bareFetch(server, url, server_request, exact_request_headers);
+	const response = await server.tomp.bare.fetch(server_request.method, exact_request_headers, url.protocol, url.host, url.port, url.path);
 	
 	const response_headers = await handle_common_response(server.tomp.binary, server, server_request, url, response);
 	
@@ -251,8 +251,7 @@ async function sendRewrittenScript(rewriter, server, server_request, field, ...a
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
-	const response = await bareFetch(server, url, server_request, request_headers);
-	
+	const response = await server.tomp.bare.fetch(server_request.method, request_headers, url.protocol, url.host, url.port, url.path);
 	const response_headers = await handle_common_response(rewriter, server, server_request, url, response, ...args);
 	
 	if(status_empty.includes(+response.status)){
@@ -300,7 +299,7 @@ async function sendHTML(server, server_request, field){
 	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
-	const response = await bareFetch(server, url, server_request, request_headers);
+	const response = await server.tomp.bare.fetch(server_request.method, request_headers, url.protocol, url.host, url.port, url.path);
 	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, response);
 
 	let send = new Uint8Array();
