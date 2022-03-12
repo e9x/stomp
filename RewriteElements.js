@@ -453,7 +453,7 @@ export default class RewriteElements {
 						return;
 					}
 
-					context.value = this.tomp.js.wrap(value, url, false, element_is_type(element, js_module_types));
+					context.value = this.tomp.js.wrap(value, url, false, element_is_type(element, js_module_types)).replace(/<\/script>/g, '<\\/script>');
 					context.modified = true;
 				},
 				unwrap: (value, element, url, context) => {
