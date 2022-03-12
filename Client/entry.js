@@ -1,6 +1,6 @@
 import PageClient from './Page/Client.js';
 import WorkerClient from './Worker/Client.js';
-import global from './global.js';
+import global from '../global.js';
 import { global_client } from '../RewriteJS.js';
 import { is_page, is_worker } from './environment.js';
 

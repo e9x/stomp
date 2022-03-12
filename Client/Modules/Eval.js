@@ -1,5 +1,5 @@
 import Rewrite from '../Rewrite.js';
-import global from '../global.js';
+import global from '../../global.js';
 import { Reflect, wrap_function } from '../rewriteUtil.js';
 
 export default class EvalRewrite extends Rewrite {

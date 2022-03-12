@@ -1,5 +1,5 @@
 import Rewrite from '../Rewrite.js';
-import global from '../global.js';
+import global from '../../global.js';
 import { wrap_function, function_strings, mirror_attributes, Reflect } from '../rewriteUtil.js';
 import NativeHelper from './NativeHelper.js';
 

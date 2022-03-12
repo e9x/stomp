@@ -1,5 +1,5 @@
 import Rewrite from '../../Rewrite.js';
-import global from '../../global.js';
+import global from '../../../global.js';
 import { wrap_function, Reflect, getOwnPropertyDescriptors, context_this } from '../../rewriteUtil.js';
 import WindowRewrite from './Window.js';
 import { global_client } from '../../../RewriteJS.js';
