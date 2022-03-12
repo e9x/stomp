@@ -1,4 +1,4 @@
-import { status_empty } from '../Bare.js';
+import { forbids_body, status_empty } from '../Bare.js';
 import { mapHeaderNamesFromArray } from './HeaderUtil.js'
 import { html_types, get_mime } from '../RewriteElements.js';
 import { load_setcookies, get_cookies } from './Cookies.js';
@@ -203,15 +203,23 @@ async function get_data(server, server_request, field){
 	
 	await handle_common_request(server, server_request, request_headers, url);
 	
+	let body = undefined;
+
+	if(!forbids_body.includes(server_request.method)){
+		// https://developer.mozilla.org/en-US/docs/Web/API/Request/body#browser_compatibility
+		body = await server_request.blob();
+	}
+
 	return {
 		gd_error: false,
 		url,
+		body,
 		request_headers,
 	};
 }
 
 export async function sendBinary(server, server_request, field){
-	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
+	const {gd_error,url,request_headers,body} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
 	const exact_request_headers = Object.fromEntries(request_headers.entries());
@@ -223,7 +231,7 @@ export async function sendBinary(server, server_request, field){
 		delete exact_request_headers['x-tomp-impl-names'];
 	}
 	
-	const response = await server.tomp.bare.fetch(server_request.method, exact_request_headers, url.protocol, url.host, url.port, url.path);
+	const response = await server.tomp.bare.fetch(server_request.method, exact_request_headers, body, url.protocol, url.host, url.port, url.path);
 	
 	const response_headers = await handle_common_response(server.tomp.binary, server, server_request, url, response);
 	
@@ -248,10 +256,10 @@ export async function sendBinary(server, server_request, field){
 }
 
 async function sendRewrittenScript(rewriter, server, server_request, field, ...args){
-	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
+	const {gd_error,url,request_headers,body} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
-	const response = await server.tomp.bare.fetch(server_request.method, request_headers, url.protocol, url.host, url.port, url.path);
+	const response = await server.tomp.bare.fetch(server_request.method, request_headers, body, url.protocol, url.host, url.port, url.path);
 	const response_headers = await handle_common_response(rewriter, server, server_request, url, response, ...args);
 	
 	if(status_empty.includes(+response.status)){
@@ -296,10 +304,10 @@ async function sendSVG(server, server_request, field){
 }
 
 async function sendHTML(server, server_request, field){
-	const {gd_error,url,request_headers} = await get_data(server, server_request, field);
+	const {gd_error,url,request_headers,body} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
-	const response = await server.tomp.bare.fetch(server_request.method, request_headers, url.protocol, url.host, url.port, url.path);
+	const response = await server.tomp.bare.fetch(server_request.method, request_headers, body, url.protocol, url.host, url.port, url.path);
 	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, response);
 
 	let send = new Uint8Array();

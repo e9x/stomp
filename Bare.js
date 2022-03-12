@@ -75,7 +75,7 @@ export default class Bare {
 
 		return socket;
 	}
-	async fetch(method, request_headers, protocol, host, port, path){
+	async fetch(method, request_headers, body, protocol, host, port, path){
 		if(protocol.startsWith('blob:')){
 			const response = await fetch(`blob:${location.origin}${path}`);
 			response.json_headers = Object.fromEntries(response.headers.entries());
@@ -110,11 +110,9 @@ export default class Bare {
 			method: method,
 		};
 	
-		if(!forbids_body.includes(options.method?.toUpperCase())){
-			// https://developer.mozilla.org/en-US/docs/Web/API/Request/body#browser_compatibility
-			options.body = await server_request.blob();
+		if(body !== undefined){
+			options.body = body;
 		}
-		
 		
 		// bare can be an absolute path containing no origin, it becomes relative to the script	
 		const request = new Request(new URL(this.server + 'v1/', location), options);
