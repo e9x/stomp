@@ -1,5 +1,5 @@
 import Rewrite from '../Rewrite.js';
-import global from '../global.js';
+import global from '../../global.js';
 import { wrap_function, Reflect, context_this } from '../rewriteUtil.js';
 
 export default class RequestRewrite extends Rewrite {

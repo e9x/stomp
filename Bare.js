@@ -2,7 +2,7 @@
 // See ../Server/Send.mjs
 
 import { encodeProtocol } from './encodeProtocol.js';
-import global from './Client/global.js';
+import global from './global.js';
 
 export const forbids_body = ['GET','HEAD'];
 export const status_empty = [101,204,205,304];

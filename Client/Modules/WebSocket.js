@@ -1,5 +1,5 @@
 import Rewrite from '../Rewrite.js';
-import global from '../global.js';
+import global from '../../global.js';
 import { validProtocol } from '../../encodeProtocol.js';
 import { load_setcookies, get_cookies } from '../../Worker/Cookies.js';
 import { Reflect } from '../rewriteUtil.js';
