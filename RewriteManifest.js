@@ -1,6 +1,6 @@
 import Rewriter from './Rewriter.js';
 
-export class RewriteManifest extends Rewriter {
+export default class RewriteManifest extends Rewriter {
 	static service = 'manifest';
 	wrap(code, url){
 		let manifest;

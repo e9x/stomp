@@ -3,7 +3,7 @@ import Parse5Iterator from './IterateParse5.js';
 import { serialize, parseFragment } from 'parse5';
 import { TOMPElementParse5 } from './RewriteHTML.js';
 
-export class RewriteSVG extends Rewriter {
+export default class RewriteSVG extends Rewriter {
 	static service = 'svg';
 	#wrap(html, url, wrap){
 		const ast = parseFragment(html);

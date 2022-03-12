@@ -58,7 +58,7 @@ export class TOMPElementParse5 extends TOMPElement {
 	}
 };
 
-export class RewriteHTML extends Rewriter {
+export default class RewriteHTML extends Rewriter {
 	static service = 'html';
 	get_head(url){
 		const nodes = [];

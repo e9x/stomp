@@ -79,7 +79,7 @@ function element_is_type(element, types){
 	return types.includes(get_mime(type).toLowerCase());
 }
 
-export class RewriteElements {
+export default class RewriteElements {
 	// attribute
 	unwrap_mock = fallback => (name, value, element, url, context) => {
 		if(element.attributes.has(attribute_original + name)){

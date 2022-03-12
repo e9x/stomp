@@ -1,7 +1,7 @@
 // for api compatibility
 import Rewriter from './Rewriter.js';
 
-export class RewriteBinary extends Rewriter {
+export default class RewriteBinary extends Rewriter {
 	static service = 'binary';
 	serve(serve, url){
 		serve = String(serve);

@@ -47,7 +47,7 @@ export class ParsedRewrittenURL {
 	}
 };
 
-export class RewriteURL {
+export default class RewriteURL {
 	constructor(tomp){
 		this.tomp = tomp;
 	}

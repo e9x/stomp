@@ -1,7 +1,7 @@
 import Rewriter from './Rewriter.js';
 import { parse, walk, generate } from 'css-tree';
 
-export class RewriteCSS extends Rewriter {
+export default class RewriteCSS extends Rewriter {
 	static service = 'css';
 	wrap(code, url, context = 'stylesheet'){
 		try{

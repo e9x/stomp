@@ -23,7 +23,7 @@ const parse_options = module => {
 	};
 };
 
-export class RewriteJS extends Rewriter {
+export default class RewriteJS extends Rewriter {
 	static service = 'js';
 	worker_main(url){
 		const cli = `${this.tomp.directory}client.js`;
