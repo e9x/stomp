@@ -33,24 +33,6 @@ export default class Bare {
 
 		const id = await assign_meta.text();
 		
-		console.log({
-			remote: {
-				protocol,
-				host,
-				port,
-				path,
-			},
-			headers: request_headers,
-			forward_headers: [
-				'accept-encoding',
-				'accept-language',
-				'sec-websocket-extensions',
-				'sec-websocket-key',
-				'sec-websocket-version',
-			],
-			id,
-		});
-
 		const socket = new WebSocket(this.ws_v1, [
 			'bare',
 			encodeProtocol(JSON.stringify({
