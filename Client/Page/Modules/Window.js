@@ -193,7 +193,7 @@ export default class WindowRewrite extends Rewrite {
 
 		window.eval(script);
 		
-		window[global_client](this.client.tomp);
+		window[global_client](this.client.tomp.toJSON());
 	}
 	restrict(){
 		throw new DOMException(`Blocked a frame with "${this.client.base.toOrigin()}" from accessing a cross-origin frame.`)
