@@ -232,7 +232,21 @@ export default class DOMRewrite extends Rewrite {
 			return Reflect.construct(target, [src], that);
 		}, true);
 	}
+	write_work(){
+		document.write = wrap_function(document.write, (target, that, [ html ]) => {
+			html = String(html);
+			html = this.client.tomp.html.wrap(html, this.client.base);
+			return Reflect.apply(target, that, [ html ]);
+		});
+
+		document.writeln = wrap_function(document.writeln, (target, that, [ html ]) => {
+			html = String(html);
+			html = this.client.tomp.html.wrap(html, this.client.base);
+			return Reflect.apply(target, that, [ html ]);
+		});
+	}
 	work(){
+		this.write_work();
 		this.style_work();
 		this.attr_work();
 		this.anchor_work();
