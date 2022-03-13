@@ -2,7 +2,7 @@ import Rewrite from '../../Rewrite.js';
 import g from '../../../global.js';
 // https://github.com/webpack/webpack/issues/12960
 const global = g;
-import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect, wrap_function } from '../../rewriteUtil.js';
+import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect, wrap_function, test_args } from '../../rewriteUtil.js';
 import { attribute_original, get_mime, TOMPElement } from '../../../RewriteElements.js';
 
 const { getAttribute, setAttribute, hasAttribute, hasAttributeNS, removeAttribute, getAttributeNames } = global?.Element?.prototype || {};
@@ -97,14 +97,13 @@ class TOMPElementDOM extends TOMPElement {
 	}
 };
 
-function test_args(target, args, length, class_name){
-	if(args.length < length){
-		throw new TypeError(`Failed to execute '${target.name}' on '${class_name}': ${length} arguments required, but only ${args.length} present.`);
-	}
-}
-
 export default class DOMRewrite extends Rewrite {
+	styles = new WeakMap();
 	style_proxy(style){
+		if(this.styles.has(style)){
+			return this.styles.get(style);
+		}
+
 		const proxy = new Proxy(style, {
 			get: (target, prop, receiver) => {
 				let result = Reflect.get(target, prop, receiver);
@@ -135,6 +134,7 @@ export default class DOMRewrite extends Rewrite {
 		});
 
 		native_proxies.set(proxy, style);
+		this.styles.set(style, proxy);
 
 		return proxy;
 	}
@@ -194,14 +194,13 @@ export default class DOMRewrite extends Rewrite {
 	}
 	attr_work(){
 		const value = Reflect.getOwnPropertyDescriptor(Attr.prototype, 'value');
-
+		
 		Reflect.defineProperty(Attr.prototype, 'value', {
-			// Attr.prototype.namespaceURI....
 			get: wrap_function(value.get, (target, that, args) => {
-				return Reflect.apply(this.get_attribute(false, getAttribute), that.ownerElement, [ that.name ]);
+				return Reflect.apply(this.get_attribute(true, getAttributeNS), that.ownerElement, [ Attr.prototype.namespaceURI, that.name ]);
 			}),
 			set: wrap_function(value.set, (target, that, [ value ]) => {
-				return Reflect.apply(this.get_attribute(false, getAttribute), that.ownerElement, [ that.name, value ]);
+				return Reflect.apply(this.get_attribute(true, setAttributeNS), that.ownerElement, [ Attr.prototype.namespaceURI, that.name, value ]);
 			}),
 			enumerable: true,
 			configurable: true,
@@ -363,16 +362,21 @@ export default class DOMRewrite extends Rewrite {
 		});
 
 		this.has_attribute = (is_namespace, target) => wrap_function(Element.prototype.hasAttribute, (target, that, args) => {
-			if(args.length < 1){
-				throw new TypeError(`Failed to execute '${target.name}' on 'Element': 1 argument required, but only ${args.length} present.`);
+			let suffix = [];
+
+			if(is_namespace){
+				test_args(target, args, 2, 'Element');
+				suffix = args.splice(0, 1);
+			}else{
+				test_args(target, args, 1, 'Element');
 			}
 
 			let [ name ] = args;
 			name = String(name);
 
 			const element = new TOMPElementDOM(that);
-			const value = Reflect.apply(target, that, [ name ]);
-			return this.client.tomp.elements.has_attribute(name, value, element, this.client.base);	
+			const value = Reflect.apply(target, that, [ ...suffix, name ]);
+			return this.client.tomp.elements.has_attribute(name, value, element, this.client.base);
 		});
 
 		this.get_attribute = (is_namespace, target) => wrap_function(target, (target, that, args) => {
@@ -433,19 +437,21 @@ export default class DOMRewrite extends Rewrite {
 			}
 			
 			this.client.tomp.elements.done_wrapping(true, element, this.client.base);
-
-			return undefined;
 		});
 
-		/*const attributes = Reflect.getOwnPropertyDescriptor(Element.prototype, 'attributes');
+		Element.prototype.getAttributeNames = wrap_function(Element.prototype.getAttributeNames, (target, that, args) => {
+			const result = [];
 
-		Reflect.defineProperty(Element.prototype, 'attributes', {
-			configurable: true,
-			enumerable: truee,
-			get: wrap_function(attributes.get, (target, that, args) => {
+			for(let attribute of Reflect.apply(target, that, args)){
+				const has = Reflect.apply(this.has_attribute(false, hasAttribute), that, [ name ]);
+			
+				if(has){
+					result.push(attribute);
+				}
+			}
 
-			}),
-		});*/
+			return result;
+		});
 		
 		Element.prototype.getAttribute = this.get_attribute(false, Element.prototype.getAttribute);
 		Element.prototype.getAttributeNS = this.get_attribute(true, Element.prototype.getAttributeNS);

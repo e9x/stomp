@@ -867,7 +867,7 @@ export default class RewriteElements {
 			return false;
 		}
 
-		return true;
+		return value;
 	}
 	get_attribute(name, value, element, url){
 		const context = {};

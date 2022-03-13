@@ -162,3 +162,9 @@ export function context_this(that){
 		return that;
 	}
 }
+
+export function test_args(target, args, length, class_name){
+	if(args.length < length){
+		throw new TypeError(`Failed to execute '${target.name}' on '${class_name}': ${length} arguments required, but only ${args.length} present.`);
+	}
+};
