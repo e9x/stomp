@@ -829,6 +829,10 @@ export default class RewriteElements {
 			}
 			
 			if('content' in ab){
+				if(!('unwrap' in ab.content)){
+					continue;
+				}
+				
 				ab.content.unwrap(value, element, url, context);
 
 				return context;
@@ -846,6 +850,10 @@ export default class RewriteElements {
 			}
 			
 			if('content' in ab){
+				if(!('wrap' in ab.content)){
+					continue;
+				}
+				
 				ab.content.wrap(value, element, url, context);
 				
 				return context;
@@ -889,6 +897,10 @@ export default class RewriteElements {
 					continue;
 				}
 				
+				if(!('unwrap' in attr)){
+					continue;
+				}
+				
 				attr.unwrap(name, value, element, url, context);
 				
 				return context;
@@ -920,11 +932,14 @@ export default class RewriteElements {
 			
 			if('attributes' in ab){
 				for(let attr of ab.attributes){
-					
 					if(!attr.name.test_tag(name)){
 						continue;
 					}
 					
+					if(!('wrap' in attr)){
+						continue;
+					}
+				
 					attr.wrap(name, value, element, url, context);
 										
 					return context;
@@ -956,6 +971,10 @@ export default class RewriteElements {
 					continue;
 				}
 				
+				if(!('unwrap' in attr)){
+					continue;
+				}
+				
 				attr.unwrap(name, value, element, url, context);
 				
 				return context;
@@ -974,11 +993,14 @@ export default class RewriteElements {
 			
 			if('attributes' in ab){
 				for(let attr of ab.attributes){
-					
 					if(!attr.name.test_class(name)){
 						continue;
 					}
 					
+					if(!('wrap' in attr)){
+						continue;
+					}
+
 					attr.wrap(name, value, element, url, context);
 					
 					return context;

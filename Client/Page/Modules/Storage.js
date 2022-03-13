@@ -133,7 +133,7 @@ export default class StorageRewrite extends Rewrite {
 
 				return that.parse_worker_storage(rawArrayBuffer);
 			}
-			key(args){
+			key(...args){
 				if(args.length < 1){
 					throw new TypeError(`Uncaught TypeError: Failed to execute 'key' on 'Storage': 1 argument required, but only 0 present.`);
 				}
@@ -156,7 +156,7 @@ export default class StorageRewrite extends Rewrite {
 				
 				return that.parse_worker_storage(rawArrayBuffer);
 			}
-			removeItem(args){
+			removeItem(...args){
 				if(args.length < 1){
 					throw new TypeError(`Uncaught TypeError: Failed to execute 'removeItem' on 'Storage': 1 argument required, but only ${args.length} present.`);
 				}
