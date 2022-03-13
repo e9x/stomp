@@ -146,7 +146,7 @@ export default class RewriteElements {
 							context.value = text_context.value;
 							context.modified = true;
 						}else{
-							context.value = this.tomp.html.unwrap(value, url, true);
+							context.value = this.tomp.html.wrap(value, url, true);
 							context.modified = true;
 						}
 					},
@@ -157,7 +157,7 @@ export default class RewriteElements {
 							context.value = text_context.value;
 							context.modified = true;
 						}else{
-							context.value = this.tomp.html.wrap(value, url, true);
+							context.value = this.tomp.html.unwrap(value, url, true);
 							context.modified = true;
 						}
 					},

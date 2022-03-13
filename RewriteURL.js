@@ -24,6 +24,11 @@ export class ParsedRewrittenURL {
 		if(typeof path === 'string'){
 			this.path = path;
 		}
+
+		if(this.toOrigin() === 'http://:0'){
+			console.trace(this, 'was http://:0');
+			debugger;
+		}
 	}
 	get port_string(){
 		if(protocols_slashes.includes(this.protocol) && default_ports.includes(this.port)){
@@ -40,7 +45,7 @@ export class ParsedRewrittenURL {
 		}
 	}
 	toString(){
-		return `${this.protocol}${this.slash}${this.host}${this.port_string}${this.path}`;
+		return this.toOrigin() + this.path;
 	}
 	toOrigin(){
 		return `${this.protocol}${this.slash}${this.host}${this.port_string}`;
