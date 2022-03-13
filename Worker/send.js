@@ -310,7 +310,7 @@ async function sendHTML(server, server_request, field){
 	const response = await server.tomp.bare.fetch(server_request.method, request_headers, body, url.protocol, url.host, url.port, url.path);
 	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, response);
 
-	let send = new Uint8Array();
+	let send = undefined;
 	
 	if(!status_empty.includes(+response.status)){
 		const mime = get_mime(response_headers.get('content-type') || '');
@@ -329,6 +329,7 @@ async function sendHTML(server, server_request, field){
 			send = response.body;
 		}
 	}
+
 	for(let remove of remove_html_headers)response_headers.delete(remove);
 
 	if(response_headers.has('refresh')){
