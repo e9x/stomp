@@ -353,7 +353,7 @@ async function sendForm(server, server_request, field){
 		
 		return new Response(undefined,  {
 			headers,
-			status: 302,
+			status: 307,
 		});
 	}
 
@@ -380,7 +380,7 @@ async function sendForm(server, server_request, field){
 	// https://stackoverflow.com/questions/14935090/how-to-preserve-request-body-on-performing-http-redirect-from-servlet-filter
 	return new Response(undefined, {
 		headers,
-		status: 307 ,
+		status: 307,
 	});
 }
 
@@ -389,10 +389,18 @@ async function process(server, server_request, field){
 	url = decodeURIComponent(url);
 	service = decodeURIComponent(service);
 
-	const headers = new Headers();
-	headers.set('content-type', 'text/html');
-	headers.set('refresh', '0;' + server.tomp[service].serve(url, url));
-	return new Response(undefined, { headers });
+	if(!(service in server.tomp)){
+		return new Response(undefined, {
+			sttus: 400,
+		});
+	}
+
+	return new Response(undefined, {
+		headers: {
+			location: server.tomp[service].serve(url, url),
+		},
+		status: 307,
+	});
 }
 
 export default async function register(server){
