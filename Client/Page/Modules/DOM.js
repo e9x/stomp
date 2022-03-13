@@ -197,10 +197,10 @@ export default class DOMRewrite extends Rewrite {
 		
 		Reflect.defineProperty(Attr.prototype, 'value', {
 			get: wrap_function(value.get, (target, that, args) => {
-				return Reflect.apply(this.get_attribute(true, getAttributeNS), that.ownerElement, [ Attr.prototype.namespaceURI, that.name ]);
+				return Reflect.apply(this.get_attribute(true, getAttributeNS), that.ownerElement, [ that.namespaceURI, that.name ]);
 			}),
 			set: wrap_function(value.set, (target, that, [ value ]) => {
-				return Reflect.apply(this.get_attribute(true, setAttributeNS), that.ownerElement, [ Attr.prototype.namespaceURI, that.name, value ]);
+				return Reflect.apply(this.get_attribute(true, setAttributeNS), that.ownerElement, [ that.namespaceURI, that.name, value ]);
 			}),
 			enumerable: true,
 			configurable: true,
