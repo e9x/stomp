@@ -5,7 +5,7 @@ const global = g;
 import { bind_natives, getOwnPropertyDescriptors, native_proxies, Proxy, Reflect, wrap_function, test_args } from '../../rewriteUtil.js';
 import { attribute_original, get_mime, TOMPElement } from '../../../RewriteElements.js';
 
-const { getAttribute, setAttribute, hasAttribute, hasAttributeNS, removeAttribute, getAttributeNames } = global?.Element?.prototype || {};
+const { getAttribute, getAttributeNS, setAttribute, setAttributeNS, hasAttribute, hasAttributeNS, removeAttribute, removeAttributeNS, getAttributeNamesNS } = global?.Element?.prototype || {};
 const { localName } = getOwnPropertyDescriptors(global?.Element?.prototype || {});
 
 class TOMPElementDOMAttributes {
