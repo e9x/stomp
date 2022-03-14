@@ -6,6 +6,8 @@ export default class SearchBuilder {
 		this.template = String(template);
 	}
 	query(input){
+		input = String(input);
+
 		if(input.includes('.') && !input.match(http_s_protocol)){
 			return `http://${input}`;
 		}else if(input.match(whitespace) || !input.match(http_s_protocol)) {
