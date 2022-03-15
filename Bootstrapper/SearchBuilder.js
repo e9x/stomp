@@ -8,12 +8,12 @@ export default class SearchBuilder {
 	query(input){
 		input = String(input);
 
-		if(input.includes('.') && !input.match(http_s_protocol)){
-			return `http://${input}`;
-		}else if(input.match(whitespace) || !input.match(http_s_protocol)) {
-			return this.template.replace('%s', encodeURIComponent(input));
-		}else{
+		if(input.match(http_s_protocol)){
 			return input;
+		}else if(input.includes('.') && !input.match(whitespace)){
+			return `http://${input}`;
+		}else{
+			return this.template.replace('%s', encodeURIComponent(input));
 		}
 	}
 };
