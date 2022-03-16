@@ -1,4 +1,4 @@
-import { parseScript } from 'meriyah';
+import { parseScript } from 'meriyah-loose';
 import { generate as generateScript } from '@javascript-obfuscator/escodegen';
 import { readFile } from 'node:fs/promises';
 

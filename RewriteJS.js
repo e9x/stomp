@@ -1,6 +1,6 @@
 import Rewriter from './Rewriter.js';
 import AcornIterator from './IterateAcorn.js';
-import { parseScript } from 'meriyah';
+import { parseScript } from 'meriyah-loose';
 import { generate } from '@javascript-obfuscator/escodegen';
 import { builders as b } from 'ast-types';
 

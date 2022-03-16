@@ -31,7 +31,7 @@
 		"commander": "^9.0.0",
 		"css-tree": "^2.0.4",
 		"idb": "^7.0.0",
-		"meriyah": "^4.2.0",
+		"meriyah": "github:sysce/meriyah-loose",
 		"parse5": "^6.0.1",
 		"set-cookie-parser": "^2.4.8",
 		"srcset": "^5.0.0",
