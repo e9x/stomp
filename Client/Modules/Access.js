@@ -28,7 +28,7 @@ export default class AccessRewrite extends Rewrite {
 		this.eval.global[global_proxy] = this.eval.eval_global_proxy;
 		
 		if(this.client.type === 'page'){
-			this.unique_parent = parent !== global  && global_client in parent;
+			this.unique_parent = parent !== global && global_client in parent;
 			
 			if(this.unique_parent){
 				this.parent = parent;

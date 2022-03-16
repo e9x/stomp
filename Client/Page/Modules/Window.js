@@ -6,6 +6,8 @@ import { is_tomp } from './PageRequest.js';
 import NativeHelper from '../../Modules/NativeHelper.js';
 
 export default class WindowRewrite extends Rewrite {
+	top = global.top;
+	parent = global.parent;
 	global = global.postMessage;
 	restricted = new WeakMap([ [global, global] ]);
 	same_origin(window){
@@ -268,9 +270,35 @@ export default class WindowRewrite extends Rewrite {
 
 		return restricted;
 	}
+	find_top(){
+		const stack = [
+			global,
+		];
+
+		let window;
+
+		while(window = stack.pop()){
+			try{
+				if(global_client in window){
+					// only set if unique
+					const parent = window[global_client].access.parent;
+
+					if(parent !== undefined){
+						stack.unshift(parent);
+					}
+				}
+			}catch(error){}
+		}
+
+		return window;
+	}
 	restrict_window(window){
 		if(!(global_client in window)){
-			return null;
+			if(window === top){
+				return this.find_top();
+			}else{
+				return window;
+			}
 		}
 
 		if(this.same_origin(window)){
