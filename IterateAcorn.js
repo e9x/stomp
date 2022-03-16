@@ -88,22 +88,29 @@ export default class AcornIterator {
 		this.stack.push(new AcornContext(ast, undefined, undefined, this.stack, true));
 	}
 	next(){
-		if(!this.stack.length) return { value: undefined, done: true };
+		if(!this.stack.length){
+			return { value: undefined, done: true };
+		}
 		
 		const context = this.stack.pop();
 		const entries = [];
 
-		for(let [key, value] of Object.entries(context.node)){
-			if(typeof value?.type == 'string')entries.push([key,value]);
-			else if(Array.isArray(value)){
+		for(let key in context.node){
+			const value = context.node[key];
+
+			if(typeof value?.type === 'string'){
+				entries.push([key,value]);
+			}else if(value instanceof Array){
 				for(let sv of value){
-					if(typeof sv?.type == 'string')entries.push([key,sv]);
+					if(typeof sv?.type === 'string'){
+						entries.push([key,sv]);
+					}
 				}
 			}
 		}
 
-		let start = this.stack.length - 1,
-			length = entries.length;
+		const start = this.stack.length - 1;
+		let length = entries.length;
 		
 		for(let [key, node] of entries){
 			const ent = new AcornContext(node, context, key, this.stack);

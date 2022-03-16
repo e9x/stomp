@@ -4,8 +4,10 @@ import { parse, walk, generate } from 'css-tree';
 export default class RewriteCSS extends Rewriter {
 	static service = 'css';
 	wrap(code, url, context = 'stylesheet'){
+		let ast;
+		
 		try{
-			var ast = parse(code, { context });
+			ast = parse(code, { context });
 		}catch(err){
 			if(err instanceof SyntaxError){
 				return `/*${JSON.stringify(err.message)}*/`;
@@ -15,7 +17,10 @@ export default class RewriteCSS extends Rewriter {
 		const that = this;
 
 		walk(ast, function(node, item, list){
-			if(node.type === 'Url')try{
+			if(node.type === 'Raw' && node.value.includes('url(')){
+				// node.value that be any raw data from what I see
+				node.value = that.wrap(node.value, url, 'value');
+			}else if(node.type === 'Url')try{
 				const resolved = new URL(node.value, url);
 				
 				if(this.atrule?.name === 'import'){
@@ -24,7 +29,7 @@ export default class RewriteCSS extends Rewriter {
 					node.value = that.tomp.binary.serve(resolved, url);
 				}
 			}catch(err){
-				// console.error(err);
+				console.error(err);
 				return;
 			}
 			else if(node.name === 'import'){
@@ -34,7 +39,7 @@ export default class RewriteCSS extends Rewriter {
 					const resolved = new URL(data.value, url);
 					data.value = that.tomp.css.serve(resolved, url);
 				}catch(err){
-					// console.error(err);
+					console.error(err);
 					return;
 				}
 			}

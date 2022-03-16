@@ -7,7 +7,10 @@ export default function(file, { dontUnwrap }){
 	const tomp = new TOMP({
 		directory: '/',
 		bare: '/',
+		origin: 'http://localhost',
 	});
+
+	tomp.key = tomp.codec.generate_key();
 
 	file = resolve(cwd(), file);
 	console.log('Using test:', file);
