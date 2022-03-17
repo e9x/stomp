@@ -43,7 +43,7 @@ export function mirror_attributes(from, to){
 };
 
 export function wrap_function(fn, wrap, construct){
-	if(typeof fn != 'function')throw new TypeError(`First argument to wrap_function(fn, wrap, construct) was not a function.`);
+	if(typeof fn !== 'function')throw new TypeError(`First argument to wrap_function(fn, wrap, construct) was not a function.`);
 
 	const name = fn.name;
 
