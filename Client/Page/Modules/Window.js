@@ -4,6 +4,7 @@ import { global_client } from '../../../RewriteJS.js';
 import { Reflect, wrap_function } from '../../rewriteUtil.js';
 import { is_tomp } from './PageRequest.js';
 import NativeHelper from '../../Modules/NativeHelper.js';
+import domianNameParser from 'effective-domain-name-parser';
 
 export default class WindowRewrite extends Rewrite {
 	top = global.top;
@@ -16,7 +17,13 @@ export default class WindowRewrite extends Rewrite {
 
 		// https://web.dev/same-site-same-origin/
 		// todo: compare eTLD
-		return this.remove_blob(base.protocol) === this.remove_blob(window_base.protocol); // && base.port === window_base.port && window_base.host === base.host;
+		return this.remove_blob(base.protocol) === this.remove_blob(window_base.protocol) && base.port === window_base.port && this.same_host(base.host, window_base.host);
+	}
+	same_host(hosta, hostb){
+		const pa = domianNameParser.parse(hosta);
+		const pb = domianNameParser.parse(hostb);
+
+		return pa.sld === pb.sld;
 	}
 	remove_blob(protocol){
 		const blob = 'blob:';
@@ -191,7 +198,7 @@ export default class WindowRewrite extends Rewrite {
 
 		let script = http.responseText;
 		
-		script = script.replace('//# sourceMappingURL=client.js.map', `//# sourceMappingURL=${this.client.host.toOrigin()}${this.client.tomp.directory}client.js.map`)
+		script = script.replace('//# sourceMappingURL=client.js.map$', `//# sourceMappingURL=${this.client.host.toOrigin()}${this.client.tomp.directory}client.js.map`)
 
 		window.eval(script);
 		

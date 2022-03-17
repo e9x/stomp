@@ -5,6 +5,7 @@ import { Reflect, wrap_function } from '../../rewriteUtil.js';
 export default class HistoryRewrite extends Rewrite {
 	global = global.history;
 	handler(target, that, args){
+		console.log(that, this.global, that === this.global);
 		if(that !== this.global){
 			throw new TypeError('Illegal invocation');
 		}
