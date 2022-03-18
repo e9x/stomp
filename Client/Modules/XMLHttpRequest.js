@@ -118,7 +118,7 @@ export default class XMLHttpRequestRewrite extends Rewrite {
 
 				return this.#response;
 			}
-			#on_headers(error, response){
+			#on_headers(error, response, url){
 				if(error){
 					console.error(error);
 				}
@@ -126,7 +126,7 @@ export default class XMLHttpRequestRewrite extends Rewrite {
 				this.#readyState = HEADERS_RECEIVED;
 				this.#status = response.status;
 				this.#statusText = response.statusText;
-				this.#responseURL = that.client.tomp.html.unwrap_serving(response.rawUrl, that.client.base).toString();
+				this.#responseURL = that.client.tomp.html.unwrap_serving(url, that.client.base).toString();
 				this.#response_headers = response.headers;
 				this.#dispatch_readyState();
 
@@ -174,14 +174,14 @@ export default class XMLHttpRequestRewrite extends Rewrite {
 					init.signal = this.#abort.signal;
 
 					Reflect.apply(that.client.get(RequestRewrite).global_fetch, global, [ url, init ]).then(async response => {
-						this.#on_headers(undefined, response);
+						this.#on_headers(undefined, response, response.url);
 						const buffer = await response.arrayBuffer();
 						this.#on_done(undefined, response, buffer);
 					}).catch(error => this.#on_done(error));	
 				}else{
 					try{
 						const response = that.client.get(SyncClient).fetch(url, init);
-						this.#on_headers(undefined, response);
+						this.#on_headers(undefined, response, response.rawUrl);
 						this.#on_done(undefined, response, response.rawArrayBuffer);
 					}catch(error){
 						this.#on_done(error);
