@@ -98,11 +98,20 @@ export default class AcornIterator {
 		for(let key in context.node){
 			const value = context.node[key];
 
-			if(typeof value?.type === 'string'){
+			if(typeof value !== 'object' || value === null){
+				continue;
+			}
+
+
+			if(typeof value.type === 'string'){
 				entries.push([key,value]);
-			}else if(value instanceof Array){
+			}else if(Array.isArray(value)){
 				for(let sv of value){
-					if(typeof sv?.type === 'string'){
+					if(typeof sv !== 'object' || value === null){
+						continue;
+					}
+					
+					if(typeof sv.type === 'string'){
 						entries.push([key,sv]);
 					}
 				}

@@ -83,7 +83,9 @@ export default class Parse5Iterator {
 		this.stack = [new Parse5Context(ast, undefined, true)];
 	}
 	next(){
-		if(!this.stack.length) return { value: undefined, done: true };
+		if(!this.stack.length){
+			return { value: undefined, done: true };
+		}
 		
 		const context = this.stack.pop();
 

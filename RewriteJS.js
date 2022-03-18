@@ -55,7 +55,7 @@ export default class RewriteJS extends Rewriter {
 		// code = null;
 
 		for(let ctx of new AcornIterator(ast)){
-			switch(ctx.type){
+			ctx_type: switch(ctx.type){
 				case'ImportExpression':
 					
 					// todo: add tompc$.import(meta, url)
@@ -94,20 +94,55 @@ export default class RewriteJS extends Rewriter {
 
 					break;
 				case'Identifier':
-					
-					if(ctx.parent.type === 'ArrayPattern' || ctx.parent.type === 'ObjectPattern')break;
-					if(ctx.parent.type === 'MemberExpression' && ctx.parent_key === 'property')break; // window.location;
-					if(ctx.parent.type === 'LabeledStatement')break; // { location: null, };
-					if(ctx.parent.type === 'VariableDeclarator' && ctx.parent_key === 'id')break;
-					if(ctx.parent.type === 'Property' && ctx.parent_key === 'key')break;
-					if(ctx.parent.type === 'MethodDefinition')break;
-					if(ctx.parent.type === 'ClassDeclaration')break;
-					if(ctx.parent.type === 'RestElement')break;
-					if(ctx.parent.type === 'ExportSpecifier')break;
-					if(ctx.parent.type === 'ImportSpecifier')break;
-					if((ctx.parent.type === 'FunctionDeclaration' || ctx.parent.type === 'FunctionExpression' || ctx.parent.type === 'ArrowFunctionExpression') && ctx.parent_key === 'params')break;
-					if((ctx.parent.type === 'FunctionDeclaration' || ctx.parent.type === 'FunctionExpression') && ctx.parent_key === 'id')break;
-					if(ctx.parent.type === 'AssignmentPattern' && ctx.parent_key === 'left') break;
+					switch(ctx.parent.type){
+						case'LabeledStatement':
+						case'MethodDefinition':
+						case'ClassDeclaration':
+						case'RestElement':
+						case'ExportSpecifier':
+						case'ImportSpecifier':
+						case'ArrayPattern':
+						case'ObjectPattern':
+							break ctx_type;
+						case'AssignmentPattern':
+							if(ctx.parent_key === 'left'){
+								break ctx_type;
+							}
+
+							break;
+						case'MemberExpression':
+							if(ctx.parent_key === 'property'){
+								break ctx_type;
+							}
+
+							break;
+						case'VariableDeclarator':
+							if(ctx.parent_key === 'id'){
+								break ctx_type;
+							}
+
+							break;
+						case'FunctionDeclaration':
+						case'FunctionExpression':
+							if(ctx.parent_key === 'id'){
+								break ctx_type;
+							}
+
+							break;
+						case'ArrowFunctionExpression':
+							if(ctx.parent_key === 'params'){
+								break ctx_type;
+							}
+
+							break;
+						case'Property':
+							if(ctx.parent_key === 'key'){
+								break ctx_type;
+							}
+
+							break;
+					}
+
 					if(!undefinable.includes(ctx.node.name))break;
 					
 					if(ctx.parent.type === 'UpdateExpression' || ctx.parent.type === 'AssignmentExpression' && ctx.parent_key === 'left'){
@@ -149,8 +184,18 @@ export default class RewriteJS extends Rewriter {
 					break;
 				case'MemberExpression':
 				
-					if(ctx.parent.type === 'ArrayPattern' || ctx.parent.type === 'ObjectPattern')break;
-					if(ctx.parent.type === 'UnaryExpression' && ctx.parent.node.operator === 'delete')break;
+					switch(ctx.parent.type){
+						case'UnaryExpression':
+							if(ctx.parent.node.operator === 'delete'){
+								break ctx_type;
+							}
+							
+							break;
+						case'ArrayPattern':
+						case'ObjectPattern':
+							break ctx_type;
+					}
+					
 					if(ctx.node[this.prevent_rewrite])break;
 				
 					let rewrite = false;
@@ -263,7 +308,7 @@ export default class RewriteJS extends Rewriter {
 					break;
 			}
 		}
-
+		
 		code = generate(ast);
 		
 		if(worker){
