@@ -231,7 +231,7 @@ export async function sendBinary(server, server_request, field){
 		delete exact_request_headers['x-tomp-impl-names'];
 	}
 	
-	const response = await server.tomp.bare.fetch(server_request.method, exact_request_headers, body, url.protocol, url.host, url.port, url.path);
+	const response = await server.tomp.bare.fetch(server_request.method, exact_request_headers, body, url.protocol, url.host, url.port, url.path, server_request.cache);
 	
 	const response_headers = await handle_common_response(server.tomp.binary, server, server_request, url, response);
 	
@@ -259,7 +259,7 @@ async function sendRewrittenScript(rewriter, server, server_request, field, ...a
 	const {gd_error,url,request_headers,body} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
-	const response = await server.tomp.bare.fetch(server_request.method, request_headers, body, url.protocol, url.host, url.port, url.path);
+	const response = await server.tomp.bare.fetch(server_request.method, request_headers, body, url.protocol, url.host, url.port, url.path, server_request.cache);
 	const response_headers = await handle_common_response(rewriter, server, server_request, url, response, ...args);
 	
 	if(status_empty.includes(+response.status)){
@@ -307,7 +307,7 @@ async function sendHTML(server, server_request, field){
 	const {gd_error,url,request_headers,body} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
-	const response = await server.tomp.bare.fetch(server_request.method, request_headers, body, url.protocol, url.host, url.port, url.path);
+	const response = await server.tomp.bare.fetch(server_request.method, request_headers, body, url.protocol, url.host, url.port, url.path, server_request.cache);
 	const response_headers = await handle_common_response(server.tomp.html, server, server_request, url, response);
 
 	let send = undefined;
