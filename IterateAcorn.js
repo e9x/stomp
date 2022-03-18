@@ -107,10 +107,10 @@ export default class AcornIterator {
 				entries.push([key,value]);
 			}else if(Array.isArray(value)){
 				for(let sv of value){
-					if(typeof sv !== 'object' || value === null){
+					if(typeof sv !== 'object' || sv === null){
 						continue;
 					}
-					
+
 					if(typeof sv.type === 'string'){
 						entries.push([key,sv]);
 					}
