@@ -3,12 +3,11 @@ import global from '../../../global.js';
 import { engine } from '../../environment.js';
 import { decodeCookie } from '../../../encodeCookies.js';
 import { status_empty } from '../../../Bare.js';
-import { Reflect } from '../../rewriteUtil.js';
 import CookieRewrite from './Cookie.js'
 
 const { Request, XMLHttpRequest } = global;
 
-export class SyncClient {
+export default class SyncClient {
 	constructor(client){
 		this.client = client;
 	}

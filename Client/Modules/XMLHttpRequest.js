@@ -3,7 +3,7 @@ import global from '../../global.js';
 import { Reflect } from '../rewriteUtil.js';
 import { EventTarget_on, TargetConstant, DOMObjectConstructor, mirror_class } from '../NativeUtil.js';
 import { forbids_body } from '../../Bare.js';
-import { SyncClient } from '../Page/Modules/SyncClient.js';
+import SyncClient from '../Page/Modules/SyncClient.js';
 import RequestRewrite from './Request.js';
 
 export default class XMLHttpRequestRewrite extends Rewrite {

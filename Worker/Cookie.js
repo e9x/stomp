@@ -167,9 +167,4 @@ export default class Cookie {
 			}
 		}
 	}
-	api = {
-		get: this.get,
-		set: this.set,
-		get_string: this.get_string,
-	};
 };

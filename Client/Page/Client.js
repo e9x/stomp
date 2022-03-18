@@ -1,5 +1,4 @@
-import { SyncClient } from './Modules/SyncClient.js';
-import { Reflect } from '../rewriteUtil.js';
+import SyncClient from './Modules/SyncClient.js';
 import Client from '../Client.js';
 import HistoryRewrite from './Modules/History.js';
 import DOMRewrite from './Modules/DOM.js';
@@ -10,6 +9,7 @@ import IFrameRewrite from './Modules/IFrame.js';
 import WindowRewrite from './Modules/Window.js';
 import IsolateModule from './Modules/Isolate.js';
 import { global_client } from '../../RewriteJS.js';
+import { Reflect } from '../rewriteUtil.js';
 
 export default class PageClient extends Client {
 	static type = 'page';
@@ -52,5 +52,24 @@ export default class PageClient extends Client {
 			IFrameRewrite,
 			IsolateModule,
 		);
+	}
+	decoder = new TextDecoder();
+	sync_api(api, target, args){
+		const response = this.get(SyncClient).fetch(...this.api_fetch_opts(api, target, args));
+		const decoded = this.decoder.decode(response.rawArrayBuffer);
+		
+		let parsed;
+
+		if(decoded === ''){
+			parsed = undefined;
+		}else{
+			parsed = JSON.parse(decoded);
+		}
+		
+		if(!response.ok){
+			throw parsed;
+		}else{
+			return parsed;
+		}
 	}
 };

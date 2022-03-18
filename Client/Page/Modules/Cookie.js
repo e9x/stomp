@@ -1,6 +1,5 @@
 import Rewrite from '../../Rewrite.js';
 import { Reflect, wrap_function } from '../../rewriteUtil.js';
-import { SyncClient } from './SyncClient.js';
 
 const decoder = new TextDecoder();
 
@@ -21,24 +20,14 @@ export default class CookieRewrite extends Rewrite {
 					throw new TypeError('Illegal invocation');
 				}
 
-				const { rawArrayBuffer } = this.client.get(SyncClient).fetch(`${this.client.tomp.directory}cookie:?` + new URLSearchParams({
-					target: 'get_string',
-					arguments: JSON.stringify([ this.client.base ]),
-				}));
-				
-				return decoder.decode(rawArrayBuffer);
+				return this.client.sync_api('cookie', 'get_string', [ this.client.base ]);
 			}),
 			set: wrap_function(this.global_descriptor.set, (target, that, [ value ]) => {
 				if(that !== document){
 					throw new TypeError('Illegal invocation');
 				}
 
-				this.client.get(SyncClient).fetch(`${this.client.tomp.directory}cookie:?` + new URLSearchParams({
-					target: 'set',
-					arguments: JSON.stringify([ this.client.base, value ]),
-				}));
-				
-				return value;
+				return this.client.sync_api('cookie', 'set', [ this.client.base, value ]);
 			}),
 		});
 

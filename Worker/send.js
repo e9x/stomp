@@ -1,3 +1,4 @@
+import APIServer from './APIServer.js';
 import { forbids_body, status_empty } from '../Bare.js';
 import { mapHeaderNamesFromArray } from './HeaderUtil.js'
 import { html_types, get_mime } from '../RewriteElements.js';
@@ -73,7 +74,7 @@ async function handle_common_request(server, server_request, request_headers, ur
 	request_headers.set('host', url.host);
 	
 	if(send_cookies){
-		const cookies = await server.cookies.get(url);
+		const cookies = await server.cookie.get(url);
 
 		if(cookies.length > 0){
 			request_headers.set('cookie', cookies.toString());
@@ -82,40 +83,6 @@ async function handle_common_request(server, server_request, request_headers, ur
 		}
 	}else{
 		request_headers.delete('cookie');
-	}
-}
-
-async function sendCookie(server, server_request){
-	const url = new URL(server_request.url);
-	const target = url.searchParams.get('target');
-	const args = JSON.parse(url.searchParams.get('arguments'));
-
-	if(!(target in server.cookies.api)){
-		throw new Error(`Unknown API: ${target}`);
-	}
-
-	const result = await server.cookies[target].call(server.cookies, ...args);
-
-	return server.json(200, result);
-}
-
-import * as Storage from './Storage.js';
-
-async function sendStorage(server, server_request){
-	const url = new URL(server_request.url);
-	const func = url.searchParams.get('func');
-	const args = JSON.parse(url.searchParams.get('args'));
-	
-	if(!(func in Storage)){
-		console.warn('Unknown function:', func);
-		return server.json(400);
-	}
-
-	try{
-		return server.json(200, await Storage[func](server, ...args));
-	}catch(err){
-		console.error(err);
-		return server.json(500, { message: err.message });
 	}
 }
 
@@ -130,7 +97,7 @@ async function handle_common_response(rewriter, server, server_request, url, res
 	for(let remove of remove_general_headers)response_headers.delete(remove);
 	
 	if('set-cookie' in response.json_headers){
-		await server.cookies.set(url, response.json_headers['set-cookie']);
+		await server.cookie.set(url, response.json_headers['set-cookie']);
 	}
 	
 	response_headers.set('referrer-policy', 'same-origin') ;
@@ -365,8 +332,8 @@ async function process(server, server_request, field){
 }
 
 export default async function register(server){
-	server.routes.set('cookie', sendCookie);
-	server.routes.set('storage', sendStorage);
+	new APIServer('cookie', server, server.cookie);
+	new APIServer('storage', server, server.storage);
 	server.routes.set('process', process);
 	server.routes.set('binary', sendBinary);
 	server.routes.set('form', sendForm);

@@ -1,9 +1,9 @@
 import TOMP from '../TOMP.js';
 import SyncServer from './SyncServer.js';
 import Cookie from './Cookie.js';
+import Storage from './Storage.js';
 import register from './send.js';
 import { openDB } from 'idb/with-async-ittr';
-import { create_db as create_storage_db } from './Storage.js';
 import { BareError } from '../Bare.js';
 
 export default class Server {
@@ -13,7 +13,8 @@ export default class Server {
 		this.tomp = new TOMP(config);
 		this.request = this.request.bind(this);
 		this.ready = this.work();
-		this.cookies = new Cookie(this);
+		this.cookie = new Cookie(this);
+		this.storage = new Storage(this);
 		this.sync_request = new SyncServer(this);
 		register(this);
 	}
