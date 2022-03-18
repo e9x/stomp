@@ -109,7 +109,7 @@ export default class SyncServer {
 				statusText: response.statusText,
 				headers: Object.fromEntries(response.headers.entries()),
 			},
-			response.url,
+			String(url),
 		];
 	}
 };

@@ -34,9 +34,7 @@ export class SyncClient {
 			response = new Response(rawArrayBuffer, init);
 		}
 
-		Reflect.defineProperty(response, 'url', {
-			value: url,
-		});
+		response.rawUrl = url;
 		response.rawArrayBuffer = rawArrayBuffer;
 
 		return response;

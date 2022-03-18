@@ -126,7 +126,7 @@ export default class XMLHttpRequestRewrite extends Rewrite {
 				this.#readyState = HEADERS_RECEIVED;
 				this.#status = response.status;
 				this.#statusText = response.statusText;
-				this.#responseURL = that.client.tomp.html.unwrap_serving(response.url, that.client.base);
+				this.#responseURL = that.client.tomp.html.unwrap_serving(response.rawUrl, that.client.base).toString();
 				this.#response_headers = response.headers;
 				this.#dispatch_readyState();
 
