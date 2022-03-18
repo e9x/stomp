@@ -21,8 +21,9 @@ export default class CookieRewrite extends Rewrite {
 					throw new TypeError('Illegal invocation');
 				}
 
-				const { rawArrayBuffer } = this.client.get(SyncClient).fetch(`${this.client.tomp.directory}get-cookies:?` + new URLSearchParams({
-					remote: JSON.stringify(this.client.base),
+				const { rawArrayBuffer } = this.client.get(SyncClient).fetch(`${this.client.tomp.directory}cookie:?` + new URLSearchParams({
+					target: 'get_string',
+					arguments: JSON.stringify([ this.client.base ]),
 				}));
 				
 				return decoder.decode(rawArrayBuffer);
@@ -32,9 +33,9 @@ export default class CookieRewrite extends Rewrite {
 					throw new TypeError('Illegal invocation');
 				}
 
-				this.client.get(SyncClient).fetch(`${this.client.tomp.directory}set-cookies:?` + new URLSearchParams({
-					remote: JSON.stringify(this.client.base),
-					cookies: value,
+				this.client.get(SyncClient).fetch(`${this.client.tomp.directory}cookie:?` + new URLSearchParams({
+					target: 'set',
+					arguments: JSON.stringify([ this.client.base, value ]),
 				}));
 				
 				return value;

@@ -1,7 +1,6 @@
 import { forbids_body, status_empty } from '../Bare.js';
 import { mapHeaderNamesFromArray } from './HeaderUtil.js'
 import { html_types, get_mime } from '../RewriteElements.js';
-import { load_setcookies, get_cookies } from './Cookies.js';
 
 const remove_general_headers = [
 	'alt-svc',
@@ -74,7 +73,7 @@ async function handle_common_request(server, server_request, request_headers, ur
 	request_headers.set('host', url.host);
 	
 	if(send_cookies){
-		const cookies = await get_cookies(server, url);
+		const cookies = await server.cookies.get(url);
 
 		if(cookies.length > 0){
 			request_headers.set('cookie', cookies.toString());
@@ -86,57 +85,18 @@ async function handle_common_request(server, server_request, request_headers, ur
 	}
 }
 
-async function sendGetCookies(server, server_request){
+async function sendCookie(server, server_request){
 	const url = new URL(server_request.url);
-	const remote = JSON.parse(url.searchParams.get('remote'));
-	const json = url.searchParams.has('json');
-	const cookies = await get_cookies(server, remote);
-	
-	if(json){
-		return new Response(JSON.stringify(cookies), {
-			headers: {
-				'content-type': 'application/json',
-			},
-		});
-	}else{
-		return new Response(cookies.toString(), {
-			headers: {
-				'content-type': 'text/plain',
-			},
-		})
-	}
-}
+	const target = url.searchParams.get('target');
+	const args = JSON.parse(url.searchParams.get('arguments'));
 
-async function sendSetCookies(server, server_request){
-	const url = new URL(server_request.url);
-	const remote = JSON.parse(url.searchParams.get('remote'));
-	const set_cookies = url.searchParams.get('cookies');
-	
-	await load_setcookies(server, remote, set_cookies);
-
-	return new Response(undefined,  {
-		status: 200,
-	});
-}
-
-import * as CookieStore from './CookieStore.js';
-
-async function sendCookieStore(server, server_request){
-	const url = new URL(server_request.url);
-	const func = url.searchParams.get('func');
-	const args = JSON.parse(url.searchParams.get('args'));
-	
-	if(!(func in CookieStore)){
-		console.warn('Unknown function:', func);
-		return server.json(400);
+	if(!(target in server.cookies.api)){
+		throw new Error(`Unknown API: ${target}`);
 	}
 
-	try{
-		return server.json(200, await CookieStore[func](server, ...args));
-	}catch(err){
-		console.error(err);
-		return server.json(500, { message: err.message });
-	}
+	const result = await server.cookies[target].call(server.cookies, ...args);
+
+	return server.json(200, result);
 }
 
 import * as Storage from './Storage.js';
@@ -170,7 +130,7 @@ async function handle_common_response(rewriter, server, server_request, url, res
 	for(let remove of remove_general_headers)response_headers.delete(remove);
 	
 	if('set-cookie' in response.json_headers){
-		await load_setcookies(server, url, response.json_headers['set-cookie']);
+		await server.cookies.set(url, response.json_headers['set-cookie']);
 	}
 	
 	response_headers.set('referrer-policy', 'same-origin') ;
@@ -405,10 +365,7 @@ async function process(server, server_request, field){
 }
 
 export default async function register(server){
-	// process, sendCookieStore, sendGetCookies, sendSetCookies, sendBinary, sendForm, sendHTML, sendSVG, sendJS, sendCSS, sendManifest, sendStorage
-	server.routes.set('get-cookies', sendGetCookies);
-	server.routes.set('set-cookies', sendSetCookies);
-	server.routes.set('cookiestore', sendCookieStore);
+	server.routes.set('cookie', sendCookie);
 	server.routes.set('storage', sendStorage);
 	server.routes.set('process', process);
 	server.routes.set('binary', sendBinary);

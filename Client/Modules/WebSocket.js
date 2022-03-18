@@ -1,7 +1,6 @@
 import Rewrite from '../Rewrite.js';
 import global from '../../global.js';
 import { validProtocol } from '../../encodeProtocol.js';
-import { load_setcookies, get_cookies } from '../../Worker/Cookies.js';
 import { Reflect } from '../rewriteUtil.js';
 import { DOMObjectConstructor, TargetConstant, EventTarget_on, mirror_class } from '../NativeUtil.js';
 
@@ -11,6 +10,8 @@ const default_ports = {
 };
 
 const ws_protocols = ['wss:','ws:'];
+
+const { fetch } = global;
 
 export default class WebSocketRewrite extends Rewrite {
 	#socket
@@ -48,7 +49,10 @@ export default class WebSocketRewrite extends Rewrite {
 				}
 
 				if(headers.has('set-cookie')){
-					load_setcookies(that.client, this.#remote, headers.get('set-cookie'));
+					await fetch(`${that.client.tomp.directory}cookies:?` + new URLSearchParams({
+						target: 'set',
+						arguments: JSON.stringify([ this.#remote, headers.get('set-cookie') ]),
+					}));
 				}
 			}
 			async #open(remote, protocol){
@@ -75,7 +79,11 @@ export default class WebSocketRewrite extends Rewrite {
 					request_headers['Sec-Websocket-Protocol'] = protocol.join(', ');
 				}
 				
-				let cookies = await get_cookies(that.client, remote);
+				let cookies = await fetch(`${that.client.tomp.directory}cookie:?` + new URLSearchParams({
+					target: 'get',
+					arguments: JSON.stringify([ remote ]),
+				}));
+				
 				if(cookies.length > 0){
 					request_headers['Cookie'] = cookies.toString();
 				}
