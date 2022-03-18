@@ -87,7 +87,7 @@ export default class Parse5Iterator {
 		
 		const context = this.stack.pop();
 
-		if(Array.isArray(context.node.childNodes)){
+		if(context.node.childNodes){
 			// insert new contexts in reverse order
 			// not cloning arrays then reversing in the interest of optimization
 			const start = this.stack.length - 1;
