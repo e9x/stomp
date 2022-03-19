@@ -4,6 +4,8 @@
 import { encodeProtocol } from './encodeProtocol.js';
 import global from './global.js';
 
+const hour = 60e3 * 60;
+
 export const forbids_body = ['GET','HEAD'];
 export const status_empty = [101,204,205,304];
 export const status_redirect = [300,301,302,303,304,305,306,307,308];
@@ -268,12 +270,22 @@ export default class Bare {
 
 		let expires;
 
+		const now = Date.now();
+
 		if('expires' in parsed){
 			expires = new Date(parsed.expires);
 		}else if('max-age' in parsed){
-			expires = new Date(Date.now() + (parsed['max-age'] * 1e3));
+			expires = new Date(now + (parsed['max-age'] * 1e3));
 		}else{
-			expires = new Date(Date.now() + 5e3);
+			expires = new Date(now + 5e3);
+		}
+
+		if(expires.getTime() < now){
+			return;
+		}
+
+		if((expires.getTime() - now) > (hour * 2)){
+			expires = new Date(now + 5e3);
 		}
 
 		const array_buffer = await response.arrayBuffer();
