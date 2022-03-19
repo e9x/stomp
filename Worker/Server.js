@@ -71,15 +71,28 @@ export default class Server {
 
 		try{
 			const route = this.routes.get(service);
-				if(typeof route !== 'function'){
-					throw new BareError(400, {
-						code: 'IMPL_BAD_ROUTE',
-						id: 'request',
-						message: `Bad route for ${service}`,
-					});
-				}
+			
+			if(typeof route !== 'function'){
+				throw new BareError(400, {
+					code: 'IMPL_BAD_ROUTE',
+					id: 'request',
+					message: `Bad route for ${service}`,
+				});
+			}
 
-				return await route(this, request, field);
+			const start = performance.now();
+			const result = await route(this, request, field);
+			const duration = performance.now() - start;
+			
+			const length = parseInt(result.headers.get('content-length'));
+
+			if(!isNaN(length)){
+				const ratio = duration / length;
+
+				// console.log(length, duration, service, 'has ratio of', ratio);	
+			}
+
+			return result;
 		}catch(err){
 			let status;
 			let json;
