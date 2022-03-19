@@ -59,9 +59,7 @@ export default class Cookie {
 		});
 
 		// const entries = await server.db.getAllFromIndex('cookies', 'path', idb_range_startswith(get_directory(remote.path)));
-		const entries = await this.db.getAll('cookies');
-		
-		for(let cookie of entries){
+		for(let cookie of await this.db.getAll('cookies')){
 			if(this.cookie_expired(cookie)){
 				this.db.delete('cookies', cookie.id);
 			}

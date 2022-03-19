@@ -45,6 +45,12 @@ export default class Bare {
 				cache.createIndex('lastModified', 'lastModified');
 			}
 		});
+
+		for(let cache of await this.db.getAll('cache')){
+			if(this.#cache_expired(cache)){
+				this.db.delete('cache', cache.id);
+			}
+		}
 	}
 	async connect(request_headers, protocol, host, port, path){
 		const assign_meta = await fetch(`${this.server}v1/ws-new-meta`, { method: 'GET' });
@@ -238,9 +244,10 @@ export default class Bare {
 		let response_data = await this.#read_bare_response(response);
 
 		if(!bad_cache){
-			console.log(data);
+			/*console.log(data);
 			console.log(response_data.headers.get('etag'), data.etag);
 			console.log(new Date(response_data.headers.get('last-modified')).getTime(), data.lastModified?.getTime());
+			*/
 			
 			if('etag' in data && response_data.headers.get('etag') === data.etag){
 				cache_valid = true;
