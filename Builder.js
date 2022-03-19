@@ -1,6 +1,6 @@
 import webpack from 'webpack';
 import Events from 'node:events';
-import { dirname, join } from 'path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
