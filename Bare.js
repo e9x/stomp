@@ -129,7 +129,7 @@ export default class Bare {
 		// bare can be an absolute path containing no origin, it becomes relative to the script	
 		const request = new Request(new URL(this.server + 'v1/', location), options);
 		
-		const { status, statusText, headers, json_headers, raw_header_names, response_body } = await this.#fetch_cached(request, protocol, host, path, port, bare_headers, forward_headers);
+		const { status, statusText, headers, json_headers, raw_header_names, response_body } = await this.#fetch_cached(request, protocol, host, path, port, bare_headers, forward_headers, cache);
 		
 		let result;
 		
@@ -206,13 +206,13 @@ export default class Bare {
 		request.headers.set('x-bare-headers', JSON.stringify(bare_headers));
 		request.headers.set('x-bare-forward-headers', JSON.stringify(forward_headers));
 	}
-	async #fetch_cached(request, protocol, host, path, port, bare_headers, forward_headers){
+	async #fetch_cached(request, protocol, host, path, port, bare_headers, forward_headers, cache){
 		const destination_id = `${protocol}${host}:${port}${path}`;
 
 		await this.#open;
 		const { store } = this.db.transaction('cache', 'readwrite');
 		const data = await store.get(destination_id);
-		let bad_cache = data === undefined || this.#cache_expired(data);
+		let bad_cache = cache === 'no-cache' || data === undefined || this.#cache_expired(data);
 		let cache_valid = false;
 		
 		if(!bad_cache){
@@ -236,10 +236,9 @@ export default class Bare {
 		let response_data = await this.#read_bare_response(response);
 
 		if(!bad_cache){
-			/*console.log(data);
+			console.log(data);
 			console.log(response_data.headers.get('etag'), data.etag);
 			console.log(new Date(response_data.headers.get('last-modified')).getTime(), data.lastModified?.getTime());
-			*/
 			
 			if('etag' in data && response_data.headers.get('etag') === data.etag){
 				cache_valid = true;
@@ -250,7 +249,7 @@ export default class Bare {
 
 		if(response_data.status === 304 && cache_valid){
 			response_data = this.#read_bare_response(await this.#write_bare_response(data.body, data.status, data.statusText, data.headers));
-		}else{
+		}else if(cache !== 'no-store'){
 			await this.#cache(response, destination_id, response_data);
 		}
 
