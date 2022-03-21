@@ -22,8 +22,6 @@ export default class Server {
 		this.db = await openDB('tomp', 1, {
 			upgrade: (db, oldv, newv, transaction) => {
 				db.createObjectStore('consts');
-				create_cookie_db(db);
-				create_storage_db(db);
 			},
 		});
 
