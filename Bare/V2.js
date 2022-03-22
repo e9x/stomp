@@ -10,7 +10,6 @@ const HOUR = 60e3 * 60;
 
 export default class ClientV2 extends Client {
 	static version = 2;
-	#open;
 	constructor(...args){
 		super(...args);
 
@@ -26,8 +25,6 @@ export default class ClientV2 extends Client {
 		}
 	}
 	async connect(request_headers, protocol, host, port, path){
-		await this.#open;
-
 		const forward_headers = [
 			'accept-encoding',
 			'accept-language',
@@ -36,12 +33,9 @@ export default class ClientV2 extends Client {
 			'sec-websocket-version',
 		];
 
-		const request = new Request(this.new_meta, {
-			method: 'GET',
-			headers: {
-				...this.#write_bare_request(protocol, host, path, port, request_headers, forward_headers, false),
-			},
-		});
+		const request = new Request(this.new_meta);
+
+		this.#write_bare_request(request.headers, protocol, host, path, port, request_headers, forward_headers);
 
 		const assign_meta = await fetch(request);
 
@@ -78,8 +72,6 @@ export default class ClientV2 extends Client {
 		return socket;
 	}
 	async fetch(method, request_headers, body, protocol, host, port, path, cache){
-		await this.#open;
-
 		if(protocol.startsWith('blob:')){
 			const response = await fetch(`blob:${location.origin}${path}`);
 			response.json_headers = Object.fromEntries(response.headers.entries());
@@ -99,7 +91,7 @@ export default class ClientV2 extends Client {
 			}
 		}
 
-		const forward_headers = ['accept-encoding', 'accept-language','if-modified-since','if-none-match'];
+		const forward_headers = ['accept-encoding', 'accept-language','if-modified-since','if-none-match','cache-control'];
 		const pass_headers = ['cache-control','etag'];
 		const pass_status = status_cache;
 
@@ -112,21 +104,24 @@ export default class ClientV2 extends Client {
 		if(body !== undefined){
 			options.body = body;
 		}
-		
-		options.headers = {
-			...this.#write_bare_request(protocol, host, path, port, bare_headers, forward_headers, true, pass_headers, pass_status),
-		};
 
 		// bare can be an absolute path containing no origin, it becomes relative to the script	
-		const request = new Request(this.http + '?', options);
+		const request = new Request(this.http + '?' + md5(`${protocol}${host}${port}${path}`), options);
+
+		this.#write_bare_request(request.headers, protocol, host, path, port, bare_headers, forward_headers, pass_headers, pass_status)
 
 		const response = await fetch(request);
 
-		const { status, statusText, headers, json_headers, raw_header_names, response_body } = await this.#read_bare_response(response);
+		let { status, statusText, headers, json_headers, raw_header_names, response_body } = await this.#read_bare_response(response);
 
 		let result;
 
-		if(!status_cache.includes(status) && status_empty.includes(status)){
+		if(status_cache.includes(status)){
+			status = response.status;
+			statusText = response.statusText; 
+		}
+
+		if(status_empty.includes(status)){
 			result = new Response(undefined, {
 				status,
 				statusText,
@@ -150,12 +145,11 @@ export default class ClientV2 extends Client {
 			throw new BareError(response.status, await response.json());
 		}
 		
-		const response_headers = Object.fromEntries(response.headers);
-		join_headers(response_headers);
+		// join_headers(response.headers);
 
-		const status = parseInt(response_headers['x-bare-status']);
-		const statusText = response_headers['x-bare-status-text'];
-		const raw_headers = JSON.parse(response_headers['x-bare-headers']);
+		const status = parseInt(response.headers.get('x-bare-status'));
+		const statusText = response.headers.get('x-bare-status-text');
+		const raw_headers = JSON.parse(response.headers.get('x-bare-headers'));
 		
 		const headers = new Headers();
 		const json_headers = {};
@@ -180,22 +174,26 @@ export default class ClientV2 extends Client {
 			response_body: response.body,
 		}
 	}
-	#write_bare_request(protocol, host, path, port, bare_headers, forward_headers, pass, pass_headers, pass_status){
-		const headers = {
-			'x-bare-protocol': protocol,
-			'x-bare-host': host,
-			'x-bare-path': path,
-			'x-bare-port': port,
-			'x-bare-headers': JSON.stringify(bare_headers),
-			'x-bare-forward-headers': JSON.stringify(forward_headers),
-		};
-
-		if(pass){
-			headers['x-bare-pass-headers'] = JSON.stringify(pass_headers);
-			headers['x-bare-pass-status'] = JSON.stringify(pass_status);
+	#write_bare_request(headers, protocol, host, path, port, bare_headers, forward_headers, pass_headers = [], pass_status = []){
+		headers.set('x-bare-protocol', protocol);
+		headers.set('x-bare-host', host);
+		headers.set('x-bare-path', path);
+		headers.set('x-bare-port', port);
+		headers.set('x-bare-headers', JSON.stringify(bare_headers));
+		
+		for(let header of forward_headers){
+			headers.append('x-bare-forward-headers', header);
+		}
+	
+		for(let header of pass_headers){
+			headers.append('x-bare-pass-headers', header);
 		}
 
-		split_headers(headers);
+		for(let status of pass_status){
+			headers.append('x-bare-pass-status', status);
+		}
+		
+		// split_headers(headers);
 
 		return headers;
 	}
