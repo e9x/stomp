@@ -13,13 +13,15 @@ import EventRewrite from './Modules/Event.js';
 import XMLHttpRequestRewrite from './Modules/XMLHttpRequest.js';
 import global from '../global.js';
 import { openDB } from 'idb/with-async-ittr';
+import Bare from '../Bare.js';
 
 export default class Client {
 	type = this.constructor.type;
 	constructor(config){
 		this.tomp = new TOMP(config);
+		this.bare = new Bare(this.tomp, this.tomp.bare);
 		this.ready = this.async_work();
-		
+
 		this.load_modules(
 			NativeHelper,
 			FunctionRewrite,

@@ -80,7 +80,7 @@ export default class WebSocketRewrite extends Rewrite {
 					request_headers['Cookie'] = cookies.toString();
 				}
 
-				this.#socket = await that.client.tomp.bare.connect(request_headers, remote.protocol, remote.host, remote.port, remote.path);
+				this.#socket = await that.client.bare.connect(request_headers, remote.protocol, remote.host, remote.port, remote.path);
 
 				this.#socket.binaryType = this.#binaryType;
 

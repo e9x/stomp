@@ -16,19 +16,35 @@ import { mapHeaderNamesFromArray, rawHeaderNames } from './Worker/HeaderUtil.js'
 
 const { fetch, WebSocket } = global;
 
-export default class Bare {
+class Client {
+	constructor(bare){
+		this.bare = bare;
+		this.version = this.constructor.version;
+		this.base = new URL(`./v${this.version}/`, this.bare.server);
+	}
+	async fetch(){
+		throw new Error('Not implemented');
+	}
+	async connect(){
+		throw new Error('Not implemented');
+	}
+};
+
+class ClientV1 extends Client {
+	static version = 1;
 	#open;
-	constructor(tomp, server){
-		this.tomp = tomp;
-		this.server = server;
+	constructor(...args){
+		super(...args);
 
-		this.ws_v1 = new URL(this.server + 'v1/', this.tomp.origin);
-		this.http_v1 = new URL(this.server + 'v1/', this.tomp.origin);
+		this.ws = new URL(this.base);
+		this.http = new URL(this.base);
+		this.new_meta = new URL('./ws-new-meta', this.base);
+		this.get_meta = new URL(`./ws-meta`, this.base);
 
-		if(this.ws_v1.protocol === 'https:'){
-			this.ws_v1.protocol = 'wss:';
+		if(this.ws.protocol === 'https:'){
+			this.ws.protocol = 'wss:';
 		}else{
-			this.ws_v1.protocol = 'ws:';
+			this.ws.protocol = 'ws:';
 		}
 
 		this.#open = this.#open_db();
@@ -53,7 +69,9 @@ export default class Bare {
 		}
 	}
 	async connect(request_headers, protocol, host, port, path){
-		const assign_meta = await fetch(`${this.server}v1/ws-new-meta`, { method: 'GET' });
+		await this.#open;
+
+		const assign_meta = await fetch(this.new_meta, { method: 'GET' });
 
 		if(!assign_meta.ok){
 			throw BareError(assign_meta.status, await assign_meta.json());
@@ -61,7 +79,7 @@ export default class Bare {
 
 		const id = await assign_meta.text();
 		
-		const socket = new WebSocket(this.ws_v1, [
+		const socket = new WebSocket(this.ws, [
 			'bare',
 			encodeProtocol(JSON.stringify({
 				remote: {
@@ -84,7 +102,7 @@ export default class Bare {
 
 		socket.meta = new Promise((resolve, reject) => {
 			socket.addEventListener('open', async () => {
-				const outgoing = await fetch(`${this.server}v1/ws-meta`, {
+				const outgoing = await fetch(this.get_meta, {
 					headers: {
 						'x-bare-id': id,
 					},
@@ -104,6 +122,8 @@ export default class Bare {
 		return socket;
 	}
 	async fetch(method, request_headers, body, protocol, host, port, path, cache){
+		await this.#open;
+
 		if(protocol.startsWith('blob:')){
 			const response = await fetch(`blob:${location.origin}${path}`);
 			response.json_headers = Object.fromEntries(response.headers.entries());
@@ -135,7 +155,7 @@ export default class Bare {
 		}
 		
 		// bare can be an absolute path containing no origin, it becomes relative to the script	
-		const request = new Request(new URL(this.server + 'v1/', location), options);
+		const request = new Request(new URL(this.bare.server + 'v1/', location), options);
 		
 		const { status, statusText, headers, json_headers, raw_header_names, response_body } = await this.#fetch_cached(request, protocol, host, path, port, bare_headers, forward_headers, cache);
 		
@@ -217,7 +237,7 @@ export default class Bare {
 	async #fetch_cached(request, protocol, host, path, port, bare_headers, forward_headers, cache){
 		const destination_id = `${protocol}${host}:${port}${path}`;
 
-		await this.#open;
+		
 		const { store } = this.db.transaction('cache', 'readwrite');
 		const data = await store.get(destination_id);
 		let bad_cache = cache === 'no-cache' || data === undefined || this.#cache_expired(data);
@@ -323,6 +343,46 @@ export default class Bare {
 		await store.put(put);
 
 		response_data.response_body = array_buffer;
+	}
+};
+
+export default class Bare {
+	#ready;  
+	constructor(tomp, server){
+		this.tomp = tomp;
+		this.server = new URL(server, this.tomp.origin);
+		this.#ready = this.#work();
+	}
+	async #work(){
+		const outgoing = await fetch(this.server);
+
+		if(!outgoing.ok){
+			throw new Error(`Unable to fetch Bare meta: ${outgoing.status} ${await outgoing.text()}`);
+		}
+
+		const json = await outgoing.json();
+
+		let found = false;
+
+		// newest-oldest
+		for(let constructor of [ /*ClientV2,*/ ClientV1 ]){
+			if(json.versions.includes(`v${constructor.version}`)){
+				this.client = new constructor(this);
+				found = true;
+			}
+		}
+
+		if(!found){
+			throw new Error(`Unable to find compatible client version.`);
+		}
+	}
+	async fetch(...args){
+		await this.#ready;
+		return this.client.fetch(...args);
+	}
+	async connect(...args){
+		await this.#ready;
+		return this.connect.fetch(...args);
 	}
 };
 

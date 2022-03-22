@@ -9,7 +9,6 @@ import RewriteManifest from './RewriteManifest.js';
 import RewriteBinary from './RewriteBinary.js';
 import { PlainCodec, XORCodec } from './Codec.js';
 import Logger, { LOG_WARN } from './Logger.js';
-import Bare from './Bare.js';
 
 const codecs = [PlainCodec, XORCodec];
 
@@ -23,7 +22,7 @@ export default class TOMP {
 
 		return {
 			directory: this.directory,
-			bare: this.bare.server,
+			bare: this.bare,
 			origin: this.origin,
 			key: this.key,
 			noscript: this.noscript,
@@ -36,6 +35,7 @@ export default class TOMP {
 	origin = '';
 	// codec key such as xor value
 	key = '';
+	bare = '';
 	loglevel = LOG_WARN;
 	noscript = false;
 	codec = PlainCodec;
@@ -70,7 +70,8 @@ export default class TOMP {
 		
 		this.origin = config.origin;
 		this.directory = config.directory;
-		
+		this.bare = config.bare;
+
 		if(typeof config.loglevel == 'number'){
 			this.loglevel = config.loglevel;
 		}
@@ -89,7 +90,6 @@ export default class TOMP {
 		this.form = new RewriteForm(this);
 		this.manifest = new RewriteManifest(this);
 		this.elements = new RewriteElements(this);
-		this.bare = new Bare(this, config.bare);
 	}
 	wrap(data){
 		if(this.key === ''){

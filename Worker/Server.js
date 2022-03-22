@@ -1,4 +1,5 @@
 import TOMP from '../TOMP.js';
+import Bare from '../Bare.js';
 import SyncServer from './SyncServer.js';
 import Cookie from './Cookie.js';
 import Storage from './Storage.js';
@@ -11,6 +12,7 @@ export default class Server {
 	constructor(config){
 		config.origin = new URL(serviceWorker.scriptURL).origin;
 		this.tomp = new TOMP(config);
+		this.bare = new Bare(this.tomp, this.tomp.bare);	
 		this.request = this.request.bind(this);
 		this.ready = this.work();
 		this.cookie = new Cookie(this);
