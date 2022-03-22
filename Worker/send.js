@@ -3,6 +3,15 @@ import { forbids_body, status_empty } from '../Bare/Bare.js';
 import { mapHeaderNamesFromArray } from './HeaderUtil.js'
 import { html_types, get_mime } from '../RewriteElements.js';
 
+/**
+ * 
+ * @typedef {object} BareURL
+ * @property {string} host
+ * @property {string} path
+ * @property {string} protocol
+ * @property {number} port
+ */
+
 const remove_general_headers = [
 	'alt-svc',
 	'x-xss-protection',
@@ -37,6 +46,13 @@ const remove_csp_headers = [
 	'x-xss-protection',
 ];
 
+/**
+ * 
+ * @param {import('./Server.js').default} server 
+ * @param {Response} server_request 
+ * @param {Headers} request_headers 
+ * @param {BareURL} url 
+ */
 async function handle_common_request(server, server_request, request_headers, url){
 	//req.referrer
 	if(server_request.headers.has('referer')){
@@ -86,6 +102,14 @@ async function handle_common_request(server, server_request, request_headers, ur
 	}
 }
 
+/**
+ * 
+ * @param {import('../Rewriter.js').default} rewriter
+ * @param {import('./Server.js').default} server 
+ * @param {Request} server_request
+ * @param {BareURL} url
+ * @returns {Response}
+ */
 async function handle_common_response(rewriter, server, server_request, url, response, ...args){
 	const response_headers = new Headers(response.headers);
 	
@@ -123,6 +147,12 @@ async function handle_common_response(rewriter, server, server_request, url, res
 	return response_headers;
 }
 
+/**
+ * 
+ * @param {import('./Server.js').default} server 
+ * @param {Response} server_request 
+ * @param {string} field 
+ */
 async function get_data(server, server_request, field){
 	const request_headers = new Headers(server_request.headers);
 	
@@ -145,7 +175,14 @@ async function get_data(server, server_request, field){
 	};
 }
 
-export async function sendBinary(server, server_request, field){
+/**
+ * 
+ * @param {import('./Server.js').default} server 
+ * @param {Request} server_request 
+ * @param {string} field 
+ * @returns {Response}
+ */
+async function sendBinary(server, server_request, field){
 	const {gd_error,url,request_headers,body} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
 	
@@ -182,6 +219,14 @@ export async function sendBinary(server, server_request, field){
 	}
 }
 
+/**
+ * 
+ * @param {import('../Rewriter.js').default} rewriter
+ * @param {import('./Server.js').default} server 
+ * @param {Request} server_request
+ * @param {string} field
+ * @returns {Response}
+ */
 async function sendRewrittenScript(rewriter, server, server_request, field, ...args){
 	const {gd_error,url,request_headers,body} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;
@@ -230,6 +275,13 @@ async function sendSVG(server, server_request, field){
 	return await sendRewrittenScript(server.tomp.svg, server, server_request, field);
 }
 
+/**
+ * 
+ * @param {import('./Server.js').default} server 
+ * @param {Request} server_request
+ * @param {string} field
+ * @returns {Response}
+ */
 async function sendHTML(server, server_request, field){
 	const {gd_error,url,request_headers,body} = await get_data(server, server_request, field);
 	if(gd_error)return gd_error;

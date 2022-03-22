@@ -26,7 +26,6 @@ export default class Bare {
 		// newest-oldest
 		for(let constructor of [ ClientV2, ClientV1 ]){
 			if(json.versions.includes(`v${constructor.version}`)){
-				console.log('found good', json.versions, constructor.version);
 				this.client = new constructor(this);
 				found = true;
 				break;

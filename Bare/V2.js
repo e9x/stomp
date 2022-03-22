@@ -2,8 +2,9 @@ import Client, { BareError, status_cache, status_empty } from './Client.js';
 import { encodeProtocol } from '../encodeProtocol.js';
 import global from '../global.js';
 import { split_headers, join_headers } from './splitHeaderUtil.js';
+import md5 from 'md5';
 
-const { fetch, WebSocket } = global;
+const { fetch, WebSocket, Request } = global;
 
 const HOUR = 60e3 * 60;
 
@@ -27,9 +28,22 @@ export default class ClientV2 extends Client {
 	async connect(request_headers, protocol, host, port, path){
 		await this.#open;
 
-		const assign_meta = await fetch(this.new_meta, {
+		const forward_headers = [
+			'accept-encoding',
+			'accept-language',
+			'sec-websocket-extensions',
+			'sec-websocket-key',
+			'sec-websocket-version',
+		];
+
+		const request = new Request(this.new_meta, {
 			method: 'GET',
+			headers: {
+				...this.#write_bare_request(protocol, host, path, port, request_headers, forward_headers, false),
+			},
 		});
+
+		const assign_meta = await fetch(request);
 
 		if(!assign_meta.ok){
 			throw BareError(assign_meta.status, await assign_meta.json());
@@ -39,23 +53,7 @@ export default class ClientV2 extends Client {
 		
 		const socket = new WebSocket(this.ws, [
 			'bare',
-			encodeProtocol(JSON.stringify({
-				remote: {
-					protocol,
-					host,
-					port,
-					path,
-				},
-				headers: request_headers,
-				forward_headers: [
-					'accept-encoding',
-					'accept-language',
-					'sec-websocket-extensions',
-					'sec-websocket-key',
-					'sec-websocket-version',
-				],
-				id,
-			})),
+			encodeProtocol(id),
 		]);
 
 		socket.meta = new Promise((resolve, reject) => {
@@ -116,11 +114,11 @@ export default class ClientV2 extends Client {
 		}
 		
 		options.headers = {
-			...this.#write_bare_request(protocol, host, path, port, bare_headers, forward_headers, pass_headers, pass_status),
+			...this.#write_bare_request(protocol, host, path, port, bare_headers, forward_headers, true, pass_headers, pass_status),
 		};
 
 		// bare can be an absolute path containing no origin, it becomes relative to the script	
-		const request = new Request(this.http, options);
+		const request = new Request(this.http + '?', options);
 
 		const response = await fetch(request);
 
@@ -182,7 +180,7 @@ export default class ClientV2 extends Client {
 			response_body: response.body,
 		}
 	}
-	#write_bare_request(protocol, host, path, port, bare_headers, forward_headers, pass_headers, pass_status){
+	#write_bare_request(protocol, host, path, port, bare_headers, forward_headers, pass, pass_headers, pass_status){
 		const headers = {
 			'x-bare-protocol': protocol,
 			'x-bare-host': host,
@@ -190,9 +188,12 @@ export default class ClientV2 extends Client {
 			'x-bare-port': port,
 			'x-bare-headers': JSON.stringify(bare_headers),
 			'x-bare-forward-headers': JSON.stringify(forward_headers),
-			'x-bare-pass-headers': JSON.stringify(pass_headers),
-			'x-bare-pass-status': JSON.stringify(pass_status),
 		};
+
+		if(pass){
+			headers['x-bare-pass-headers'] = JSON.stringify(pass_headers);
+			headers['x-bare-pass-status'] = JSON.stringify(pass_status);
+		}
 
 		split_headers(headers);
 

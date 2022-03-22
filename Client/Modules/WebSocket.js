@@ -12,7 +12,6 @@ const default_ports = {
 const ws_protocols = ['wss:','ws:'];
 
 export default class WebSocketRewrite extends Rewrite {
-	#socket
 	global = global.WebSocket;
 	work(){
 		const that = this;
@@ -76,7 +75,7 @@ export default class WebSocketRewrite extends Rewrite {
 				
 				let cookies = await that.client.api('cookie', 'get_string', [ remote ]);
 				
-				if(cookies.length !== ''){
+				if(cookies !== ''){
 					request_headers['Cookie'] = cookies.toString();
 				}
 
