@@ -1,5 +1,5 @@
 import APIServer from './APIServer.js';
-import { forbids_body, status_empty } from '../Bare.js';
+import { forbids_body, status_empty } from '../Bare/Bare.js';
 import { mapHeaderNamesFromArray } from './HeaderUtil.js'
 import { html_types, get_mime } from '../RewriteElements.js';
 

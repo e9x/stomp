@@ -13,7 +13,7 @@ import EventRewrite from './Modules/Event.js';
 import XMLHttpRequestRewrite from './Modules/XMLHttpRequest.js';
 import global from '../global.js';
 import { openDB } from 'idb/with-async-ittr';
-import Bare from '../Bare.js';
+import Bare from '../Bare/Bare.js';
 
 export default class Client {
 	type = this.constructor.type;

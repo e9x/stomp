@@ -1,11 +1,11 @@
 import TOMP from '../TOMP.js';
-import Bare from '../Bare.js';
+import Bare from '../Bare/Bare.js';
 import SyncServer from './SyncServer.js';
 import Cookie from './Cookie.js';
 import Storage from './Storage.js';
 import register from './send.js';
 import { openDB } from 'idb/with-async-ittr';
-import { BareError } from '../Bare.js';
+import { BareError } from '../Bare/Bare.js';
 
 export default class Server {
 	session = Math.random();

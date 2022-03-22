@@ -1,36 +1,16 @@
-// Implements the protocol for requesting bare data from a server
-// See ../Server/Send.mjs
-
-import { encodeProtocol } from './encodeProtocol.js';
-import global from './global.js';
-
-const hour = 60e3 * 60;
-
-export const forbids_body = ['GET','HEAD'];
-export const status_empty = [101,204,205,304];
-export const status_redirect = [300,301,302,303,304,305,306,307,308];
-
+import Client from './Client.js';
 import { openDB } from 'idb';
 import { parse } from 'cache-control-parser';
-import { mapHeaderNamesFromArray, rawHeaderNames } from './Worker/HeaderUtil.js';
+import { mapHeaderNamesFromArray, rawHeaderNames } from '../Worker/HeaderUtil.js';
+import { encodeProtocol } from '../encodeProtocol.js';
+import { status_empty } from './Client.js';
+import global from '../global.js';
 
 const { fetch, WebSocket } = global;
 
-class Client {
-	constructor(bare){
-		this.bare = bare;
-		this.version = this.constructor.version;
-		this.base = new URL(`./v${this.version}/`, this.bare.server);
-	}
-	async fetch(){
-		throw new Error('Not implemented');
-	}
-	async connect(){
-		throw new Error('Not implemented');
-	}
-};
+const HOUR = 60e3 * 60;
 
-class ClientV1 extends Client {
+export default class ClientV1 extends Client {
 	static version = 1;
 	#open;
 	constructor(...args){
@@ -311,7 +291,7 @@ class ClientV1 extends Client {
 			return;
 		}
 
-		if((expires.getTime() - now) > (hour * 2)){
+		if((expires.getTime() - now) > (HOUR * 2)){
 			expires = new Date(now + 5e3);
 		}
 
@@ -343,53 +323,5 @@ class ClientV1 extends Client {
 		await store.put(put);
 
 		response_data.response_body = array_buffer;
-	}
-};
-
-export default class Bare {
-	#ready;  
-	constructor(tomp, server){
-		this.tomp = tomp;
-		this.server = new URL(server, this.tomp.origin);
-		this.#ready = this.#work();
-	}
-	async #work(){
-		const outgoing = await fetch(this.server);
-
-		if(!outgoing.ok){
-			throw new Error(`Unable to fetch Bare meta: ${outgoing.status} ${await outgoing.text()}`);
-		}
-
-		const json = await outgoing.json();
-
-		let found = false;
-
-		// newest-oldest
-		for(let constructor of [ /*ClientV2,*/ ClientV1 ]){
-			if(json.versions.includes(`v${constructor.version}`)){
-				this.client = new constructor(this);
-				found = true;
-			}
-		}
-
-		if(!found){
-			throw new Error(`Unable to find compatible client version.`);
-		}
-	}
-	async fetch(...args){
-		await this.#ready;
-		return this.client.fetch(...args);
-	}
-	async connect(...args){
-		await this.#ready;
-		return this.connect.fetch(...args);
-	}
-};
-
-export class BareError extends Error {
-	constructor(status, body){
-		super(body.message);
-		this.status = status;
-		this.body = body;
 	}
 };
