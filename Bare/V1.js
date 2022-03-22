@@ -1,9 +1,8 @@
-import Client from './Client.js';
+import Client, { BareError, status_empty } from './Client.js';
 import { openDB } from 'idb';
 import { parse } from 'cache-control-parser';
 import { mapHeaderNamesFromArray, rawHeaderNames } from '../Worker/HeaderUtil.js';
 import { encodeProtocol } from '../encodeProtocol.js';
-import { status_empty } from './Client.js';
 import global from '../global.js';
 
 const { fetch, WebSocket } = global;
@@ -135,8 +134,8 @@ export default class ClientV1 extends Client {
 		}
 		
 		// bare can be an absolute path containing no origin, it becomes relative to the script	
-		const request = new Request(new URL(this.bare.server + 'v1/', location), options);
-		
+		const request = new Request(this.http, options);
+
 		const { status, statusText, headers, json_headers, raw_header_names, response_body } = await this.#fetch_cached(request, protocol, host, path, port, bare_headers, forward_headers, cache);
 		
 		let result;

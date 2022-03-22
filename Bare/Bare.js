@@ -26,8 +26,10 @@ export default class Bare {
 		// newest-oldest
 		for(let constructor of [ ClientV2, ClientV1 ]){
 			if(json.versions.includes(`v${constructor.version}`)){
+				console.log('found good', json.versions, constructor.version);
 				this.client = new constructor(this);
 				found = true;
+				break;
 			}
 		}
 
@@ -41,14 +43,6 @@ export default class Bare {
 	}
 	async connect(...args){
 		await this.#ready;
-		return this.connect.fetch(...args);
-	}
-};
-
-export class BareError extends Error {
-	constructor(status, body){
-		super(body.message);
-		this.status = status;
-		this.body = body;
+		return this.client.connect(...args);
 	}
 };
