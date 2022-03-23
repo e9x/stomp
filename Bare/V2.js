@@ -33,22 +33,21 @@ export default class ClientV2 extends Client {
 			'sec-websocket-version',
 		];
 
-		const request = new Request(this.new_meta);
+		const request = new Request(this.new_meta, {
+			cache: 'no-cache',
+		});
 
 		this.#write_bare_request(request.headers, protocol, host, path, port, request_headers, forward_headers);
 
 		const assign_meta = await fetch(request);
 
 		if(!assign_meta.ok){
-			throw BareError(assign_meta.status, await assign_meta.json());
+			throw new BareError(assign_meta.status, await assign_meta.json());
 		}
 
 		const id = await assign_meta.text();
 		
-		const socket = new WebSocket(this.ws, [
-			'bare',
-			encodeProtocol(id),
-		]);
+		const socket = new WebSocket(this.ws, [ encodeProtocol(id) ]);
 
 		socket.meta = new Promise((resolve, reject) => {
 			socket.addEventListener('open', async () => {
@@ -193,7 +192,7 @@ export default class ClientV2 extends Client {
 			headers.append('x-bare-pass-status', status);
 		}
 		
-		// split_headers(headers);
+		split_headers(headers);
 
 		return headers;
 	}
