@@ -175,7 +175,6 @@ export default class ClientV2 extends Client {
 	}
 	#write_bare_request(headers, protocol, host, path, port, bare_headers, forward_headers, pass_headers = [], pass_status = []){
 		headers.set('x-bare-protocol', protocol);
-		headers.set('x-bare-host', host);
 		headers.set('x-bare-path', path);
 		headers.set('x-bare-port', port);
 		headers.set('x-bare-headers', JSON.stringify(bare_headers));
