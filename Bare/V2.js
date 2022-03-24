@@ -143,12 +143,16 @@ export default class ClientV2 extends Client {
 		if(!response.ok){
 			throw new BareError(response.status, await response.json());
 		}
-		
-		// join_headers(response.headers);
 
-		const status = parseInt(response.headers.get('x-bare-status'));
-		const statusText = response.headers.get('x-bare-status-text');
-		const raw_headers = JSON.parse(response.headers.get('x-bare-headers'));
+		const response_headers = join_headers(response.headers);
+
+		if(response_headers.error){
+			throw new BareError(response_headers.error);
+		}
+
+		const status = parseInt(response_headers.get('x-bare-status'));
+		const statusText = response_headers.get('x-bare-status-text');
+		const raw_headers = JSON.parse(response_headers.get('x-bare-headers'));
 		
 		const headers = new Headers();
 		const json_headers = {};
