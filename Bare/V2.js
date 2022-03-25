@@ -25,19 +25,9 @@ export default class ClientV2 extends Client {
 		}
 	}
 	async connect(request_headers, protocol, host, port, path){
-		const forward_headers = [
-			'accept-encoding',
-			'accept-language',
-			'sec-websocket-extensions',
-			'sec-websocket-key',
-			'sec-websocket-version',
-		];
+		const request = new Request(this.new_meta);
 
-		const request = new Request(this.new_meta, {
-			cache: 'no-cache',
-		});
-
-		this.#write_bare_request(request.headers, protocol, host, path, port, request_headers, forward_headers);
+		this.#write_bare_request(request.headers, protocol, host, path, port, request_headers);
 
 		const assign_meta = await fetch(request);
 
@@ -102,7 +92,7 @@ export default class ClientV2 extends Client {
 		// bare can be an absolute path containing no origin, it becomes relative to the script	
 		const request = new Request(this.http + '?cache=' + md5(`${protocol}${host}${port}${path}`), options);
 
-		this.#write_bare_request(request.headers, protocol, host, path, port, bare_headers, [], [], [])
+		this.#write_bare_request(request.headers, protocol, host, path, port, bare_headers)
 
 		const response = await fetch(request);
 
@@ -172,7 +162,7 @@ export default class ClientV2 extends Client {
 			response_body: response.body,
 		}
 	}
-	#write_bare_request(headers, protocol, host, path, port, bare_headers, forward_headers, pass_headers = [], pass_status = []){
+	#write_bare_request(headers, protocol, host, path, port, bare_headers, forward_headers = [], pass_headers = [], pass_status = []){
 		headers.set('x-bare-protocol', protocol);
 		headers.set('x-bare-host', host);
 		headers.set('x-bare-path', path);
