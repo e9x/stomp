@@ -58,11 +58,7 @@ export default class ClientV2 extends Client {
 					method: 'GET',
 				});
 
-				if(!outgoing.ok){
-					reject(new BareError(outgoing.status, await outgoing.json()));
-				}
-
-				resolve(await outgoing.json());
+				resolve(await this.#read_bare_response(outgoing));
 			});
 
 			socket.addEventListener('error', reject);
@@ -90,24 +86,23 @@ export default class ClientV2 extends Client {
 			}
 		}
 
-		const forward_headers = ['accept-encoding', 'accept-language','if-modified-since','if-none-match','cache-control'];
-		const pass_headers = ['cache-control','etag'];
-		const pass_status = status_cache;
-
 		const options = {
 			credentials: 'omit',
 			method: method,
-			cache,
 		};
+
+		if(cache !== 'only-if-cached'){
+			options.cache = cache;
+		}
 	
 		if(body !== undefined){
 			options.body = body;
 		}
 
 		// bare can be an absolute path containing no origin, it becomes relative to the script	
-		const request = new Request(this.http + '?' + md5(`${protocol}${host}${port}${path}`), options);
+		const request = new Request(this.http + '?cache=' + md5(`${protocol}${host}${port}${path}`), options);
 
-		this.#write_bare_request(request.headers, protocol, host, path, port, bare_headers, forward_headers, pass_headers, pass_status)
+		this.#write_bare_request(request.headers, protocol, host, path, port, bare_headers, [], [], [])
 
 		const response = await fetch(request);
 
@@ -179,6 +174,7 @@ export default class ClientV2 extends Client {
 	}
 	#write_bare_request(headers, protocol, host, path, port, bare_headers, forward_headers, pass_headers = [], pass_status = []){
 		headers.set('x-bare-protocol', protocol);
+		headers.set('x-bare-host', host);
 		headers.set('x-bare-path', path);
 		headers.set('x-bare-port', port);
 		headers.set('x-bare-headers', JSON.stringify(bare_headers));
