@@ -9,7 +9,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-	if(server.request(event)){
+	if (server.request(event)) {
 		// handled
 		return;
 	}
@@ -24,7 +24,7 @@ self.addEventListener('push', event => {
 });
 
 self.addEventListener('message', event => {
-	if(server.message(event)){
+	if (server.message(event)) {
 		// handled
 		return;
 	}

@@ -14,30 +14,30 @@ import { Reflect } from '../rewriteUtil.js';
 export default class PageClient extends Client {
 	static type = 'page';
 	#baseURI_desc = Reflect.getOwnPropertyDescriptor(Node.prototype, 'baseURI');
-	get #baseURI(){
+	get #baseURI() {
 		return Reflect.apply(this.#baseURI_desc.get, document, []);
 	}
-	get base(){
+	get base() {
 		return this.tomp.url.parse_url(this.tomp.url.unwrap_ez(this.#baseURI));
 	}
-	get host(){
+	get host() {
 		return this.tomp.url.parse_url(this.#baseURI);
 	}
 	registration = undefined;
-	constructor(config){
+	constructor(config) {
 		super(config);
 
-		try{
-			if(global_client in parent){
+		try {
+			if (global_client in parent) {
 				this.registration = parent[global_client].registration;
 			}
-		}catch(error){}
-		
-		if(this.registration === undefined){
+		} catch (error) {}
+
+		if (this.registration === undefined) {
 			this.registration = navigator.serviceWorker.controller;
 		}
 
-		for(let node of document.querySelectorAll('[data-is-tomp]')){
+		for (let node of document.querySelectorAll('[data-is-tomp]')) {
 			node.remove();
 		}
 
@@ -50,26 +50,28 @@ export default class PageClient extends Client {
 			PageRequestRewrite,
 			WindowRewrite,
 			IFrameRewrite,
-			IsolateModule,
+			IsolateModule
 		);
 	}
 	decoder = new TextDecoder();
-	sync_api(api, target, args){
-		const response = this.get(SyncClient).fetch(...this.api_fetch_opts(api, target, args));
+	sync_api(api, target, args) {
+		const response = this.get(SyncClient).fetch(
+			...this.api_fetch_opts(api, target, args)
+		);
 		const decoded = this.decoder.decode(response.rawArrayBuffer);
-		
+
 		let parsed;
 
-		if(decoded === ''){
+		if (decoded === '') {
 			parsed = undefined;
-		}else{
+		} else {
 			parsed = JSON.parse(decoded);
 		}
-		
-		if(!response.ok){
+
+		if (!response.ok) {
 			throw parsed;
-		}else{
+		} else {
 			return parsed;
 		}
 	}
-};
+}

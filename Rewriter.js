@@ -1,54 +1,54 @@
-import { createDataURI, parseDataURI } from './dataURI.js'
+import { createDataURI, parseDataURI } from './dataURI.js';
 
 export default class Rewriter {
 	static service = 'unknown';
-	constructor(tomp){
+	constructor(tomp) {
 		this.tomp = tomp;
 	}
-	get overwrites_wrap(){
+	get overwrites_wrap() {
 		return this.wrap !== Rewriter.prototype.wrap;
 	}
-	get overwrites_unwrap(){
+	get overwrites_unwrap() {
 		return this.unwrap !== Rewriter.prototype.unwrap;
 	}
-	serve(serve, url, service = this.constructor.service){
+	serve(serve, url, service = this.constructor.service) {
 		serve = String(serve);
-		
-		if(serve.startsWith('data:')){
-			if(!this.overwrites_wrap){
+
+		if (serve.startsWith('data:')) {
+			if (!this.overwrites_wrap) {
 				return serve;
 			}
-			
-			const {mime,data,base64} = parseDataURI(serve);
-			
+
+			const { mime, data, base64 } = parseDataURI(serve);
+
 			const wrapped = this.wrap(data, url);
-			
+
 			return createDataURI(mime, wrapped, base64);
 		}
 
 		return this.tomp.url.wrap(serve, service);
 	}
-	unwrap_serving(serving, url){
+	unwrap_serving(serving, url) {
 		serving = String(serving);
 
-		if(serving.startsWith('data:')){
-			if(!this.overwrites_wrap){
+		if (serving.startsWith('data:')) {
+			if (!this.overwrites_wrap) {
 				return serving;
 			}
-			
-			const {mime,data,base64} = parseDataURI(serving);
-			
+
+			const { mime, data, base64 } = parseDataURI(serving);
+
 			const unwrapped = this.unwrap(data, url);
-			
+
 			return createDataURI(mime, unwrapped, base64);
 		}
-		
+
 		return this.tomp.url.unwrap_ez(serving);
 	}
-	wrap(code, url){
+	wrap(code, url) {
 		return code;
 	}
-	unwrap(code, url){
+	unwrap(code, url) {
 		return code;
 	}
-};
+}

@@ -4,38 +4,38 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const protocol = 'data:';
 
-export function parseDataURI(href){
+export function parseDataURI(href) {
 	href = String(href);
 
-	if(!href.startsWith(protocol))throw new Error('Not a data: URI');
+	if (!href.startsWith(protocol)) throw new Error('Not a data: URI');
 
 	href = href.slice(protocol.length);
 
 	const datapos = href.indexOf(',');
-	if(datapos == -1)throw new URIError('Invalid data: URI');
+	if (datapos == -1) throw new URIError('Invalid data: URI');
 
 	const split = `${href.slice(0, datapos)}`.split(';');
 
 	let mime = split.splice(0, 1);
 
-	if(mime == undefined)throw new URIError('Invalid data: URI');
+	if (mime == undefined) throw new URIError('Invalid data: URI');
 
 	let base64 = false;
 
-	for(let part of split){
-		if(part.startsWith('charset=')){
+	for (let part of split) {
+		if (part.startsWith('charset=')) {
 			mime += ';' + part;
-		}else if(part == 'base64'){
+		} else if (part == 'base64') {
 			base64 = true;
 		}
 	}
-	
+
 	let data = decodeURIComponent(href.slice(datapos + 1));
-	
-	if(base64){
+
+	if (base64) {
 		data = decoder.decode(decodeBase64(data));
 	}
-	
+
 	return {
 		mime,
 		data,
@@ -43,23 +43,23 @@ export function parseDataURI(href){
 	};
 }
 
-export function createDataURI(mime, data, base64){
-	const parts = [ mime ];
+export function createDataURI(mime, data, base64) {
+	const parts = [mime];
 
 	mime = String(mime);
 
-	if(base64){
-		if(!(data instanceof ArrayBuffer)){
+	if (base64) {
+		if (!(data instanceof ArrayBuffer)) {
 			data = String(data);
 			data = encoder.encode(data);
 		}
 
 		data = encodeBase64(data);
 		parts.push('base64');
-	}else{
+	} else {
 		data = String(data);
 	}
-	
+
 	return `data:${parts.join(';')},${data}`;
 }
 

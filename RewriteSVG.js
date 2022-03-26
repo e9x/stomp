@@ -5,21 +5,22 @@ import { TOMPElementParse5 } from './RewriteHTML.js';
 
 export default class RewriteSVG extends Rewriter {
 	static service = 'svg';
-	#wrap(html, url, wrap){
+	#wrap(html, url, wrap) {
 		const ast = parseFragment(html);
-		
+
 		const persist = {};
 
-		for(let ctx of new Parse5Iterator(ast)) {
-			if(!ctx.node.attrs){ // #text node
+		for (let ctx of new Parse5Iterator(ast)) {
+			if (!ctx.node.attrs) {
+				// #text node
 				continue;
 			}
 
 			const element = new TOMPElementParse5(ctx);
-			
-			if(wrap){
+
+			if (wrap) {
 				this.tomp.elements.wrap(element, url, persist);
-			}else{
+			} else {
 				this.tomp.elements.unwrap(element, url, persist);
 			}
 
@@ -28,10 +29,10 @@ export default class RewriteSVG extends Rewriter {
 
 		return serialize(ast);
 	}
-	wrap(html, url){
+	wrap(html, url) {
 		return this.#wrap(html, url, true);
 	}
-	unwrap(html, url){
+	unwrap(html, url) {
 		return this.#wrap(html, url, false);
 	}
-};
+}

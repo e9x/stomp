@@ -1,12 +1,21 @@
 import Rewrite from '../Rewrite.js';
 import global from '../../global.js';
-import { getOwnPropertyDescriptors, Reflect, wrap_function } from '../rewriteUtil.js';
+import {
+	getOwnPropertyDescriptors,
+	Reflect,
+	wrap_function,
+} from '../rewriteUtil.js';
 
 export default class IDBRewrite extends Rewrite {
-	work(){
-		global.IDBFactory.prototype.open = wrap_function(global.IDBFactory.prototype.open, (target, that, [ name, version ]) => {
-			return Reflect.apply(target, that, [ `${name}@${this.client.base.toOrigin()}`])
-		});
+	work() {
+		global.IDBFactory.prototype.open = wrap_function(
+			global.IDBFactory.prototype.open,
+			(target, that, [name, version]) => {
+				return Reflect.apply(target, that, [
+					`${name}@${this.client.base.toOrigin()}`,
+				]);
+			}
+		);
 
 		const { name } = getOwnPropertyDescriptors(IDBDatabase.prototype);
 
@@ -17,7 +26,7 @@ export default class IDBRewrite extends Rewrite {
 				name = name.slice(0, name.lastIndexOf('@'));
 
 				return name;
-			})
+			}),
 		});
 	}
-};
+}

@@ -4,47 +4,55 @@ import { serialize, parse, parseFragment } from 'parse5';
 import { global_client } from './RewriteJS.js';
 import { TOMPElement } from './RewriteElements.js';
 
-const essential_nodes = ['#documentType','#document','#text','html','head','body'];
+const essential_nodes = [
+	'#documentType',
+	'#document',
+	'#text',
+	'html',
+	'head',
+	'body',
+];
 
 export class TOMPElementParse5 extends TOMPElement {
 	#ctx = {};
-	constructor(ctx){
+	constructor(ctx) {
 		super();
-		
+
 		this.#ctx = ctx;
 
-		for(let { name, value } of this.#ctx.node.attrs){
-			if(!this.attributes.has(name))this.attributes.set(name, value);
+		for (let { name, value } of this.#ctx.node.attrs) {
+			if (!this.attributes.has(name)) this.attributes.set(name, value);
 		}
 
 		this.#ctx.node.attrs.length = 0;
 	}
-	get type(){
+	get type() {
 		return this.#ctx.node.nodeName;
 	}
-	set type(value){
+	set type(value) {
 		this.#ctx.node.tagName = value;
 		this.#ctx.node.nodeName = value;
 		return value;
 	}
-	get detached(){
+	get detached() {
 		return !this.#ctx.attached;
 	}
-	detach(){
+	detach() {
 		this.#ctx.detach();
 	}
-	sync(){
+	sync() {
 		this.#ctx.node.attrs.length = 0;
-		
-		for(let [ name, value ] of this.attributes){
-			if(typeof value != 'string')throw new TypeError(`Attribute ${name} was not a string.`);
+
+		for (let [name, value] of this.attributes) {
+			if (typeof value != 'string')
+				throw new TypeError(`Attribute ${name} was not a string.`);
 			this.#ctx.node.attrs.push({ name, value });
 		}
 	}
-	get text(){
+	get text() {
 		return this.#ctx.node?.childNodes[0]?.value;
 	}
-	set text(value){
+	set text(value) {
 		this.#ctx.node.childNodes = [
 			{
 				nodeName: '#text',
@@ -53,17 +61,17 @@ export class TOMPElementParse5 extends TOMPElement {
 			},
 		];
 	}
-	get parent(){
+	get parent() {
 		return new TOMPElementParse5(this.#ctx.parent);
 	}
-};
+}
 
 export default class RewriteHTML extends Rewriter {
 	static service = 'html';
-	get_head(url){
+	get_head(url) {
 		const nodes = [];
 
-		if(!this.tomp.noscript){
+		if (!this.tomp.noscript) {
 			nodes.push({
 				nodeName: 'script',
 				tagName: 'script',
@@ -79,15 +87,17 @@ export default class RewriteHTML extends Rewriter {
 					},
 				],
 			});
-			
+
 			nodes.push({
 				nodeName: 'script',
 				tagName: 'script',
 				childNodes: [
 					{
 						nodeName: '#text',
-						value: `if(typeof ${global_client}==='function')${global_client}(${JSON.stringify(this.tomp)})`,
-					}
+						value: `if(typeof ${global_client}==='function')${global_client}(${JSON.stringify(
+							this.tomp
+						)})`,
+					},
 				],
 				attrs: [
 					{
@@ -100,33 +110,40 @@ export default class RewriteHTML extends Rewriter {
 
 		return nodes;
 	}
-	#wrap(html, url, fragment, wrap){
+	#wrap(html, url, fragment, wrap) {
 		const ast = (fragment ? parseFragment : parse)(html, {
 			// https://github.com/inikulin/parse5/blob/master/packages/parse5/docs/options/parser-options.md#optional-scriptingenabled
 			// <noscript>
 			scriptingEnabled: false,
 		});
-			
+
 		let inserted_script = false;
-		
+
 		const persist = {};
 
-		for(let ctx of new Parse5Iterator(ast)) {
-			if(!ctx.node.attrs){ // #text node
+		for (let ctx of new Parse5Iterator(ast)) {
+			if (!ctx.node.attrs) {
+				// #text node
 				continue;
 			}
 
 			const element = new TOMPElementParse5(ctx);
-			
-			if(wrap){
+
+			if (wrap) {
 				this.tomp.elements.wrap(element, url, persist);
-			}else{
+			} else {
 				this.tomp.elements.unwrap(element, url, persist);
 			}
 
 			// todo: instead of first non essential node, do first live rewritten node (script, if node has on* tag)
 			// on the first non-essential node (not html,head,or body), insert the client script before it
-			if(!fragment && wrap && !element.detached && !inserted_script && !essential_nodes.includes(ctx.node.nodeName)){
+			if (
+				!fragment &&
+				wrap &&
+				!element.detached &&
+				!inserted_script &&
+				!essential_nodes.includes(ctx.node.nodeName)
+			) {
 				inserted_script = ctx.insert_before(...this.get_head(url));
 			}
 
@@ -135,26 +152,31 @@ export default class RewriteHTML extends Rewriter {
 
 		return serialize(ast);
 	}
-	wrap(html, url, fragment = false){
+	wrap(html, url, fragment = false) {
 		return this.#wrap(html, url, fragment, true);
 	}
-	unwrap(html, url, fragment = false){
+	unwrap(html, url, fragment = false) {
 		return this.#wrap(html, url, fragment, false);
 	}
 	// excellent resource
 	// https://web.archive.org/web/20210514140514/https://www.otsukare.info/2015/03/26/refresh-http-header
-	wrap_http_refresh(value, url){
+	wrap_http_refresh(value, url) {
 		const urlstart = value.toLowerCase().indexOf('url=');
-		
-		if(urlstart == -1){
+
+		if (urlstart == -1) {
 			return value;
 		}
 
 		var urlend = value.indexOf(';', urlstart);
-		if(urlend == -1)urlend = value.indexOf(',', urlstart);
-		if(urlend == -1)urlend = value.length;
-		
+		if (urlend == -1) urlend = value.indexOf(',', urlstart);
+		if (urlend == -1) urlend = value.length;
+
 		const resolved = new URL(value.slice(urlstart + 4, urlend), url).href;
-		return value.slice(0, urlstart) + 'url=' + this.serve(resolved, url) + value.slice(urlend);
+		return (
+			value.slice(0, urlstart) +
+			'url=' +
+			this.serve(resolved, url) +
+			value.slice(urlend)
+		);
 	}
-};
+}

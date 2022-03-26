@@ -2,7 +2,7 @@ import Rewrite from '../../Rewrite.js';
 import global from '../../../global.js';
 
 export default class IsolateModule extends Rewrite {
-	work(){
+	work() {
 		delete global.CookieStore;
 		delete global.cookieStore;
 		delete global.CookieStoreManager;
@@ -12,4 +12,4 @@ export default class IsolateModule extends Rewrite {
 		delete global.ServiceWorkerRegistration;
 		delete Navigator.prototype.serviceWorker;
 	}
-};
+}

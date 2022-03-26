@@ -9,10 +9,10 @@ import { BareError } from '../Bare/Bare.js';
 
 export default class Server {
 	session = Math.random();
-	constructor(config){
+	constructor(config) {
 		config.origin = new URL(serviceWorker.scriptURL).origin;
 		this.tomp = new TOMP(config);
-		this.bare = new Bare(this.tomp, this.tomp.bare, this.tomp.bare_json);	
+		this.bare = new Bare(this.tomp, this.tomp.bare, this.tomp.bare_json);
 		this.request = this.request.bind(this);
 		this.ready = this.work();
 		this.cookie = new Cookie(this);
@@ -20,7 +20,7 @@ export default class Server {
 		this.sync_request = new SyncServer(this);
 		register(this);
 	}
-	async work(){
+	async work() {
 		this.db = await openDB('tomp', 1, {
 			upgrade: (db, oldv, newv, transaction) => {
 				db.createObjectStore('consts');
@@ -32,32 +32,32 @@ export default class Server {
 
 		let key = await store.get(`key${this.tomp.codec_index}`);
 
-		if(key === undefined){
+		if (key === undefined) {
 			key = this.tomp.codec.generate_key();
 		}
 
 		this.tomp.key = key;
 
 		await store.put(key, `key${this.tomp.codec_index}`);
-		
+
 		await tx.done;
 	}
-	on_message({ data }){
-		if(this.sync_request.message(data)){
+	on_message({ data }) {
+		if (this.sync_request.message(data)) {
 			return; // handled
 		}
 	}
-	message(event){
-		if(typeof event.data === 'object' && event.data.tomp === true){
+	message(event) {
+		if (typeof event.data === 'object' && event.data.tomp === true) {
 			this.on_message(event);
 			return true;
-		}else{
+		} else {
 			return false;
 		}
 	}
-	json(status, json){
+	json(status, json) {
 		// this.tomp.log.trace(json);
-		
+
 		return new Response(JSON.stringify(json, null, '\t'), {
 			status,
 			headers: {
@@ -66,13 +66,13 @@ export default class Server {
 		});
 	}
 	routes = new Map();
-	async send(request, service, field){
+	async send(request, service, field) {
 		await this.ready;
 
-		try{
+		try {
 			const route = this.routes.get(service);
-			
-			if(typeof route !== 'function'){
+
+			if (typeof route !== 'function') {
 				throw new BareError(400, {
 					code: 'IMPL_BAD_ROUTE',
 					id: 'request',
@@ -83,25 +83,25 @@ export default class Server {
 			const start = performance.now();
 			const result = await route(this, request, field);
 			const duration = performance.now() - start;
-			
+
 			const length = parseInt(result.headers.get('content-length'));
 
-			if(!isNaN(length)){
+			if (!isNaN(length)) {
 				const ratio = duration / length;
 
-				// console.log(length, duration, service, 'has ratio of', ratio);	
+				// console.log(length, duration, service, 'has ratio of', ratio);
 			}
 
 			return result;
-		}catch(err){
+		} catch (err) {
 			let status;
 			let json;
 
-			if(err instanceof Error){
-				if(err instanceof BareError){
+			if (err instanceof Error) {
+				if (err instanceof BareError) {
 					status = err.status;
 					json = err.body;
-				}else{
+				} else {
 					status = 500;
 					json = {
 						code: 'UNKNOWN',
@@ -110,8 +110,8 @@ export default class Server {
 						stack: err.stack,
 					};
 					this.tomp.log.error(err);
-				}		
-			}else{
+				}
+			} else {
 				status = 500;
 				json = {
 					code: 'UNKNOWN',
@@ -121,8 +121,9 @@ export default class Server {
 				};
 			}
 
-			if(request.destination === 'document'){
-				return new Response(`<!DOCTYPE HTML>
+			if (request.destination === 'document') {
+				return new Response(
+					`<!DOCTYPE HTML>
 <html>
 	<head>
 		<meta charset='utf-8' />
@@ -146,34 +147,36 @@ if(json.stack){
 console.error(error);
 		</script>
 	</body>
-</html>`, {
-					status,
-					headers: {
-						'content-type': 'text/html',
-					},
-				});
-			}else{
+</html>`,
+					{
+						status,
+						headers: {
+							'content-type': 'text/html',
+						},
+					}
+				);
+			} else {
 				return this.json(status, json);
 			}
 		}
 	}
-	request(event){
+	request(event) {
 		const { request } = event;
 		let url = request.url.slice(request.url.indexOf(this.tomp.directory));
-		
+
 		const hash = url.indexOf('#');
-		
-		if(hash != -1){
+
+		if (hash != -1) {
 			url = url.slice(0, hash);
 		}
 
-		const {service,field} = this.tomp.url.get_attributes(url);
-		
-		if(this.routes.has(service)){
+		const { service, field } = this.tomp.url.get_attributes(url);
+
+		if (this.routes.has(service)) {
 			event.respondWith(this.send(request, service, field));
 			return true;
 		}
-		
+
 		return false;
 	}
-};
+}

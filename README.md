@@ -18,21 +18,25 @@ Documentation for components such as the Bootstrapper can be found in [the wiki]
 ### Quickstart
 
 1. Clone the repository locally
+
 ```sh
 git clone https://github.com/sysce/tomp.git
 ```
 
 2. Enter the folder
+
 ```sh
 cd toomanyproxies
 ```
 
 3. Install dependencies
+
 ```sh
 npm install
 ```
 
 3. Build to the `tompbuild` folder
+
 ```sh
 node ./app.mjs build --folder tompbuild
 ```

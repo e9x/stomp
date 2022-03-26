@@ -1,5 +1,5 @@
-import TOMP from '../TOMP.js'
-import Rewrite from './Rewrite.js'
+import TOMP from '../TOMP.js';
+import Rewrite from './Rewrite.js';
 import NativeHelper from './Modules/NativeHelper.js';
 import LocationRewrite from './Modules/Location.js';
 import WebSocketRewrite from './Modules/WebSocket.js';
@@ -17,7 +17,7 @@ import Bare from '../Bare/Bare.js';
 
 export default class Client {
 	type = this.constructor.type;
-	constructor(config){
+	constructor(config) {
 		this.tomp = new TOMP(config);
 		this.bare = new Bare(this.tomp, this.tomp.bare, this.tomp.bare_json);
 		this.ready = this.async_work();
@@ -33,30 +33,34 @@ export default class Client {
 			EvalRewrite,
 			LocationRewrite,
 			AccessRewrite,
-			XMLHttpRequestRewrite,
+			XMLHttpRequestRewrite
 		);
 
 		// this.modules.get(NativeHelper)[...]
 	}
-	async api(api, target, args){
-		const response = await Reflect.apply(this.get(RequestRewrite).global_fetch, global, this.api_fetch_opts(api, target, args));
+	async api(api, target, args) {
+		const response = await Reflect.apply(
+			this.get(RequestRewrite).global_fetch,
+			global,
+			this.api_fetch_opts(api, target, args)
+		);
 		const decoded = await response.text();
 
 		let parsed;
 
-		if(decoded === ''){
+		if (decoded === '') {
 			parsed = undefined;
-		}else{
+		} else {
 			parsed = JSON.parse(decoded);
 		}
-		
-		if(!response.ok){
+
+		if (!response.ok) {
 			throw parsed;
-		}else{
+		} else {
 			return parsed;
 		}
 	}
-	api_fetch_opts(api, target, args){
+	api_fetch_opts(api, target, args) {
 		return [
 			`${this.tomp.directory}${api}:`,
 			{
@@ -68,32 +72,32 @@ export default class Client {
 					target,
 					args,
 				}),
-			}
+			},
 		];
 	}
 	/**
 	 * @argument {Rewrite.constructor} Module
 	 * @returns {Rewrite} module
 	 */
-	get(Module){
+	get(Module) {
 		return this.#modules.get(Module);
 	}
 	#modules = new Map();
-	load_modules(...Modules){
-		for(let Module of Modules){
+	load_modules(...Modules) {
+		for (let Module of Modules) {
 			this.#modules.set(Module, new Module(this));
 		}
 	}
-	work(){
-		for(let [Module, module] of this.#modules){
+	work() {
+		for (let [Module, module] of this.#modules) {
 			module.work();
 		}
 	}
-	async async_work(){
+	async async_work() {
 		this.db = await openDB('tomp', 1, {
 			upgrade: (db, oldv, newv, transaction) => {
 				throw new Error(`Service worker didn't register the TOMP database.`);
 			},
 		});
 	}
-};
+}

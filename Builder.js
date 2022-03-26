@@ -7,18 +7,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default class Builder {
-	get_errors(error, stats){
+	get_errors(error, stats) {
 		const errors = [];
-		
-		if(error){
+
+		if (error) {
 			errors.push(error);
 		}
-		
-		if(typeof stats == 'object' && stats !== undefined && stats !== null){
-			for(let error of stats.compilation.errors){
-				if(error?.module){
+
+		if (typeof stats == 'object' && stats !== undefined && stats !== null) {
+			for (let error of stats.compilation.errors) {
+				if (error?.module) {
 					errors.push(`${error.module?.request}: ${error}`);
-				}else{
+				} else {
 					errors.push(error);
 				}
 			}
@@ -27,65 +27,82 @@ export default class Builder {
 		return errors;
 	}
 	webpacks = [];
-	constructor(output, development){
+	constructor(output, development) {
 		const mode = development ? 'development' : 'production';
-		
-		this.webpacks.push(webpack({
-			mode,
-			devtool: 'source-map',
-			entry: {
-				client: join(__dirname, 'Client', 'entry.js'),
-				worker: join(__dirname, 'Worker', 'entry.js'),
-			},
-			context: __dirname,
-			output: {
-				path: output,
-				filename: '[name].js',
-			},
-		}));
-		
-		this.webpacks.push(webpack({
-			mode,
-			devtool: 'source-map',
-			entry: join(__dirname, 'Bootstrapper', 'Bootstrapper.js'),
-			context: __dirname,
-			output: {
-				library: 'TOMPBoot',
-			    libraryTarget: 'umd',
-				libraryExport: 'default',
-				path: output,
-				filename: 'bootstrapper.js',
-			},
-		}));
-		
+
+		this.webpacks.push(
+			webpack({
+				mode,
+				devtool: 'source-map',
+				entry: {
+					client: join(__dirname, 'Client', 'entry.js'),
+					worker: join(__dirname, 'Worker', 'entry.js'),
+				},
+				context: __dirname,
+				output: {
+					path: output,
+					filename: '[name].js',
+				},
+			})
+		);
+
+		this.webpacks.push(
+			webpack({
+				mode,
+				devtool: 'source-map',
+				entry: join(__dirname, 'Bootstrapper', 'Bootstrapper.js'),
+				context: __dirname,
+				output: {
+					library: 'TOMPBoot',
+					libraryTarget: 'umd',
+					libraryExport: 'default',
+					path: output,
+					filename: 'bootstrapper.js',
+				},
+			})
+		);
 	}
-	build(){
-		return Promise.all(this.webpacks.map(webpack => new Promise((resolve, reject) => {
-			webpack.run((error, stats) => {
-				const errors = this.get_errors(error, stats);
-	
-				if(errors.length){
-					reject(errors);
-				}else{
-					resolve();
-				}
-			});
-		})));
+	build() {
+		return Promise.all(
+			this.webpacks.map(
+				webpack =>
+					new Promise((resolve, reject) => {
+						webpack.run((error, stats) => {
+							const errors = this.get_errors(error, stats);
+
+							if (errors.length) {
+								reject(errors);
+							} else {
+								resolve();
+							}
+						});
+					})
+			)
+		);
 	}
-	watch(){
+	watch() {
 		const emitter = new Events();
-		
-		const watch = Promise.all(this.webpacks.map(webpack => new Promise(resolve => setTimeout(() => {
-			resolve(webpack.watch({}, (error, stats) => {
-				const errors = this.get_errors(error, stats);
-	
-				if(errors.length){
-					emitter.emit('error', errors);
-				}else{
-					emitter.emit('bulit');
-				}
-			}));
-		}))));
+
+		const watch = Promise.all(
+			this.webpacks.map(
+				webpack =>
+					new Promise(resolve =>
+						setTimeout(() => {
+							resolve(
+								webpack.watch({}, (error, stats) => {
+									const errors = this.get_errors(error, stats);
+
+									if (errors.length) {
+										emitter.emit('error', errors);
+									} else {
+										emitter.emit('bulit');
+									}
+								})
+							);
+						})
+					)
+			)
+		);
 
 		emitter.stop = async () => {
 			(await watch).close();
@@ -93,4 +110,4 @@ export default class Builder {
 
 		return emitter;
 	}
-};
+}

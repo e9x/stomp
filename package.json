@@ -25,6 +25,17 @@
 	"license": "GPL-3.0",
 	"type": "module",
 	"main": "Builder.js",
+	"lint-staged": {
+		"*.{js,json}": "prettier --write"
+	},
+	"scripts": {
+		"prepare": "husky install"
+	},
+	"devDependencies": {
+		"husky": "^7.0.4",
+		"lint-staged": "^12.3.7",
+		"prettier": "2.6.0"
+	},
 	"dependencies": {
 		"@javascript-obfuscator/escodegen": "^2.3.0",
 		"ast-types": "^0.14.2",
