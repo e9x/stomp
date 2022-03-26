@@ -23,6 +23,7 @@ export default class TOMP {
 		return {
 			directory: this.directory,
 			bare: this.bare,
+			bare_json: this.bare_json,
 			origin: this.origin,
 			key: this.key,
 			noscript: this.noscript,
@@ -71,6 +72,10 @@ export default class TOMP {
 		this.origin = config.origin;
 		this.directory = config.directory;
 		this.bare = config.bare;
+
+		if(typeof config.bare_json === 'object'){
+			this.bare_json = config.bare_json;
+		}
 
 		if(typeof config.loglevel == 'number'){
 			this.loglevel = config.loglevel;

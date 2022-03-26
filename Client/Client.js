@@ -19,7 +19,7 @@ export default class Client {
 	type = this.constructor.type;
 	constructor(config){
 		this.tomp = new TOMP(config);
-		this.bare = new Bare(this.tomp, this.tomp.bare);
+		this.bare = new Bare(this.tomp, this.tomp.bare, this.tomp.bare_json);
 		this.ready = this.async_work();
 
 		this.load_modules(

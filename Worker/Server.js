@@ -12,7 +12,7 @@ export default class Server {
 	constructor(config){
 		config.origin = new URL(serviceWorker.scriptURL).origin;
 		this.tomp = new TOMP(config);
-		this.bare = new Bare(this.tomp, this.tomp.bare);	
+		this.bare = new Bare(this.tomp, this.tomp.bare, this.tomp.bare_json);	
 		this.request = this.request.bind(this);
 		this.ready = this.work();
 		this.cookie = new Cookie(this);

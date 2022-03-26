@@ -7,20 +7,24 @@ import ClientV2 from './V2.js';
 
 export default class Bare {
 	#ready;  
-	constructor(tomp, server){
+	constructor(tomp, server, json){
 		this.tomp = tomp;
 		this.server = new URL(server, this.tomp.origin);
-		this.#ready = this.#work();
+		this.#ready = this.#work(json);
 	}
-	async #work(){
-		const outgoing = await fetch(this.server);
+	async #work(json){
+		if(json === undefined){
+			const outgoing = await fetch(this.server);
 
-		if(!outgoing.ok){
-			throw new Error(`Unable to fetch Bare meta: ${outgoing.status} ${await outgoing.text()}`);
+			if(!outgoing.ok){
+				throw new Error(`Unable to fetch Bare meta: ${outgoing.status} ${await outgoing.text()}`);
+			}
+
+			json = await outgoing.json();
+
+			this.tomp.bare_json = json;
 		}
-
-		const json = await outgoing.json();
-
+		
 		let found = false;
 
 		// newest-oldest
