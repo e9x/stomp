@@ -1,7 +1,8 @@
 import APIServer from './APIServer.js';
 import { forbids_body, status_empty } from '../Bare/Bare.js';
 import { mapHeaderNamesFromArray } from './HeaderUtil.js';
-import { html_types, get_mime } from '../RewriteElements.js';
+import { html_types } from '../RewriteElements.js';
+import sniffMime from './sniffMime.js';
 
 /**
  *
@@ -383,6 +384,7 @@ async function sendHTML(server, server_request, field) {
 		url.path,
 		server_request.cache
 	);
+	
 	const response_headers = await handle_common_response(
 		server.tomp.html,
 		server,
@@ -394,13 +396,11 @@ async function sendHTML(server, server_request, field) {
 	let send = undefined;
 
 	if (!status_empty.includes(+response.status)) {
-		const mime = get_mime(response_headers.get('content-type') || '');
+		const mime = sniffMime(server_request, response);
+
+		response_headers.set('content-type', mime);
 
 		if (html_types.includes(mime)) {
-			if (mime === '') {
-				response_headers.set('content-type', 'text/html');
-			}
-
 			send = server.tomp.html.wrap(await response.text(), url.toString());
 
 			for (let remove of remove_encoding_headers) {

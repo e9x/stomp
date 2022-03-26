@@ -27,6 +27,11 @@ export class TOMPElement {
 	}
 }
 
+/**
+ * 
+ * @param {string} content_type 
+ * @returns {string} mime
+ */
 export function get_mime(content_type) {
 	content_type = String(content_type);
 	return content_type.split(';')[0];
