@@ -75,22 +75,6 @@ export default class Cookie {
 			}
 		}
 	}
-	async test() {
-		try {
-			this.db.transaction('cookies', 'readonly');
-		} catch (error) {
-			if (
-				error.message ===
-				"Failed to execute 'transaction' on 'IDBDatabase': The database connection is closing."
-			) {
-				this.#open = this.#open_db();
-			} else {
-				throw error;
-			}
-		}
-
-		await this.#open;
-	}
 	cookie_expired(cookie) {
 		const now = new Date();
 

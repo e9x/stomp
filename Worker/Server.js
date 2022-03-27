@@ -9,19 +9,18 @@ import { BareError } from '../Bare/Bare.js';
 
 export default class Server {
 	session = Math.random();
-	#open;
 	constructor(config) {
 		config.origin = new URL(serviceWorker.scriptURL).origin;
 		this.tomp = new TOMP(config);
 		this.bare = new Bare(this.tomp, this.tomp.bare, this.tomp.bare_json);
 		this.request = this.request.bind(this);
+		this.ready = this.work();
 		this.cookie = new Cookie(this);
 		this.storage = new Storage(this);
 		this.sync_request = new SyncServer(this);
-		this.#open = this.#open_db();
 		register(this);
 	}
-	async #open_db() {
+	async work() {
 		this.db = await openDB('tomp', 1, {
 			upgrade: (db, oldv, newv, transaction) => {
 				db.createObjectStore('consts');
@@ -67,28 +66,10 @@ export default class Server {
 		});
 	}
 	routes = new Map();
-	async test() {
-		try {
-			this.db.transaction('consts', 'readonly');
-		} catch (error) {
-			if (
-				error.message ===
-				"Failed to execute 'transaction' on 'IDBDatabase': The database connection is closing."
-			) {
-				this.#open = this.#open_db();
-			} else {
-				throw error;
-			}
-		}
-
-		await this.#open;
-	}
 	async send(request, service, field) {
-		try {
-			await this.test();
-			await this.cookie.test();
-			await this.storage.test();
+		await this.ready;
 
+		try {
 			const route = this.routes.get(service);
 
 			if (typeof route !== 'function') {
