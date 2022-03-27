@@ -29,6 +29,23 @@ export default class Storage {
 
 		await this.db.clear('sessionStorage');
 	}
+	async test() {
+		try {
+			this.db.transaction('localStorage', 'readonly');
+			this.db.transaction('sessionStorage', 'readonly');
+		} catch (error) {
+			if (
+				error.message ===
+				"Failed to execute 'transaction' on 'IDBDatabase': The database connection is closing."
+			) {
+				this.#open = this.#open_db();
+			} else {
+				throw error;
+			}
+		}
+
+		await this.#open;
+	}
 	get_id(name, remote) {
 		return `${remote.toOrigin()}/${name}`;
 	}
