@@ -26,75 +26,6 @@ const parse_options = module => {
 	};
 };
 
-class Modifications {
-	changes = [];
-	replace(ctx, _with) {
-		ctx.replace_with(_with);
-		this.changes.push([ctx.node, _with]);
-	}
-	range_size([start, end]) {
-		return end - start;
-	}
-	toString(code) {
-		this.changes.sort(
-			([a], [b]) => this.range_size(b.range) - this.range_size(a.range)
-		);
-
-		// large -> smallest
-		// remove smaller ones that will be completely removed
-		console.log(this.changes.map(([old]) => this.range_size(old.range)));
-
-		let os_range0 = 0;
-		let os_range1 = 0;
-
-		const replaced_ranges = [];
-
-		main: for (let [oldnode, newnode] of this.changes) {
-			const on_range0 = oldnode.range[0] + os_range0;
-			const on_range1 = oldnode.range[1] + os_range1;
-
-			const generated = generate(newnode);
-			const on_size = on_range1 - on_range0;
-
-			const gn_range0 = on_range0;
-			const gn_range1 = on_range0 + generated.length;
-
-			for (let nn of replaced_ranges) {
-				const nn_range0 = nn.range[0] + os_range0;
-				const nn_range1 = nn.range[1] + os_range1;
-
-				console.log(
-					[on_range0, on_range1],
-					[nn_range0, nn_range1],
-					generate(nn),
-					generate(oldnode)
-				);
-				// assume nn_ is from larger node
-
-				if (gn_range0 >= nn_range0 && nn_range1 > gn_range1) {
-					console.log('SKIP');
-					continue main;
-				}
-			}
-
-			console.log('work', generate(oldnode), generate(newnode));
-			console.log(on_range0, on_range1);
-			code = code.slice(0, on_range0) + generated + code.slice(on_range1);
-
-			const diff = generated.length - on_size; // code.length - oldcodelength;
-
-			newnode.range = [gn_range0, gn_range1];
-			// console.log('sliced:', code.slice(...newnode.range));
-			replaced_ranges.push(newnode);
-
-			os_range0 += diff;
-			os_range1 += diff;
-		}
-
-		return code;
-	}
-}
-
 export default class RewriteJS extends Rewriter {
 	static service = 'js';
 	worker_main(url) {
@@ -125,8 +56,6 @@ export default class RewriteJS extends Rewriter {
 			} else throw err;
 		}
 
-		const modify = new Modifications();
-
 		// unload from memory
 		// code = null;
 
@@ -134,8 +63,7 @@ export default class RewriteJS extends Rewriter {
 			switch (ctx.type) {
 				case 'ImportExpression':
 					// todo: add tompc$.import(meta, url)
-					modify.replace(
-						ctx,
+					ctx.replace_with(
 						b.importExpression(
 							b.callExpression(
 								b.memberExpression(
@@ -155,15 +83,11 @@ export default class RewriteJS extends Rewriter {
 
 					break;
 				case 'ImportDeclaration':
-					/*modify.replace(
-						ctx,
-						b.importDeclaration()
 					ctx.node.source.value = this.serve(
 						new URL(ctx.node.source.value, url),
 						url
 					);
-*/
-					// TODO : FIX
+
 					break;
 				case 'CallExpression':
 					const { callee } = ctx.node;
@@ -180,8 +104,7 @@ export default class RewriteJS extends Rewriter {
 						*/
 
 						// transform eval(...) into eval(...tompc$.eval.eval_scope(eval, ...['code',{note:"eval is possibly a var"}]))
-						modify.replace(
-							ctx,
+						ctx.replace_with(
 							b.callExpression(b.identifier('eval'), [
 								b.spreadElement(
 									b.callExpression(
@@ -248,8 +171,7 @@ export default class RewriteJS extends Rewriter {
 						(ctx.parent.type === 'AssignmentExpression' &&
 							ctx.parent_key === 'left')
 					) {
-						modify.replace(
-							ctx.parent,
+						ctx.parent.replace_with(
 							b.callExpression(
 								b.memberExpression(global_access, b.identifier('set1')),
 								[
@@ -299,8 +221,7 @@ export default class RewriteJS extends Rewriter {
 							)
 						);
 					} else {
-						modify.replace(
-							ctx,
+						ctx.replace_with(
 							b.callExpression(
 								b.memberExpression(global_access, b.identifier('get')),
 								[ctx.node, b.literal(ctx.node.name)]
@@ -320,6 +241,7 @@ export default class RewriteJS extends Rewriter {
 						ctx.parent.node.operator === 'delete'
 					)
 						break;
+					if (ctx.node[this.prevent_rewrite]) break;
 
 					let rewrite = false;
 
@@ -338,18 +260,18 @@ export default class RewriteJS extends Rewriter {
 					} else
 						switch (ctx.node.property.type) {
 							case 'Identifier':
-								if (undefinable.includes(ctx.node.property.name)) {
-									rewrite = true;
-								} else {
+								if (!undefinable.includes(ctx.node.property.name)) {
 									rewrite = false;
+								} else {
+									rewrite = true;
 								}
 
 								break;
 							case 'Literal':
 								if (!undefinable.includes(ctx.node.property.value)) {
-									rewrite = true;
-								} else {
 									rewrite = false;
+								} else {
+									rewrite = true;
 								}
 
 								break;
@@ -375,8 +297,7 @@ export default class RewriteJS extends Rewriter {
 						ctx.parent.type === 'NewExpression' &&
 						ctx.parent_key === 'callee'
 					) {
-						modify.replace(
-							ctx.parent,
+						ctx.parent.replace_with(
 							b.callExpression(
 								b.memberExpression(global_access, b.identifier('new2')),
 								[
@@ -391,8 +312,7 @@ export default class RewriteJS extends Rewriter {
 						ctx.parent.type === 'CallExpression' &&
 						ctx.parent_key === 'callee'
 					) {
-						modify.replace(
-							ctx.parent,
+						ctx.parent.replace_with(
 							b.callExpression(
 								b.memberExpression(global_access, b.identifier('call2')),
 								[
@@ -408,8 +328,7 @@ export default class RewriteJS extends Rewriter {
 						(ctx.parent.type === 'AssignmentExpression' &&
 							ctx.parent_key === 'left')
 					) {
-						modify.replace(
-							ctx.parent,
+						ctx.parent.replace_with(
 							b.callExpression(
 								b.memberExpression(global_access, b.identifier('set2')),
 								[
@@ -449,8 +368,7 @@ export default class RewriteJS extends Rewriter {
 							)
 						);
 					} else {
-						modify.replace(
-							ctx,
+						ctx.replace_with(
 							b.callExpression(
 								b.memberExpression(global_access, b.identifier('get2')),
 								[
@@ -480,7 +398,7 @@ export default class RewriteJS extends Rewriter {
 			}
 		}
 
-		code = modify.toString(code);
+		code = generate(ast);
 
 		if (worker) {
 			code = this.worker_main(url) + code;
@@ -488,12 +406,135 @@ export default class RewriteJS extends Rewriter {
 
 		return code;
 	}
+	pattern_declarator(ctx) {
+		if (!ctx.parent.node.init) {
+			// very weird...
+			console.log('No init:', generate(ctx.parent.parent.node));
+			return;
+		}
+
+		/*
+		const {
+			window: {location: test},
+			location: wrapped,		
+		} = window;
+		console.log(test);
+
+		const { test, wrapped } = tompc$.access.pattern(window, [ { window: { location: 'test' }, location: 'wrapped' } ]);
+		*/
+
+		const pattern_root =
+			ctx.type === 'ObjectPattern'
+				? b.objectExpression([])
+				: b.arrayExpression([]);
+		const declare = [];
+		const stack = [[pattern_root, ctx.node]];
+
+		while (stack.length) {
+			let [result, pattern] = stack.pop();
+
+			let list;
+
+			if (pattern.type === 'ArrayPattern') {
+				list = pattern.elements;
+			} else if (pattern.type === 'ObjectPattern') {
+				list = pattern.properties;
+			}
+
+			for (let i = 0; i < list.length; i++) {
+				let key;
+				let value;
+
+				let part = list[i];
+
+				if (pattern.type === 'ArrayPattern') {
+					value = part;
+				} else if (pattern.type === 'ObjectPattern') {
+					({ value, key } = part);
+				}
+
+				// console.log(result.type, value.type);
+
+				if (value === null) {
+					if (result.type === 'ArrayExpression') {
+						result.elements.push(null);
+					}
+
+					continue;
+				}
+
+				if (value.type === 'ArrayPattern') {
+					const expr = b.arrayExpression([]);
+
+					if (result.type === 'ArrayExpression') {
+						result.elements.push(expr);
+					} else if (result.type === 'ObjectExpression') {
+						result.properties.push(b.property('init', key, expr));
+					}
+
+					// console.log('ArrayPattern value:', value);
+					stack.push([expr, value]);
+				} else if (value.type === 'ObjectPattern') {
+					const expr = b.objectExpression([]);
+
+					if (result.type === 'ArrayExpression') {
+						result.elements.push(expr);
+					} else if (result.type === 'ObjectExpression') {
+						result.properties.push(b.property('init', key, expr));
+					}
+
+					// console.log('ObjectPattern value:', value);
+					stack.push([expr, value]);
+				} else if (value.type === 'Identifier') {
+					if (result.type === 'ArrayExpression') {
+						declare.push({
+							...b.property('init', value, value),
+							shorthand: true,
+						});
+						result.elements.push(b.literal(value.name));
+					} else if (result.type === 'ObjectExpression') {
+						declare.push({
+							...b.property('init', value, value),
+							shorthand: true,
+						});
+						result.properties.push(
+							b.property('init', key, b.literal(value.name))
+						);
+					} else {
+						console.error(
+							pattern.type,
+							value.type,
+							result.type,
+							'was id',
+							generate(pattern),
+							JSON.stringify(pattern)
+						);
+					}
+				} else {
+					// AssignmentPattern
+					console.warn('Unknown', value.type);
+				}
+			}
+		}
+
+		ctx.parent.replace_with(
+			b.variableDeclarator(
+				b.objectPattern(declare),
+				b.callExpression(
+					b.memberExpression(global_access, b.identifier('pattern')),
+					[
+						ctx.parent.node.init,
+						pattern_root,
+						b.literal(this.generate_part(code, ctx.parent)),
+					]
+				)
+			)
+		);
+	}
 	unwrap(code, url, module) {
 		if (this.tomp.noscript) return '';
 
 		code = String(code);
-
-		const modify = new Modifications();
 
 		let ast;
 
@@ -555,7 +596,7 @@ export default class RewriteJS extends Rewriter {
 								case 'get':
 									{
 										const id = ctx.node.arguments[0].name;
-										modify.replace(ctx, b.identifier(id));
+										ctx.replace_with(b.identifier(id));
 									}
 									break;
 								case 'get2':
@@ -566,7 +607,7 @@ export default class RewriteJS extends Rewriter {
 										const id =
 											ctx.node.arguments[ctx.node.arguments.length - 1].value;
 
-										modify.replace(ctx, b.identifier(id));
+										ctx.replace_with(b.identifier(id));
 										ctx.remove_descendants_from_stack();
 									}
 									break;
@@ -575,12 +616,12 @@ export default class RewriteJS extends Rewriter {
 										const id =
 											ctx.node.arguments[ctx.node.arguments.length - 1].value;
 
-										modify.replace(ctx.parent, b.identifier(id));
+										ctx.parent.replace_with(b.identifier(id));
 										ctx.parent.remove_descendants_from_stack();
 									}
 									break;
 								case 'pattern':
-									modify.replace(ctx, ctx.node.arguments[0]);
+									ctx.replace_with(ctx.node.arguments[0]);
 									break;
 								default:
 									console.warn('unknown', parts);
@@ -590,8 +631,7 @@ export default class RewriteJS extends Rewriter {
 						case 'eval':
 							switch (parts[2]) {
 								case 'eval_scope':
-									modify.replace(
-										ctx.parent,
+									ctx.parent.replace_with(
 										b.callExpression(
 											b.identifier('eval'),
 											ctx.node.arguments.slice(1)
@@ -599,8 +639,7 @@ export default class RewriteJS extends Rewriter {
 									);
 									break;
 								case 'import':
-									modify.replace(
-										ctx.parent,
+									ctx.parent.replace_with(
 										b.callExpression(
 											b.identifier('import'),
 											ctx.node.arguments.slice(1)
@@ -618,9 +657,7 @@ export default class RewriteJS extends Rewriter {
 			}
 		}
 
-		code = modify.toString(code);
-
-		return code;
+		return generate(ast);
 	}
 	generate_part(code, ctx) {
 		let result = code.slice(ctx.node.range[0], ctx.node.range[1]);
