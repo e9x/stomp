@@ -1,4 +1,4 @@
-# SystemYA's TOMP implementation
+# SystemYA's TOMP implementation (STomp)
 
 This repository implements the proxy model found [here](https://github.com/tomphttp/specifications/blob/master/ProxyModel.md).
 
