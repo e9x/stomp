@@ -53,7 +53,7 @@ export default class Builder {
 				entry: join(__dirname, 'Bootstrapper', 'Bootstrapper.js'),
 				context: __dirname,
 				output: {
-					library: 'TOMPBoot',
+					library: 'StompBoot',
 					libraryTarget: 'umd',
 					libraryExport: 'default',
 					path: output,
