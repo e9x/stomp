@@ -10,9 +10,13 @@ export default class Bare {
 	constructor(tomp, server, json) {
 		this.tomp = tomp;
 		this.server = new URL(server, this.tomp.origin);
-		this.#ready = this.#work(json);
+		this.#work(json);
 	}
 	async #work(json) {
+		if (this.#ready === true) {
+			return;
+		}
+
 		if (json === undefined) {
 			const outgoing = await fetch(this.server);
 
@@ -43,13 +47,15 @@ export default class Bare {
 		if (!found) {
 			throw new Error(`Unable to find compatible client version.`);
 		}
+
+		this.#ready = true;
 	}
 	async fetch(...args) {
-		await this.#ready;
+		await this.#work();
 		return this.client.fetch(...args);
 	}
 	async connect(...args) {
-		await this.#ready;
+		await this.#work();
 		return this.client.connect(...args);
 	}
 }
