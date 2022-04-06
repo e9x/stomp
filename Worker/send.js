@@ -233,9 +233,10 @@ async function sendBinary(server, server_request, field) {
 		response
 	);
 
-	let exact_response_headers = Object.fromEntries([
+	const exact_response_headers = Object.fromEntries([
 		...response_headers.entries(),
 	]);
+
 	Reflect.setPrototypeOf(exact_request_headers, null);
 
 	mapHeaderNamesFromArray(
