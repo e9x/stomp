@@ -1,18 +1,16 @@
 import TOMP from '../TOMP.js';
-import Bare from '../Bare/Bare.js';
 import SyncServer from './SyncServer.js';
 import Cookie from './Cookie.js';
 import Storage from './Storage.js';
 import register from './send.js';
 import { openDB } from 'idb/with-async-ittr';
-import { BareError } from '../Bare/Bare.js';
+import { BareError } from 'bare-client';
 
 export default class Server {
 	session = Math.random();
 	constructor(config) {
 		config.origin = new URL(serviceWorker.scriptURL).origin;
 		this.tomp = new TOMP(config);
-		this.bare = new Bare(this.tomp, this.tomp.bare, this.tomp.bare_json);
 		this.request = this.request.bind(this);
 		this.ready = this.work();
 		this.cookie = new Cookie(this);

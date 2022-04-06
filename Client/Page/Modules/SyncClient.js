@@ -2,7 +2,7 @@ import { decodeBase64, encodeBase64 } from '../../../Base64.js';
 import global from '../../../global.js';
 import { engine } from '../../environment.js';
 import { decodeCookie } from '../../../encodeCookies.js';
-import { status_empty } from '../../../Bare/Bare.js';
+import { status_empty } from '../../../HTTPConsts.js';
 import CookieRewrite from './Cookie.js';
 
 const { Request, XMLHttpRequest } = global;

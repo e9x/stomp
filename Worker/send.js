@@ -1,6 +1,6 @@
 import APIServer from './APIServer.js';
-import { forbids_body, status_empty } from '../Bare/Bare.js';
-import { mapHeaderNamesFromArray } from './HeaderUtil.js';
+import { forbids_body, status_empty } from '../HTTPConsts.js';
+import { mapHeaderNamesFromArray, rawHeaderNames } from './HeaderUtil.js';
 import { html_types } from '../RewriteElements.js';
 import sniffMime from './sniffMime.js';
 
@@ -124,8 +124,12 @@ async function handle_common_response(
 	for (let remove of remove_csp_headers) response_headers.delete(remove);
 	for (let remove of remove_general_headers) response_headers.delete(remove);
 
-	if ('set-cookie' in response.json_headers) {
-		await server.cookie.set(url, response.json_headers['set-cookie']);
+	if (response.headers.has('set-cookie')) {
+		for (let header in response.rawHeaders) {
+			if (header.toLowerCase() === 'set-cookie') {
+				await server.cookie.set(url, response.rawHeaders[header]);
+			}
+		}
 	}
 
 	response_headers.set('referrer-policy', 'same-origin');
@@ -210,7 +214,7 @@ async function sendBinary(server, server_request, field) {
 		delete exact_request_headers['x-tomp-impl-names'];
 	}
 
-	const response = await server.bare.fetch(
+	const response = await server.tomp.bare.fetch(
 		server_request.method,
 		exact_request_headers,
 		body,
@@ -234,7 +238,10 @@ async function sendBinary(server, server_request, field) {
 	]);
 	Reflect.setPrototypeOf(exact_request_headers, null);
 
-	mapHeaderNamesFromArray(response.raw_header_names, exact_response_headers);
+	mapHeaderNamesFromArray(
+		rawHeaderNames(response.rawHeaders),
+		exact_response_headers
+	);
 
 	if (status_empty.includes(+response.status)) {
 		return new Response(undefined, {
@@ -273,7 +280,7 @@ async function sendRewrittenScript(
 	);
 	if (gd_error) return gd_error;
 
-	const response = await server.bare.fetch(
+	const response = await server.tomp.bare.fetch(
 		server_request.method,
 		request_headers,
 		body,
@@ -374,7 +381,7 @@ async function sendHTML(server, server_request, field) {
 	);
 	if (gd_error) return gd_error;
 
-	const response = await server.bare.fetch(
+	const response = await server.tomp.bare.fetch(
 		server_request.method,
 		request_headers,
 		body,
@@ -384,7 +391,7 @@ async function sendHTML(server, server_request, field) {
 		url.path,
 		server_request.cache
 	);
-	
+
 	const response_headers = await handle_common_response(
 		server.tomp.html,
 		server,

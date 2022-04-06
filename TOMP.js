@@ -9,6 +9,7 @@ import RewriteManifest from './RewriteManifest.js';
 import RewriteBinary from './RewriteBinary.js';
 import { PlainCodec, XORCodec } from './Codec.js';
 import Logger, { LOG_WARN } from './Logger.js';
+import BareClient from 'bare-client';
 
 const codecs = [PlainCodec, XORCodec];
 
@@ -22,8 +23,8 @@ export default class TOMP {
 
 		return {
 			directory: this.directory,
-			bare: this.bare,
-			bare_json: this.bare_json,
+			bare_server: this.bare_server,
+			bare_data: this.bare.data,
 			origin: this.origin,
 			key: this.key,
 			noscript: this.noscript,
@@ -36,7 +37,6 @@ export default class TOMP {
 	origin = '';
 	// codec key such as xor value
 	key = '';
-	bare = '';
 	loglevel = LOG_WARN;
 	noscript = false;
 	codec = PlainCodec;
@@ -55,7 +55,7 @@ export default class TOMP {
 			throw new Error('Directory must be specified.');
 		}
 
-		if (typeof config.bare !== 'string') {
+		if (typeof config.bare_server !== 'string') {
 			throw new Error('Bare server URL must be specified.');
 		}
 
@@ -71,11 +71,7 @@ export default class TOMP {
 
 		this.origin = config.origin;
 		this.directory = config.directory;
-		this.bare = config.bare;
-
-		if (typeof config.bare_json === 'object') {
-			this.bare_json = config.bare_json;
-		}
+		this.bare_server = config.bare_server;
 
 		if (typeof config.loglevel == 'number') {
 			this.loglevel = config.loglevel;
@@ -85,6 +81,10 @@ export default class TOMP {
 			this.noscript = true;
 		}
 
+		this.bare = new BareClient(
+			new URL(this.bare_server, this.origin),
+			config.bare_data
+		);
 		this.log = new Logger(this.loglevel);
 		this.url = new RewriteURL(this);
 		this.js = new RewriteJS(this);

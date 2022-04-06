@@ -7,7 +7,7 @@ import {
 	DOMObjectConstructor,
 	mirror_class,
 } from '../NativeUtil.js';
-import { forbids_body } from '../../Bare/Bare.js';
+import { forbids_body } from '../../HTTPConsts.js';
 import SyncClient from '../Page/Modules/SyncClient.js';
 import RequestRewrite from './Request.js';
 
