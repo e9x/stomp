@@ -67,19 +67,19 @@ class Modifications {
 			);*/
 			// insight
 
-			console.log(`iterating for ${generate(newnode)}`);
+			// console.log(`iterating for ${generate(newnode)}`);
 
 			for (let range of replaced) {
-				console.log(
+				/*console.log(
 					`\toldnode.range: ${oldnode.range} size: ${this.range_size(
 						oldnode.range
 					)}, range: ${range} size: ${this.range_size(range)}`
-				);
+				);*/
 				if (
 					range[0] >= oldnode.range[0] &&
 					this.range_size(range) > this.range_size(oldnode.range)
 				) {
-					console.log('continue', generate(newnode));
+					// console.log('continue', generate(newnode));
 					continue main;
 				}
 			}
