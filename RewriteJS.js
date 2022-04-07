@@ -40,7 +40,9 @@ class Modifications {
 		return end - start;
 	}
 	toString(code) {
-		this.changes.sort(([a], [b]) => {
+		const changes = [...this.changes];
+
+		changes.sort(([a], [b]) => {
 			const factor1 = a.range[0] - b.range[0];
 
 			if (factor1 !== 0) {
@@ -50,34 +52,59 @@ class Modifications {
 			return this.range_size(a.range) > this.range_size(b.range);
 		});
 
-		const replaced = new WeakSet();
+		const replaced = [];
 		let offset = 0;
 
 		main: for (let [oldnode, newnode] of this.changes) {
-			if (replaced.has(oldnode)) {
+			/*if (replaced.has(oldnode)) {
 				console.log('REPLACED', generate(newnode));
 				continue;
 			}
-			console.log(oldnode.range[0], this.range_size(oldnode.range));
+			console.log(
+				oldnode_range[0],
+				this.range_size(oldnode_range),
+				generate(newnode)
+			);*/
+			// insight
 
-			oldnode.range[0] += offset;
-			oldnode.range[1] += offset;
+			console.log(`iterating for ${generate(newnode)}`);
+
+			for (let range of replaced) {
+				console.log(
+					`\toldnode.range: ${oldnode.range} size: ${this.range_size(
+						oldnode.range
+					)}, range: ${range} size: ${this.range_size(range)}`
+				);
+				if (
+					range[0] >= oldnode.range[0] &&
+					this.range_size(range) > this.range_size(oldnode.range)
+				) {
+					console.log('continue', generate(newnode));
+					continue main;
+				}
+			}
 
 			const generated = generate(newnode);
 
-			newnode.range = [oldnode.range[0], oldnode.range[0] + generated.length];
+			const oldnode_range = [
+				oldnode.range[0] + offset,
+				oldnode.range[1] + offset,
+			];
+
+			/*const newnode_range = [
+				oldnode_range[0],
+				oldnode_range[0] + generated.length,
+			];*/
 
 			code =
-				code.slice(0, oldnode.range[0]) +
+				code.slice(0, oldnode_range[0]) +
 				generated +
-				code.slice(oldnode.range[1]);
+				code.slice(oldnode_range[1]);
 
-			const diff = generated.length - (oldnode.range[1] - oldnode.range[0]);
+			const diff = generated.length - (oldnode_range[1] - oldnode_range[0]);
 			offset += diff;
 
-			for (let { node } of new AcornIterator(newnode)) {
-				replaced.add(node);
-			}
+			replaced.push(oldnode.range);
 		}
 
 		return code;
