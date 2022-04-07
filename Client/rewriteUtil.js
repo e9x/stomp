@@ -63,12 +63,20 @@ export function wrap_function(fn, wrap, construct) {
 	const wrapped =
 		'prototype' in fn
 			? function attach(...args) {
-					if (construct && new.target === undefined) {
-						// should throw an error if fn was a class
-						fn();
+					let new_target = new.target;
+
+					if (construct) {
+						if (new.target === undefined) {
+							// should throw an error if fn was a class
+							fn();
+						} else if (new.target === wrapped) {
+							new_target = fn;
+							Reflect.setPrototypeOf(this, fn.prototype);
+							this.constructor = fn;
+						}
 					}
 
-					return wrap(fn, this, args);
+					return wrap(fn, this, args, new_target);
 			  }
 			: {
 					attach(...args) {

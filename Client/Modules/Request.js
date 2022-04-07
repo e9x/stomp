@@ -138,7 +138,7 @@ export default class RequestRewrite extends Rewrite {
 
 		global.Request = wrap_function(
 			global.Request,
-			(target, that, args) => {
+			(target, that, args, new_target) => {
 				if (args.length === 0) {
 					throw new DOMException(
 						`Failed to construct 'Request': 1 argument required, but only 0 present.`
@@ -152,7 +152,7 @@ export default class RequestRewrite extends Rewrite {
 				const result = Reflect.construct(
 					target,
 					[this.client.tomp.binary.serve(url), init],
-					that
+					new_target
 				);
 
 				this.request_urls.set(result, url.toString());

@@ -214,7 +214,7 @@ async function sendBinary(server, server_request, field) {
 		delete exact_request_headers['x-tomp-impl-names'];
 	}
 
-	const response = await server.tomp.bare.fetch(
+	const response = await server.tomp.bare.request(
 		server_request.method,
 		exact_request_headers,
 		body,
@@ -281,7 +281,7 @@ async function sendRewrittenScript(
 	);
 	if (gd_error) return gd_error;
 
-	const response = await server.tomp.bare.fetch(
+	const response = await server.tomp.bare.request(
 		server_request.method,
 		request_headers,
 		body,
@@ -382,7 +382,7 @@ async function sendHTML(server, server_request, field) {
 	);
 	if (gd_error) return gd_error;
 
-	const response = await server.tomp.bare.fetch(
+	const response = await server.tomp.bare.request(
 		server_request.method,
 		request_headers,
 		body,
