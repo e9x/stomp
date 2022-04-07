@@ -36,9 +36,28 @@ class Modifications {
 		return end - start;
 	}
 	toString(code) {
-		/*this.changes.sort(
+		const replaced_ranges = [];
+		this.changes.sort(
 			([a], [b]) => this.range_size(b.range) - this.range_size(a.range)
-		);*/
+		);
+
+		main: for (let array of this.changes) {
+			const [oldnode] = array;
+
+			for (let nn of replaced_ranges) {
+				// nn is larger node
+
+				if (oldnode.range[0] >= nn.range[0] && nn.range[1] > oldnode.range[1]) {
+					const i = this.changes.indexOf(array);
+					this.changes.splice(i, 1);
+					continue main;
+				}
+			}
+
+			replaced_ranges.push(oldnode);
+		}
+
+		this.changes.sort(([a], [b]) => a.range[0] - b.range[0]);
 
 		// large -> smallest
 		// remove smaller ones that will be completely removed
@@ -47,10 +66,8 @@ class Modifications {
 		let offset = 0;
 
 		for (let [oldnode, newnode] of this.changes) {
-			console.log(generate(oldnode), code.slice(...oldnode.range));
 			oldnode.range[0] += offset;
 			oldnode.range[1] += offset;
-			console.log(generate(oldnode), code.slice(...oldnode.range));
 
 			const generated = generate(newnode);
 
