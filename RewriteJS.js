@@ -76,7 +76,7 @@ class Modifications {
 					)}, range: ${range} size: ${this.range_size(range)}`
 				);*/
 				if (
-					range[0] >= oldnode.range[0] &&
+					range[0] <= oldnode.range[0] &&
 					this.range_size(range) > this.range_size(oldnode.range)
 				) {
 					// console.log('continue', generate(newnode));
