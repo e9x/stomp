@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 export default function (file, { dontUnwrap }) {
 	const tomp = new TOMP({
 		directory: '/',
-		bare: '/',
+		bare_server: '/bare/',
 		origin: 'http://localhost',
 	});
 
