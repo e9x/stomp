@@ -11,5 +11,8 @@ if (typeof globalThis === 'object' && globalThis !== undefined) {
 	g = window;
 }
 
+/**
+ * @type {globalThis}
+ */
 let global;
 export default global = g;
