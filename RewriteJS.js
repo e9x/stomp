@@ -40,39 +40,26 @@ class Modifications {
 		return end - start;
 	}
 	toString(code) {
-		const replaced_ranges = [];
-		this.changes.sort(
-			([a], [b]) => this.range_size(b.range) - this.range_size(a.range)
-		);
+		this.changes.sort(([a], [b]) => {
+			const factor1 = a.range[0] - b.range[0];
 
-		main: for (let array of this.changes) {
-			const [oldnode] = array;
-
-			for (let nn of replaced_ranges) {
-				// nn is larger node
-
-				if (
-					oldnode.range[0] >= nn.range[0] &&
-					nn.range[1] >= oldnode.range[1]
-				) {
-					const i = this.changes.indexOf(array);
-					this.changes.splice(i, 1);
-					continue main;
-				}
+			if (factor1 !== 0) {
+				return factor1;
 			}
 
-			replaced_ranges.push(oldnode);
-		}
+			return this.range_size(a.range) > this.range_size(b.range);
+		});
 
-		this.changes.sort(([a], [b]) => a.range[0] - b.range[0]);
-
-		// large -> smallest
-		// remove smaller ones that will be completely removed
-		// console.log(this.changes.map(([old]) => this.range_size(old.range)));
-
+		const replaced = new WeakSet();
 		let offset = 0;
 
-		for (let [oldnode, newnode] of this.changes) {
+		main: for (let [oldnode, newnode] of this.changes) {
+			if (replaced.has(oldnode)) {
+				console.log('REPLACED', generate(newnode));
+				continue;
+			}
+			console.log(oldnode.range[0], this.range_size(oldnode.range));
+
 			oldnode.range[0] += offset;
 			oldnode.range[1] += offset;
 
@@ -87,6 +74,10 @@ class Modifications {
 
 			const diff = generated.length - (oldnode.range[1] - oldnode.range[0]);
 			offset += diff;
+
+			for (let { node } of new AcornIterator(newnode)) {
+				replaced.add(node);
+			}
 		}
 
 		return code;
