@@ -11,7 +11,7 @@ import { global_client } from '../../../RewriteJS.js';
 
 const beacon_protocols = ['http:', 'https:'];
 
-export const is_tomp = 'tompc$from_tomp';
+export const is_tomp = global_client + 'from_tomp';
 
 export default class PageRequestRewrite extends Rewrite {
 	work() {

@@ -4,7 +4,11 @@ import { parseScript } from 'meriyah-loose';
 import { generate } from '@javascript-obfuscator/escodegen';
 import { builders as b } from 'ast-types';
 
-export const global_client = 'tompc$';
+const c_target = 't$t';
+const c_prop = 't$p';
+const c_value = 't$v';
+
+export const global_client = 'tc$';
 
 const global_access = b.memberExpression(
 	b.identifier(global_client),
@@ -47,7 +51,10 @@ class Modifications {
 			for (let nn of replaced_ranges) {
 				// nn is larger node
 
-				if (oldnode.range[0] >= nn.range[0] && nn.range[1] > oldnode.range[1]) {
+				if (
+					oldnode.range[0] >= nn.range[0] &&
+					nn.range[1] >= oldnode.range[1]
+				) {
 					const i = this.changes.indexOf(array);
 					this.changes.splice(i, 1);
 					continue main;
@@ -249,16 +256,16 @@ export default class RewriteJS extends Rewriter {
 									// return what the intended value is
 									b.arrowFunctionExpression(
 										[
-											b.identifier('tomp$target'),
-											b.identifier('tomp$prop'),
-											b.identifier('tomp$value'),
+											b.identifier(c_target),
+											b.identifier(c_prop),
+											b.identifier(c_value),
 										],
 										ctx.parent.type === 'UpdateExpression'
 											? b.updateExpression(
 													ctx.parent.node.operator,
 													b.memberExpression(
-														b.identifier('tomp$target'),
-														b.identifier('tomp$prop'),
+														b.identifier(c_target),
+														b.identifier(c_prop),
 														true
 													),
 													ctx.parent.node.prefix
@@ -266,21 +273,17 @@ export default class RewriteJS extends Rewriter {
 											: b.assignmentExpression(
 													ctx.parent.node.operator,
 													b.memberExpression(
-														b.identifier('tomp$target'),
-														b.identifier('tomp$prop'),
+														b.identifier(c_target),
+														b.identifier(c_prop),
 														true
 													),
-													b.identifier('tomp$value')
+													b.identifier(c_value)
 											  )
 									),
 									// set
 									b.arrowFunctionExpression(
-										[b.identifier('tomp$value')],
-										b.assignmentExpression(
-											'=',
-											ctx.node,
-											b.identifier('tomp$value')
-										)
+										[b.identifier(c_value)],
+										b.assignmentExpression('=', ctx.node, b.identifier(c_value))
 									),
 									ctx.parent.type === 'UpdateExpression'
 										? b.identifier('undefined')
@@ -408,16 +411,16 @@ export default class RewriteJS extends Rewriter {
 									property_argument,
 									b.arrowFunctionExpression(
 										[
-											b.identifier('tomp$target'),
-											b.identifier('tomp$prop'),
-											b.identifier('tomp$value'),
+											b.identifier(c_target),
+											b.identifier(c_prop),
+											b.identifier(c_value),
 										],
 										ctx.parent.type === 'UpdateExpression'
 											? b.updateExpression(
 													ctx.parent.node.operator,
 													b.memberExpression(
-														b.identifier('tomp$target'),
-														b.identifier('tomp$prop'),
+														b.identifier(c_target),
+														b.identifier(c_prop),
 														true
 													),
 													ctx.parent.node.prefix
@@ -425,11 +428,11 @@ export default class RewriteJS extends Rewriter {
 											: b.assignmentExpression(
 													ctx.parent.node.operator,
 													b.memberExpression(
-														b.identifier('tomp$target'),
-														b.identifier('tomp$prop'),
+														b.identifier(c_target),
+														b.identifier(c_prop),
 														true
 													),
-													b.identifier('tomp$value')
+													b.identifier(c_value)
 											  )
 									),
 									ctx.parent.type === 'UpdateExpression'
