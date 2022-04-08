@@ -56,20 +56,20 @@ class Modifications {
 		let offset = 0;
 
 		main: for (let [oldnode, newnode] of this.changes) {
-			console.log(`iterating for ${generate(newnode)}`);
+			// console.log(`iterating for ${generate(newnode)}`);
 
 			for (let range of replaced) {
-				console.log(
+				/*console.log(
 					`\toldnode.range: ${oldnode.range} size: ${this.range_size(
 						oldnode.range
 					)}, range: ${range} size: ${this.range_size(range)}`
-				);
+				);*/
 				if (
 					range[0] <= oldnode.range[0] &&
 					range[1] >= oldnode.range[1] &&
 					this.range_size(range) > this.range_size(oldnode.range)
 				) {
-					console.log('continue', generate(newnode));
+					// console.log('continue', generate(newnode));
 					continue main;
 				}
 			}
@@ -367,6 +367,8 @@ export default class RewriteJS extends Rewriter {
 
 					let property_argument;
 
+					// TODO: run property_argument through rewriter
+					// object[location[location]]
 					if (ctx.node.computed) {
 						property_argument = ctx.node.property;
 					} else if (ctx.node.property.type === 'Identifier') {
