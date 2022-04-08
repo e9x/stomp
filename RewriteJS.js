@@ -96,14 +96,14 @@ export default class RewriteJS extends Rewriter {
 
 					break;
 				case 'ImportDeclaration':
-					/*modify.replace(
+					console.log(ctx.node);
+					modify.replace(
 						ctx,
-						b.importDeclaration()
-					ctx.node.source.value = this.serve(
-						new URL(ctx.node.source.value, url),
-						url
+						b.importDeclaration(
+							ctx.node.specifiers,
+							b.literal(this.serve(new URL(ctx.node.source.value, url), url))
+						)
 					);
-*/
 					// TODO : FIX
 					break;
 				case 'CallExpression':
