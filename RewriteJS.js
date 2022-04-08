@@ -56,20 +56,22 @@ class Modifications {
 		let offset = 0;
 
 		main: for (let [oldnode, newnode] of this.changes) {
-			// console.log(`iterating for ${generate(newnode)}`);
+			console.log(`iterating for ${generate(newnode)}`);
+
+			console.log(
+				`\toldnode.range: ${oldnode.range} size: ${this.range_size(
+					oldnode.range
+				)}`
+			);
 
 			for (let range of replaced) {
-				/*console.log(
-					`\toldnode.range: ${oldnode.range} size: ${this.range_size(
-						oldnode.range
-					)}, range: ${range} size: ${this.range_size(range)}`
-				);*/
+				console.log(`\t\trange: ${range} size: ${this.range_size(range)}`);
 				if (
 					range[0] <= oldnode.range[0] &&
 					range[1] >= oldnode.range[1] &&
 					this.range_size(range) > this.range_size(oldnode.range)
 				) {
-					// console.log('continue', generate(newnode));
+					console.log('continue', generate(newnode));
 					continue main;
 				}
 			}
