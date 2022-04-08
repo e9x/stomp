@@ -31,75 +31,8 @@ const parse_options = module => {
 };
 
 class Modifications {
-	changes = [];
 	replace(ctx, _with) {
 		ctx.replace_with(_with);
-		this.changes.push([ctx.node, _with]);
-	}
-	range_size([start, end]) {
-		return end - start;
-	}
-	toString(code) {
-		const changes = [...this.changes];
-
-		changes.sort(([a], [b]) => {
-			const factor1 = a.range[0] - b.range[0];
-
-			if (factor1 !== 0) {
-				return factor1;
-			}
-
-			return this.range_size(a.range) > this.range_size(b.range);
-		});
-
-		const replaced = [];
-		let offset = 0;
-
-		main: for (let [oldnode, newnode] of this.changes) {
-			console.log(`iterating for ${generate(newnode)}`);
-
-			console.log(
-				`\toldnode.range: ${oldnode.range} size: ${this.range_size(
-					oldnode.range
-				)}`
-			);
-
-			for (let range of replaced) {
-				console.log(`\t\trange: ${range} size: ${this.range_size(range)}`);
-				if (
-					range[0] <= oldnode.range[0] &&
-					range[1] >= oldnode.range[1] &&
-					this.range_size(range) > this.range_size(oldnode.range)
-				) {
-					console.log('continue', generate(newnode));
-					continue main;
-				}
-			}
-
-			const generated = generate(newnode);
-
-			const oldnode_range = [
-				oldnode.range[0] + offset,
-				oldnode.range[1] + offset,
-			];
-
-			/*const newnode_range = [
-				oldnode_range[0],
-				oldnode_range[0] + generated.length,
-			];*/
-
-			code =
-				code.slice(0, oldnode_range[0]) +
-				generated +
-				code.slice(oldnode_range[1]);
-
-			const diff = generated.length - (oldnode_range[1] - oldnode_range[0]);
-			offset += diff;
-
-			replaced.push(oldnode.range);
-		}
-
-		return code;
 	}
 }
 
@@ -486,7 +419,8 @@ export default class RewriteJS extends Rewriter {
 			}
 		}
 
-		code = modify.toString(code);
+		code = generate(ast);
+		// modify.toString(code);
 
 		if (worker) {
 			code = this.worker_main(url) + code;
@@ -624,7 +558,8 @@ export default class RewriteJS extends Rewriter {
 			}
 		}
 
-		code = modify.toString(code);
+		code = generate(ast);
+		// modify.toString(code);
 
 		return code;
 	}
