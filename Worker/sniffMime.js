@@ -2,11 +2,15 @@ import { get_mime } from '../RewriteElements.js';
 import mime from 'mime/lite.js';
 
 /**
- * 
- * @param {Response} response 
+ *
+ * @param {import('bare-client').BareResponse} response
  * @returns {string} mime
  */
 export default function sniffMime(request, response) {
+	if (response.cached) {
+		return 'text/html';
+	}
+
 	if (response.headers.has('content-type')) {
 		return get_mime(response.headers.get('content-type'));
 	} else {
@@ -17,17 +21,18 @@ export default function sniffMime(request, response) {
 		}
 
 		const { pathname } = new URL(request.url);
+
 		const last_dot = pathname.lastIndexOf('.');
 
 		if (last_dot === -1) {
 			return '';
 		}
-		
-		const type = mime.getType(pathname.slice(last_dot + 1));;
 
-		if(type === null){
+		const type = mime.getType(pathname.slice(last_dot + 1));
+
+		if (type === null) {
 			return 'application/octet-stream';
-		}else{
+		} else {
 			return type;
 		}
 	}
