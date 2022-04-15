@@ -2,15 +2,35 @@ import { createDataURI, parseDataURI } from './dataURI.js';
 
 export default class Rewriter {
 	static service = 'unknown';
+	/**
+	 *
+	 * @param {import('./TOMP.js').default} tomp
+	 */
 	constructor(tomp) {
+		/**
+		 * @type {import('./TOMP.js').default}
+		 */
 		this.tomp = tomp;
 	}
+	/**
+	 * @returns {boolean}
+	 */
 	get overwrites_wrap() {
 		return this.wrap !== Rewriter.prototype.wrap;
 	}
+	/**
+	 * @returns {boolean}
+	 */
 	get overwrites_unwrap() {
 		return this.unwrap !== Rewriter.prototype.unwrap;
 	}
+	/**
+	 *
+	 * @param {string} serve
+	 * @param {string} url
+	 * @param {string} service
+	 * @returns {string}
+	 */
 	serve(serve, url, service = this.constructor.service) {
 		serve = String(serve);
 
@@ -28,6 +48,12 @@ export default class Rewriter {
 
 		return this.tomp.url.wrap(serve, service);
 	}
+	/**
+	 *
+	 * @param {string}} serving
+	 * @param {string} url
+	 * @returns {string}
+	 */
 	unwrap_serving(serving, url) {
 		serving = String(serving);
 
@@ -45,10 +71,20 @@ export default class Rewriter {
 
 		return this.tomp.url.unwrap_ez(serving);
 	}
-	wrap(code, url) {
+	/**
+	 *
+	 * @param {string} code
+	 * @returns {string}
+	 */
+	wrap(code) {
 		return code;
 	}
-	unwrap(code, url) {
+	/**
+	 *
+	 * @param {string} code
+	 * @returns {string}
+	 */
+	unwrap(code) {
 		return code;
 	}
 }

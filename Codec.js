@@ -6,26 +6,26 @@
 import { decodeCodecURI, encodeCodecURI } from './encodeCodecURI.js';
 
 export class CodecInterface {
-	static generate_key() {
+	generate_key() {
 		throw new Error('generate_key() not implemented');
 	}
-	static wrap(input, key) {
+	wrap(input, key) {
 		throw new Error('wrap() not implemented');
 	}
-	static unwrap(input, key) {
+	unwrap(input, key) {
 		throw new Error('unwrap() not implemented');
 	}
 }
 
 export class PlainCodec extends CodecInterface {
-	static generate_key() {
+	generate_key() {
 		return String(0);
 	}
-	static wrap(input, key) {
+	wrap(input, key) {
 		key = parseInt(key);
 		return input;
 	}
-	static unwrap(input, key) {
+	unwrap(input, key) {
 		key = parseInt(key);
 		return input;
 	}
@@ -33,9 +33,9 @@ export class PlainCodec extends CodecInterface {
 
 // nature of xor allows wrap to be used both ways
 export class XORCodec extends CodecInterface {
-	static URI_max = 0x7f;
-	static URI_min = 0x01;
-	static generate_key() {
+	URI_max = 0x7f;
+	URI_min = 0x01;
+	generate_key() {
 		const xor = ~~(Math.random() * (this.URI_max - 3)) + 2,
 			// 2-4
 			frequency = Math.min(~~(Math.random() * 0xf), 4);
@@ -44,7 +44,7 @@ export class XORCodec extends CodecInterface {
 		// CHAR frequency
 		return ((xor << 4) + frequency).toString(16);
 	}
-	static wrap(input, key) {
+	wrap(input, key) {
 		key = parseInt(key, 16);
 
 		const xor = key >> 0x4,
@@ -62,7 +62,7 @@ export class XORCodec extends CodecInterface {
 
 		return encodeCodecURI(result);
 	}
-	static unwrap(input, key) {
+	unwrap(input, key) {
 		key = parseInt(key, 16);
 		input = decodeCodecURI(input);
 

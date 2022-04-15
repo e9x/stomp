@@ -114,7 +114,7 @@ export default class RewriteHTML extends Rewriter {
 		const ast = (fragment ? parseFragment : parse)(html, {
 			// https://github.com/inikulin/parse5/blob/master/packages/parse5/docs/options/parser-options.md#optional-scriptingenabled
 			// <noscript>
-			scriptingEnabled: false,
+			scriptingEnabled: !this.tomp.noscript,
 		});
 
 		let inserted_script = false;
