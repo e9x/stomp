@@ -71,6 +71,7 @@ export default class Client {
 					args,
 				}),
 			},
+			true,
 		];
 	}
 	/**

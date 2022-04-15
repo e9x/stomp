@@ -5,6 +5,8 @@ import { decodeCookie } from '../../../encodeCookies.js';
 import { status_empty } from '../../../HTTPConsts.js';
 import CookieRewrite from './Cookie.js';
 
+// 10 seconds
+const max_cycles = 10 * 200000000;
 const { Request, XMLHttpRequest } = global;
 
 export default class SyncClient {
@@ -38,7 +40,7 @@ export default class SyncClient {
 
 		return response;
 	}
-	fetch(url, init = {}) {
+	fetch(url, init = {}, loopback = false) {
 		const request = new Request(url, init);
 
 		const options = {
@@ -85,9 +87,22 @@ export default class SyncClient {
 		});
 
 		let cookie_count;
-		let cycles;
+		let cycles_test_cookie = 0;
 
-		for (cycles = 1e5; cycles > 0; cycles--) {
+		let remainder = 0;
+
+		if (loopback) {
+			remainder = 10;
+		} else {
+			remainder = 5000;
+		}
+
+		for (let cycles = 0; cycles < max_cycles; cycles++) {
+			if (cycles % remainder !== 0) {
+				continue;
+			}
+
+			cycles_test_cookie++;
 			const match = this.client.get(CookieRewrite).value.match(regex);
 
 			if (!match) continue;
@@ -103,8 +118,10 @@ export default class SyncClient {
 			break;
 		}
 
-		if (!cycles) {
-			throw new RangeError(`Used max cycles when requesting ${url}`);
+		if (cookie_count === undefined) {
+			throw new RangeError(
+				`Reached max cycles (${max_cycles}) when requesting ${url}`
+			);
 		}
 
 		let data = '';
