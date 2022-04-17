@@ -13,14 +13,15 @@ export default class SyncClient {
 	constructor(client) {
 		this.client = client;
 	}
-	encoder = new TextEncoder('utf-8');
+	encoder = new TextEncoder();
+	decoder = new TextEncoder();
 	work() {}
-	create_response([error, base64ArrayBuffer, init, url]) {
+	create_response([error, textArrayBuffer, init, url]) {
 		if (error !== null) {
 			throw new TypeError(error.message);
 		}
 
-		const { buffer: rawArrayBuffer } = decodeBase64(base64ArrayBuffer);
+		const { buffer: rawArrayBuffer } = this.encoder.encode(textArrayBuffer);
 
 		let response;
 
@@ -60,9 +61,9 @@ export default class SyncClient {
 		let body = undefined;
 
 		if (init.body instanceof ArrayBuffer) {
-			body = encodeBase64(init.body);
-		} else if (typeof init.body == 'string') {
-			body = encodeBase64(this.encoder.encode(init.body));
+			body = this.decoder.decode(init.body);
+		} else if (typeof init.body === 'string') {
+			body = init.body;
 		}
 
 		const args = [request.url, options, body];
@@ -86,9 +87,8 @@ export default class SyncClient {
 			args,
 		});
 
+		let cookie = '';
 		let cookie_count;
-		let cycles_test_cookie = 0;
-
 		let remainder = 0;
 
 		if (loopback) {
@@ -102,8 +102,8 @@ export default class SyncClient {
 				continue;
 			}
 
-			cycles_test_cookie++;
-			const match = this.client.get(CookieRewrite).value.match(regex);
+			cookie = this.client.get(CookieRewrite).value;
+			const match = cookie.match(regex);
 
 			if (!match) continue;
 
@@ -128,7 +128,7 @@ export default class SyncClient {
 
 		for (let i = 0; i < cookie_count; i++) {
 			const regex = new RegExp(`${id}${i}=(.*?)(;|$)`);
-			const match = this.client.get(CookieRewrite).value.match(regex);
+			const match = cookie.match(regex);
 
 			if (!match) {
 				console.warn(`Couldn't find chunk ${i}`);

@@ -38,7 +38,7 @@ class Modifications {
 
 export default class RewriteJS extends Rewriter {
 	static service = 'js';
-	worker_main(url) {
+	worker_main() {
 		const cli = `${this.tomp.directory}client.js`;
 
 		return (
@@ -423,7 +423,7 @@ export default class RewriteJS extends Rewriter {
 		// modify.toString(code);
 
 		if (worker) {
-			code = this.worker_main(url) + code;
+			code = this.worker_main() + code;
 		}
 
 		return code;

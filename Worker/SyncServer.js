@@ -1,4 +1,3 @@
-import { decodeBase64, encodeBase64 } from '../Base64.js';
 import { encodeCookie } from '../encodeCookies.js';
 import { status_redirect } from '../HTTPConsts.js';
 
@@ -60,7 +59,7 @@ export default class SyncServer {
 	}
 	async process([url, options, body]) {
 		if (body !== null) {
-			options.body = decodeBase64(body);
+			options.body = body;
 		}
 
 		let redirects = 15;
@@ -111,7 +110,7 @@ export default class SyncServer {
 
 		return [
 			undefined,
-			encodeBase64(await response.arrayBuffer()),
+			new TextDecoder().decode(await response.arrayBuffer()),
 			{
 				status: response.status,
 				statusText: response.statusText,

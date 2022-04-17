@@ -1,4 +1,5 @@
 import { parseSrcset, stringifySrcset } from 'srcset';
+import Rewriter from './Rewriter.js';
 
 export const attribute_original = 'data-tomp-value-';
 
@@ -28,8 +29,8 @@ export class TOMPElement {
 }
 
 /**
- * 
- * @param {string} content_type 
+ *
+ * @param {string} content_type
  * @returns {string} mime
  */
 export function get_mime(content_type) {
@@ -89,7 +90,7 @@ function element_is_type(element, types) {
 	return types.includes(get_mime(type).toLowerCase());
 }
 
-export default class RewriteElements {
+export default class RewriteElements extends Rewriter {
 	// attribute
 	unwrap_mock = fallback => (name, value, element, url, context) => {
 		if (element.attributes.has(attribute_original + name)) {
@@ -783,9 +784,6 @@ export default class RewriteElements {
 			},
 		},
 	];
-	constructor(tomp) {
-		this.tomp = tomp;
-	}
 	wrap(element, url, persist) {
 		return this.#wrap(element, url, persist, true);
 	}
