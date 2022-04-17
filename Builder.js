@@ -30,9 +30,14 @@ export default class Builder {
 	constructor(output, development) {
 		const mode = development ? 'development' : 'production';
 
+		const cache = {
+			type: 'filesystem',
+		};
+
 		this.webpacks.push(
 			webpack({
 				mode,
+				cache,
 				devtool: 'source-map',
 				entry: {
 					client: join(__dirname, 'Client', 'entry.js'),
@@ -49,6 +54,7 @@ export default class Builder {
 		this.webpacks.push(
 			webpack({
 				mode,
+				cache,
 				devtool: 'source-map',
 				entry: join(__dirname, 'Bootstrapper', 'Bootstrapper.js'),
 				context: __dirname,
