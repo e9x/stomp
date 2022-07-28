@@ -9,7 +9,7 @@ import RewriteManifest from './RewriteManifest.js';
 import RewriteBinary from './RewriteBinary.js';
 import { PlainCodec, XORCodec } from './Codec.js';
 import Logger, { LOG_WARN } from './Logger.js';
-import BareClient from 'bare-client';
+import BareClient from '@tomphttp/bare-client';
 
 /**
  * @type {import('./Codec.js').CodecInterface[]}

@@ -3,7 +3,7 @@ import mime from 'mime/lite.js';
 
 /**
  *
- * @param {import('bare-client').BareResponse} response
+ * @param {import('@tomphttp/bare-client').BareResponse} response
  * @returns {string} mime
  */
 export default function sniffMime(request, response) {

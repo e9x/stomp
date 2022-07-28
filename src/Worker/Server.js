@@ -4,7 +4,7 @@ import Cookie from './Cookie.js';
 import Storage from './Storage.js';
 import register from './send.js';
 import { openDB } from 'idb/with-async-ittr';
-import { BareError } from 'bare-client';
+import { BareError } from '@tomphttp/bare-client';
 
 export default class Server {
 	session = Math.random();

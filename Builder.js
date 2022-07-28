@@ -40,8 +40,8 @@ export default class Builder {
 				cache,
 				devtool: 'source-map',
 				entry: {
-					client: join(__dirname, 'Client', 'entry.js'),
-					worker: join(__dirname, 'Worker', 'entry.js'),
+					client: join(__dirname, 'src', 'Client', 'entry.js'),
+					worker: join(__dirname, 'src', 'Worker', 'entry.js'),
 				},
 				context: __dirname,
 				output: {
@@ -56,7 +56,7 @@ export default class Builder {
 				mode,
 				cache,
 				devtool: 'source-map',
-				entry: join(__dirname, 'Bootstrapper', 'Bootstrapper.js'),
+				entry: join(__dirname, 'src', 'Bootstrapper', 'Bootstrapper.js'),
 				context: __dirname,
 				output: {
 					library: 'StompBoot',
