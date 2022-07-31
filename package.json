@@ -38,7 +38,7 @@
 	},
 	"dependencies": {
 		"@javascript-obfuscator/escodegen": "^2.3.0",
-		"@tomphttp/bare-client": "^1.0.3",
+		"@tomphttp/bare-client": "^1.0.4-build1",
 		"ast-types": "^0.14.2",
 		"cache-control-parser": "^2.0.2",
 		"commander": "^9.0.0",
