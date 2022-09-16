@@ -18,7 +18,7 @@ const config = [
 			worker: './src/Worker/entry.js',
 		},
 		output: {
-			path: fileURLToPath(new URL('../dist/', import.meta.url)),
+			path: fileURLToPath(new URL('./dist/', import.meta.url)),
 			filename: '[name].js',
 		},
 	},
@@ -33,7 +33,7 @@ const config = [
 			library: 'StompBoot',
 			libraryTarget: 'umd',
 			libraryExport: 'default',
-			path: fileURLToPath(new URL('../dist/', import.meta.url)),
+			path: fileURLToPath(new URL('./dist/', import.meta.url)),
 			filename: 'bootstrapper.js',
 		},
 	},
