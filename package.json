@@ -29,7 +29,6 @@
 	},
 	"license": "GPL-3.0",
 	"type": "module",
-	"main": "Builder.js",
 	"devDependencies": {
 		"cross-env": "^7.0.3",
 		"prettier": "2.6.0",
