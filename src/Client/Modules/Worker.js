@@ -25,11 +25,11 @@ export default class WorkerRewrite extends Rewrite {
 					options
 				);
 
-				this.#worker.addEventListener('message', event => {
+				this.#worker.addEventListener('message', (event) => {
 					this.dispatchEvent(new MessageEvent('message', event));
 				});
 
-				this.#worker.addEventListener('error', event => {
+				this.#worker.addEventListener('error', (event) => {
 					this.dispatchEvent(new ErrorEvent('error', event));
 				});
 			}

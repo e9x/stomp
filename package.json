@@ -1,15 +1,16 @@
 {
 	"name": "stomp",
+	"main": "lib/index.js",
 	"description": "Back.",
 	"version": "0.0.1",
-	"homepage": "https://github.com/tomphttp",
+	"homepage": "https://github.com/sysce/stomp",
 	"bugs": {
-		"url": "https://github.com/tomphttp/toomanyproxies/issues",
+		"url": "https://github.com/sysce/stomp/issues",
 		"email": "tomp@sys32.dev"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/tomphttp/toomanyproxies.git"
+		"url": "https://github.com/sysce/stomp.git"
 	},
 	"author": {
 		"name": "TOMP Development",
@@ -31,6 +32,7 @@
 	"type": "module",
 	"devDependencies": {
 		"cross-env": "^7.0.3",
+		"eslint": "^8.23.1",
 		"prettier": "2.6.0",
 		"webpack": "^5.74.0",
 		"webpack-cli": "^4.10.0"
@@ -40,7 +42,6 @@
 		"@tomphttp/bare-client": "^1.0.4-build1",
 		"ast-types": "^0.14.2",
 		"cache-control-parser": "^2.0.2",
-		"commander": "^9.0.0",
 		"css-tree": "^2.0.4",
 		"effective-domain-name-parser": "^0.0.10",
 		"idb": "^7.0.0",
@@ -50,5 +51,9 @@
 		"parse5": "^6.0.1",
 		"set-cookie-parser": "^2.4.8",
 		"srcset": "^5.0.0"
-	}
+	},
+	"files": [
+		"dist",
+		"lib"
+	]
 }

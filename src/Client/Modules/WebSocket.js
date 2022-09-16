@@ -99,25 +99,25 @@ export default class WebSocketRewrite extends Rewrite {
 
 				this.#socket.binaryType = this.#binaryType;
 
-				this.#socket.addEventListener('message', event => {
+				this.#socket.addEventListener('message', (event) => {
 					this.dispatchEvent(new MessageEvent('message', event));
 				});
 
 				this.#socket.meta
-					.then(meta => {
+					.then((meta) => {
 						this.#read_meta(meta);
 					})
 					.catch(() => {});
 
-				this.#socket.addEventListener('open', async event => {
+				this.#socket.addEventListener('open', async (event) => {
 					this.dispatchEvent(new Event('open', event));
 				});
 
-				this.#socket.addEventListener('error', event => {
+				this.#socket.addEventListener('error', (event) => {
 					this.dispatchEvent(new ErrorEvent('error', event));
 				});
 
-				this.#socket.addEventListener('close', event => {
+				this.#socket.addEventListener('close', (event) => {
 					this.dispatchEvent(new Event('close', event));
 				});
 			}

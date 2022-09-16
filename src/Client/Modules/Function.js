@@ -13,7 +13,7 @@ const is_not_member = /=>|^((async\s+)?(\(|function[( ]))/;
 
 export default class FunctionRewrite extends Rewrite {
 	global = global.Function;
-	global_async = (async _ => _).constructor;
+	global_async = (async (_) => _).constructor;
 	work() {
 		const that = this;
 

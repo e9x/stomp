@@ -99,7 +99,7 @@ export default class StorageRewrite extends Rewrite {
 				this.client.base,
 			]);
 		},
-		ownKeys: target => {
+		ownKeys: (target) => {
 			const keys = this.client.sync_api('storage', 'getKeys', [
 				this.is_session(target),
 				this.client.base,

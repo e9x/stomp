@@ -92,7 +92,7 @@ function element_is_type(element, types) {
 
 export default class RewriteElements extends Rewriter {
 	// attribute
-	unwrap_mock = fallback => (name, value, element, url, context) => {
+	unwrap_mock = (fallback) => (name, value, element, url, context) => {
 		if (element.attributes.has(attribute_original + name)) {
 			context.value = element.attributes.get(attribute_original + name);
 			context.modified = true;

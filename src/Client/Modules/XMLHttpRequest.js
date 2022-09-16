@@ -207,12 +207,12 @@ export default class XMLHttpRequestRewrite extends Rewrite {
 						url,
 						init,
 					])
-						.then(async response => {
+						.then(async (response) => {
 							this.#on_headers(undefined, response, response.url);
 							const buffer = await response.arrayBuffer();
 							this.#on_done(undefined, response, buffer);
 						})
-						.catch(error => this.#on_done(error));
+						.catch((error) => this.#on_done(error));
 				} else {
 					try {
 						const response = that.client.get(SyncClient).fetch(url, init);

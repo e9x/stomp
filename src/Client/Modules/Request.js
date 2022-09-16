@@ -109,7 +109,7 @@ export default class RequestRewrite extends Rewrite {
 				const promise = Reflect.apply(target, that, [input, init]);
 
 				return new Promise((resolve, reject) => {
-					promise.then(response => {
+					promise.then((response) => {
 						this.response_url.set(
 							response,
 							this.client.tomp.url
@@ -119,7 +119,7 @@ export default class RequestRewrite extends Rewrite {
 						resolve(response);
 					});
 
-					promise.catch(error => {
+					promise.catch((error) => {
 						reject(error);
 					});
 				});

@@ -19,7 +19,7 @@ export const providers = ['window', 'document'];
 export const undefinable = ['eval', 'location', 'top'];
 // only eval and location are of interest
 
-const parse_options = module => {
+const parse_options = (module) => {
 	return {
 		ecmaVersion: 2022,
 		module: module === true,
