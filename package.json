@@ -2,7 +2,7 @@
 	"name": "stomp",
 	"main": "lib/index.js",
 	"description": "Back.",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"homepage": "https://github.com/sysce/stomp",
 	"bugs": {
 		"url": "https://github.com/sysce/stomp/issues",
