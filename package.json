@@ -1,5 +1,5 @@
 {
-	"name": "stomp",
+	"name": "@sysce/stomp",
 	"main": "lib/index.js",
 	"description": "Back.",
 	"version": "1.0.0",
