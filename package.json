@@ -1,6 +1,6 @@
 {
 	"name": "@sysce/stomp",
-	"main": "lib/index.js",
+	"main": "lib/index.cjs",
 	"description": "Back.",
 	"version": "1.0.0",
 	"homepage": "https://github.com/sysce/stomp",
