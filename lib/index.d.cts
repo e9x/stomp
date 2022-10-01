@@ -1,1 +1,3 @@
-export const stompPath: string;
+declare const stompPath: string;
+
+export = stompPath;
