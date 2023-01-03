@@ -9,7 +9,7 @@ import { BareError } from '@tomphttp/bare-client';
 export default class Server {
 	session = Math.random();
 	constructor(config) {
-		config.origin = new URL(serviceWorker.scriptURL).origin;
+		config.origin = new URL(location.href).origin;
 		this.tomp = new TOMP(config);
 		this.request = this.request.bind(this);
 		this.ready = this.work();
