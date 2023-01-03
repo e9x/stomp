@@ -106,23 +106,25 @@ export default class PageRequestRewrite extends Rewrite {
 			}
 		);
 
-		Navigator.prototype.sendBeacon = wrap_function(
-			Navigator.prototype.sendBeacon,
-			(target, that, [url, data]) => {
-				if (that != navigator) throw new TypeError('Illegal invocation');
+		// sometimes undefined
+		if (Navigator.prototype.sendBeacon)
+			Navigator.prototype.sendBeacon = wrap_function(
+				Navigator.prototype.sendBeacon,
+				(target, that, [url, data]) => {
+					if (that != navigator) throw new TypeError('Illegal invocation');
 
-				url = new URL(url, this.client.base);
+					url = new URL(url, this.client.base);
 
-				if (!beacon_protocols.includes(url.protocol)) {
-					throw new TypeError(
-						`Failed to execute 'sendBeacon' on 'Navigator': Beacons are only supported over HTTP(S).`
-					);
+					if (!beacon_protocols.includes(url.protocol)) {
+						throw new TypeError(
+							`Failed to execute 'sendBeacon' on 'Navigator': Beacons are only supported over HTTP(S).`
+						);
+					}
+
+					url = this.client.tomp.binary.serve(url, this.client.base);
+					return Reflect.apply(target, that, [url, data]);
 				}
-
-				url = this.client.tomp.binary.serve(url, this.client.base);
-				return Reflect.apply(target, that, [url, data]);
-			}
-		);
+			);
 
 		/*XMLHttpRequest.prototype.setRequestHeader = wrap_function(XMLHttpRequest.prototype.setRequestHeader, (target, that, [header, value]) => {
 			value = String(value);
