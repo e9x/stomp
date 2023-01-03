@@ -32,23 +32,23 @@
 	"type": "module",
 	"devDependencies": {
 		"cross-env": "^7.0.3",
-		"eslint": "^8.23.1",
-		"prettier": "^2.6.0",
-		"webpack": "^5.74.0",
-		"webpack-cli": "^4.10.0"
+		"eslint": "^8.31.0",
+		"prettier": "^2.8.1",
+		"webpack": "^5.75.0",
+		"webpack-cli": "^5.0.1"
 	},
 	"dependencies": {
 		"@javascript-obfuscator/escodegen": "^2.3.0",
-		"@tomphttp/bare-client": "^1.0.5",
+		"@tomphttp/bare-client": "^1.1.1",
 		"ast-types": "^0.14.2",
 		"cache-control-parser": "^2.0.2",
-		"css-tree": "^2.2.1",
+		"css-tree": "^2.3.1",
 		"effective-domain-name-parser": "^0.0.10",
-		"idb": "^7.0.2",
+		"idb": "^7.1.1",
 		"md5": "^2.3.0",
 		"meriyah-loose": "github:sysce/meriyah-loose",
 		"mime": "^3.0.0",
-		"parse5": "^7.1.1",
+		"parse5": "^7.1.2",
 		"set-cookie-parser": "^2.5.1",
 		"srcset": "^5.0.0"
 	},
