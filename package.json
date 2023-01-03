@@ -46,7 +46,7 @@
 		"effective-domain-name-parser": "^0.0.10",
 		"idb": "^7.1.1",
 		"md5": "^2.3.0",
-		"meriyah-loose": "github:sysce/meriyah-loose",
+		"meriyah": "^4.3.3",
 		"mime": "^3.0.0",
 		"parse5": "^7.1.2",
 		"set-cookie-parser": "^2.5.1",
