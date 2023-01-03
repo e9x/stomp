@@ -129,7 +129,7 @@ export default class DOMRewrite extends Rewrite {
 
 		const proxy = new Proxy(style, {
 			get: (target, prop, receiver) => {
-				let result = Reflect.get(target, prop, receiver);
+				let result = Reflect.get(target, prop);
 
 				if (typeof result == 'string' && prop != 'cssText') {
 					result = this.client.tomp.css.unwrap(
