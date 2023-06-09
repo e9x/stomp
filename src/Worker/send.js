@@ -214,16 +214,12 @@ async function sendBinary(server, server_request, field) {
 		delete exact_request_headers['x-tomp-impl-names'];
 	}
 
-	const response = await server.tomp.bare.request(
-		server_request.method,
-		exact_request_headers,
+	const response = await server.tomp.bare.fetch(url.toString(), {
+		method: server_request.method,
+		headers: exact_request_headers,
 		body,
-		url.protocol,
-		url.host,
-		url.port,
-		url.path,
-		server_request.cache
-	);
+		cache: server_request.cache,
+	});
 
 	const response_headers = await handle_common_response(
 		server.tomp.binary,
@@ -281,16 +277,12 @@ async function sendRewrittenScript(
 	);
 	if (gd_error) return gd_error;
 
-	const response = await server.tomp.bare.request(
-		server_request.method,
-		request_headers,
+	const response = await server.tomp.bare.fetch(url.toString(), {
+		method: server_request.method,
+		headers: request_headers,
 		body,
-		url.protocol,
-		url.host,
-		url.port,
-		url.path,
-		server_request.cache
-	);
+		cache: server_request.cache,
+	});
 	const response_headers = await handle_common_response(
 		rewriter,
 		server,
@@ -382,16 +374,12 @@ async function sendHTML(server, server_request, field) {
 	);
 	if (gd_error) return gd_error;
 
-	const response = await server.tomp.bare.request(
-		server_request.method,
-		request_headers,
+	const response = await server.tomp.bare.fetch(url.toString(), {
+		method: server_request.method,
+		headers: request_headers,
 		body,
-		url.protocol,
-		url.host,
-		url.port,
-		url.path,
-		server_request.cache
-	);
+		cache: server_request.cache,
+	});
 
 	const response_headers = await handle_common_response(
 		server.tomp.html,

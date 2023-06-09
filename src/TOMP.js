@@ -9,7 +9,7 @@ import RewriteManifest from './RewriteManifest.js';
 import RewriteBinary from './RewriteBinary.js';
 import { PlainCodec, XORCodec } from './Codec.js';
 import Logger, { LOG_WARN } from './Logger.js';
-import BareClient from '@tomphttp/bare-client';
+import { BareClient } from '@tomphttp/bare-client';
 
 /**
  * @type {import('./Codec.js').CodecInterface[]}
@@ -43,7 +43,7 @@ export default class TOMP {
 		return {
 			directory: this.directory,
 			bare_server: this.bare_server,
-			bare_data: this.bare.data,
+			bare_data: this.bare.manfiest,
 			origin: this.origin,
 			key: this.key,
 			noscript: this.noscript,

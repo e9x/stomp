@@ -31,6 +31,9 @@ export default class WebSocketRewrite extends Rewrite {
 		const CLOSED = 3;
 
 		class WebSocketProxy extends EventTarget {
+			/**
+			 * @type {import('@tomphttp/bare-client').BareWebSocket}
+			 */
 			#socket;
 			#ready;
 			#remote = {};
@@ -38,25 +41,24 @@ export default class WebSocketRewrite extends Rewrite {
 			#protocol = '';
 			#extensions = '';
 			#url = '';
-			#id = '';
-			async #read_meta(meta) {
-				const headers = new Headers(meta.headers);
-
-				if (headers.has('sec-websocket-protocol')) {
-					this.#protocol = headers.get('sec-websocket-protocol');
-				}
-
-				if (headers.has('sec-websocket-extensions')) {
-					this.#extensions = headers.get('sec-websocket-extensions');
-				}
-
-				if (headers.has('set-cookie')) {
-					await that.client.api('cookie', 'set', [
-						this.#remote,
-						headers.get('set-cookie'),
-					]);
-				}
-			}
+			/**
+			 * @type {(() => number) | undefined}
+			 */
+			#getReadyState;
+			/**
+			 * fallback for when #getReadyState isn't set
+			 * @type {number}
+			 */
+			#readyState = CONNECTING;
+			/**
+			 * @type {(() => Error | undefined) | undefined}
+			 */
+			#getSendError;
+			/**
+			 *
+			 * @param {URL} remote
+			 * @param {string[]} protocol
+			 */
 			async #open(remote, protocol) {
 				this.#remote = remote;
 
@@ -71,43 +73,38 @@ export default class WebSocketRewrite extends Rewrite {
 				request_headers['User-Agent'] = navigator.userAgent;
 				request_headers['Connection'] = 'Upgrade';
 
-				for (let proto of [].concat(protocol)) {
-					if (!validProtocol(proto)) {
-						throw new DOMException(
-							`Failed to construct 'WebSocket': The subprotocol '${proto}' is invalid.`
-						);
-					}
-				}
+				const cookies = await that.client.api('cookie', 'get_string', [remote]);
 
-				if (protocol.length) {
-					request_headers['Sec-Websocket-Protocol'] = protocol.join(', ');
-				}
+				if (cookies !== '') request_headers['Cookie'] = cookies.toString();
 
-				let cookies = await that.client.api('cookie', 'get_string', [remote]);
-
-				if (cookies !== '') {
-					request_headers['Cookie'] = cookies.toString();
-				}
-
-				this.#socket = await that.tomp.bare.connect(
+				this.#socket = await that.tomp.bare.createWebSocket(
+					remote.toString(),
+					protocol,
 					request_headers,
-					remote.protocol,
-					remote.host,
-					remote.port,
-					remote.path
+					(socket, getReadyState) => {
+						this.#getReadyState = getReadyState;
+					},
+					(socket, getSendError) => {
+						this.#getSendError = getSendError;
+					}
 				);
 
 				this.#socket.binaryType = this.#binaryType;
 
+				this.#socket.addEventListener('meta', async (event) => {
+					event.preventDefault();
+
+					this.#protocol = event.meta.protocol;
+
+					await that.client.api('cookie', 'set', [
+						this.#remote,
+						event.meta.setCookies,
+					]);
+				});
+
 				this.#socket.addEventListener('message', (event) => {
 					this.dispatchEvent(new MessageEvent('message', event));
 				});
-
-				this.#socket.meta
-					.then((meta) => {
-						this.#read_meta(meta);
-					})
-					.catch(() => {});
 
 				this.#socket.addEventListener('open', async (event) => {
 					this.dispatchEvent(new Event('open', event));
@@ -157,27 +154,31 @@ export default class WebSocketRewrite extends Rewrite {
 
 				this.#url = parsed.href;
 
-				this.#ready = this.#open(
-					{
-						host: parsed.hostname,
-						path: parsed.pathname + parsed.search,
-						protocol: parsed.protocol,
-						port,
-					},
-					[].concat(protocol)
+				protocol = (Array.isArray(protocol) ? protocol : [protocol]).map(
+					String
 				);
+
+				for (const proto of protocol) {
+					if (!validProtocol(proto)) {
+						throw new DOMException(
+							`Failed to construct 'WebSocket': The subprotocol '${proto}' is invalid.`
+						);
+					}
+				}
+
+				this.#ready = this.#open(parsed, [].concat(protocol));
 			}
 			get protocol() {
 				return this.#protocol;
 			}
 			get extensions() {
-				return this.#extensions;
+				return this.#socket ? this.#socket.extensions : this.#extensions;
 			}
 			get readyState() {
-				if (this.#socket) {
-					return this.#socket.readyState;
+				if (this.#getReadyState) {
+					return this.#getReadyState();
 				} else {
-					return CONNECTING;
+					return this.#readyState;
 				}
 			}
 			get binaryType() {
@@ -193,11 +194,17 @@ export default class WebSocketRewrite extends Rewrite {
 				return value;
 			}
 			send(data) {
+				if (this.#getSendError) {
+					const error = this.#getSendError();
+					if (error) throw error;
+				}
+
 				if (!this.#socket) {
 					throw new DOMException(
 						`Failed to execute 'send' on 'WebSocket': Still in CONNECTING state.`
 					);
 				}
+
 				this.#socket.send(data);
 			}
 			close(code, reason) {
@@ -213,7 +220,11 @@ export default class WebSocketRewrite extends Rewrite {
 					}
 				}
 
-				this.#ready.then(() => this.#socket.close(code, reason));
+				if (this.#socket) this.#socket.close();
+				else {
+					this.#readyState = CLOSING;
+					this.#ready.then(() => this.#socket.close(code, reason));
+				}
 			}
 		}
 
