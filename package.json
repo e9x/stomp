@@ -2,7 +2,7 @@
 	"name": "@sysce/stomp",
 	"main": "lib/index.cjs",
 	"description": "Back.",
-	"version": "1.0.3",
+	"version": "2.0.0-beta",
 	"homepage": "https://github.com/sysce/stomp",
 	"bugs": {
 		"url": "https://github.com/sysce/stomp/issues",
