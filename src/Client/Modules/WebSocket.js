@@ -1,244 +1,158 @@
 import Rewrite from '../Rewrite.js';
 import global from '../../global.js';
-import { validProtocol } from '../../encodeProtocol.js';
-import { Reflect } from '../rewriteUtil.js';
-import {
-	DOMObjectConstructor,
-	TargetConstant,
-	EventTarget_on,
-	mirror_class,
-} from '../NativeUtil.js';
+import { Reflect, wrap_function } from '../rewriteUtil.js';
 
 const default_ports = {
 	'ws:': 80,
 	'wss:': 443,
 };
 
-const ws_protocols = ['wss:', 'ws:'];
-
 export default class WebSocketRewrite extends Rewrite {
 	global = global.WebSocket;
 	work() {
-		const that = this;
+		/**
+		 * @type {WeakMap<WebSocket, string>}
+		 */
+		const url_props = new WeakMap();
 
-		const didnt_specify = Symbol();
+		const url_desc = Object.getOwnPropertyDescriptor(
+			WebSocket.prototype,
+			'url'
+		);
 
-		const instances = new WeakSet();
+		url_desc.get = wrap_function(url_desc.get, (target, that, args) => {
+			if (url_props.has(that)) return url_props.get(that).toString();
+			else return Reflect.apply(target, that, args);
+		});
 
-		const CONNECTING = 0;
-		const OPEN = 1;
-		const CLOSING = 2;
-		const CLOSED = 3;
+		Object.defineProperty(global.WebSocket.prototype, 'url', url_desc);
 
-		class WebSocketProxy extends EventTarget {
-			/**
-			 * @type {import('@tomphttp/bare-client').BareWebSocket}
-			 */
-			#socket;
-			#ready;
-			#remote = {};
-			#binaryType = 'blob';
-			#protocol = '';
-			#extensions = '';
-			#url = '';
-			/**
-			 * @type {(() => number) | undefined}
-			 */
-			#getReadyState;
-			/**
-			 * fallback for when #getReadyState isn't set
-			 * @type {number}
-			 */
-			#readyState = CONNECTING;
-			/**
-			 * @type {(() => Error | undefined) | undefined}
-			 */
-			#getSendError;
-			/**
-			 *
-			 * @param {URL} remote
-			 * @param {string[]} protocol
-			 */
-			async #open(remote, protocol) {
-				this.#remote = remote;
+		/**
+		 * @type {WeakMap<WebSocket, import('@tomphttp/bare-client').BareWebSocket.GetProtocolCallback>}
+		 */
+		const protocol_props = new WeakMap();
 
-				const request_headers = {};
-				Reflect.setPrototypeOf(request_headers, null);
+		const protocol_desc = Object.getOwnPropertyDescriptor(
+			WebSocket.prototype,
+			'protocol'
+		);
 
-				request_headers['Host'] = remote.host;
-				request_headers['Origin'] = that.client.base.toOrigin();
-				request_headers['Pragma'] = 'no-cache';
-				request_headers['Cache-Control'] = 'no-cache';
-				request_headers['Upgrade'] = 'websocket';
-				request_headers['User-Agent'] = navigator.userAgent;
-				request_headers['Connection'] = 'Upgrade';
-
-				const cookies = await that.client.api('cookie', 'get_string', [remote]);
-
-				if (cookies !== '') request_headers['Cookie'] = cookies.toString();
-
-				this.#socket = await that.tomp.bare.createWebSocket(
-					remote.toString(),
-					protocol,
-					request_headers,
-					(socket, getReadyState) => {
-						this.#getReadyState = getReadyState;
-					},
-					(socket, getSendError) => {
-						this.#getSendError = getSendError;
-					}
-				);
-
-				this.#socket.binaryType = this.#binaryType;
-
-				this.#socket.addEventListener('meta', async (event) => {
-					event.preventDefault();
-
-					this.#protocol = event.meta.protocol;
-
-					await that.client.api('cookie', 'set', [
-						this.#remote,
-						event.meta.setCookies,
-					]);
-				});
-
-				this.#socket.addEventListener('message', (event) => {
-					this.dispatchEvent(new MessageEvent('message', event));
-				});
-
-				this.#socket.addEventListener('open', async (event) => {
-					this.dispatchEvent(new Event('open', event));
-				});
-
-				this.#socket.addEventListener('error', (event) => {
-					this.dispatchEvent(new ErrorEvent('error', event));
-				});
-
-				this.#socket.addEventListener('close', (event) => {
-					this.dispatchEvent(new Event('close', event));
-				});
+		protocol_desc.get = wrap_function(
+			protocol_desc.get,
+			(target, that, args) => {
+				// invoke it to get the protocol
+				if (protocol_props.has(that)) return protocol_props.get(that)();
+				else return Reflect.apply(target, that, args);
 			}
-			get url() {
-				return this.#url;
+		);
+
+		Object.defineProperty(
+			global.WebSocket.prototype,
+			'protocol',
+			protocol_desc
+		);
+
+		/**
+		 * A map containing the readyState getters of Bare WebSockets
+		 * @type {WeakMap<WebSocket, import('@tomphttp/bare-client').BareWebSocket.GetReadyStateCallback>}
+		 */
+		const socket_ready_state = new WeakMap();
+
+		const ready_state_desc = Object.getOwnPropertyDescriptor(
+			window.WebSocket.prototype,
+			'readyState'
+		);
+
+		ready_state_desc.get = wrap_function(
+			ready_state_desc.get,
+			(target, that, args) => {
+				if (socket_ready_state.has(that)) return socket_ready_state.get(that)();
+				else return target.call(that, ...args);
 			}
-			constructor(url = didnt_specify, protocol = []) {
-				super();
+		);
 
-				instances.add(this);
+		Object.defineProperty(
+			window.WebSocket.prototype,
+			'readyState',
+			ready_state_desc
+		);
 
-				if (url == didnt_specify) {
-					throw new DOMException(
-						`Failed to construct 'WebSocket': 1 argument required, but only 0 present.`
-					);
-				}
+		/**
+		 * A map containing the send hooks of Bare WebSockets
+		 * @type {WeakMap<WebSocket, import('@tomphttp/bare-client').BareWebSocket.GetSendErrorCallback}
+		 */
+		const socket_send_error = new WeakMap();
 
-				let parsed;
-
-				try {
-					parsed = new URL(url);
-				} catch (err) {
-					throw new DOMException(
-						`Faiiled to construct 'WebSocket': The URL '${url}' is invalid.`
-					);
-				}
-
-				if (!ws_protocols.includes(parsed.protocol)) {
-					throw new DOMException(
-						`Failed to construct 'WebSocket': The URL's scheme must be either 'ws' or 'wss'. '${parsed.protocol}' is not allowed.`
-					);
-				}
-
-				let port = parseInt(parsed.port);
-
-				if (isNaN(port)) port = default_ports[parsed.protocol];
-
-				this.#url = parsed.href;
-
-				protocol = (Array.isArray(protocol) ? protocol : [protocol]).map(
-					String
-				);
-
-				for (const proto of protocol) {
-					if (!validProtocol(proto)) {
-						throw new DOMException(
-							`Failed to construct 'WebSocket': The subprotocol '${proto}' is invalid.`
-						);
-					}
-				}
-
-				this.#ready = this.#open(parsed, [].concat(protocol));
-			}
-			get protocol() {
-				return this.#protocol;
-			}
-			get extensions() {
-				return this.#socket ? this.#socket.extensions : this.#extensions;
-			}
-			get readyState() {
-				if (this.#getReadyState) {
-					return this.#getReadyState();
-				} else {
-					return this.#readyState;
-				}
-			}
-			get binaryType() {
-				return this.#binaryType;
-			}
-			set binaryType(value) {
-				this.#binaryType = value;
-
-				if (this.#socket) {
-					this.#socket.binaryType = value;
-				}
-
-				return value;
-			}
-			send(data) {
-				if (this.#getSendError) {
-					const error = this.#getSendError();
+		WebSocket.prototype.send = wrap_function(
+			WebSocket.prototype.send,
+			(target, that, args) => {
+				if (socket_send_error.has(that)) {
+					const error = socket_send_error.get(that)();
 					if (error) throw error;
 				}
 
-				if (!this.#socket) {
-					throw new DOMException(
-						`Failed to execute 'send' on 'WebSocket': Still in CONNECTING state.`
-					);
-				}
-
-				this.#socket.send(data);
+				target.call(that, ...args);
 			}
-			close(code, reason) {
-				if (typeof code !== 'undefined') {
-					if (typeof code !== 'number') {
-						code = 0;
-					}
+		);
 
-					if (code !== 1000 && (code < 3000 || code > 4999)) {
-						throw new DOMException(
-							`Failed to execute 'close' on 'WebSocket': The code must be either 1000, or between 3000 and 4999. ${code} is neither.`
-						);
-					}
-				}
+		/**
+		 *
+		 * @param {URL|string} url
+		 */
+		const getRemote = (url) => {
+			const parsed = new URL(url);
 
-				if (this.#socket) this.#socket.close();
-				else {
-					this.#readyState = CLOSING;
-					this.#ready.then(() => this.#socket.close(code, reason));
-				}
-			}
-		}
+			return {
+				host: parsed.hostname,
+				path: parsed.pathname + parsed.search,
+				protocol: parsed.protocol,
+				port: default_ports[parsed.protocol],
+			};
+		};
 
-		WebSocketProxy = DOMObjectConstructor(WebSocketProxy);
-		EventTarget_on(WebSocketProxy.prototype, 'close');
-		EventTarget_on(WebSocketProxy.prototype, 'open');
-		EventTarget_on(WebSocketProxy.prototype, 'message');
-		EventTarget_on(WebSocketProxy.prototype, 'error');
-		TargetConstant(WebSocketProxy, 'CONNECTING', CONNECTING);
-		TargetConstant(WebSocketProxy, 'OPEN', OPEN);
-		TargetConstant(WebSocketProxy, 'CLOSING', CLOSING);
-		TargetConstant(WebSocketProxy, 'CLOSED', CLOSED);
-		mirror_class(this.global, WebSocketProxy, instances);
+		window.WebSocket = wrap_function(
+			window.WebSocket,
+			(target, that, args) => {
+				const socket = this.tomp.bare.createWebSocket(args[0], args[1], {
+					headers: async () => {
+						const request_headers = Object.create(null);
 
-		global.WebSocket = WebSocketProxy;
+						request_headers['Origin'] = this.client.base.toOrigin();
+						request_headers['User-Agent'] = navigator.userAgent;
+
+						const cookies = await this.client.api('cookie', 'get_string', [
+							getRemote(args[0]),
+						]);
+
+						if (cookies !== '') request_headers['Cookie'] = cookies.toString();
+
+						return request_headers;
+					},
+					readyStateHook: (socket, getReadyState) =>
+						socket_ready_state.set(socket, getReadyState),
+					sendErrorHook: (socket, getSendError) =>
+						socket_send_error.set(socket, getSendError),
+					urlHook: (socket, url) => url_props.set(socket, url),
+					protocolHook: (socket, getProtocol) =>
+						protocol_props.set(socket, getProtocol),
+					setCookiesCallback: async (setCookies) => {
+						await this.client.api('cookie', 'set', [
+							getRemote(args[0]),
+							setCookies,
+						]);
+					},
+				});
+
+				return socket;
+			},
+			true
+		);
+
+		// websocket prototype contains these constants too
+		// no need to store a local copy
+		WebSocket.CONNECTING = WebSocket.prototype.CONNECTING;
+		WebSocket.OPEN = WebSocket.prototype.OPEN;
+		WebSocket.CLOSING = WebSocket.prototype.CLOSING;
+		WebSocket.CLOSED = WebSocket.prototype.CLOSED;
 	}
 }
