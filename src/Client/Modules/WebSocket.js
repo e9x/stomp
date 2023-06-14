@@ -141,6 +141,7 @@ export default class WebSocketRewrite extends Rewrite {
 							setCookies,
 						]);
 					},
+					webSocketImpl: target,
 				});
 
 				return socket;
